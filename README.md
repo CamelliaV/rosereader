@@ -63,6 +63,22 @@ Create unpacked build:
 npm run pack
 ```
 
+## Arch Linux
+
+This repo includes a `PKGBUILD` for local packaging:
+
+```bash
+makepkg -si
+```
+
+The installed launcher exports `ROSE_DATA_DIR` to:
+
+```text
+${XDG_CONFIG_HOME:-$HOME/.config}/RoseReader
+```
+
+`npm run start` and the packaged app share this same persistence location on Linux, so your reading progress, highlights, bookmarks, and notes are not split.
+
 ## Data Storage
 
 App data is stored in Electron `userData` as:

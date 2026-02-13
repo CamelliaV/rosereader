@@ -93,10 +93,37 @@ let appData = {
   analytics: { ...defaultAnalytics }
 };
 
-const dataPath = path.join(app.getPath('userData'), 'rosereader-data.json');
-const dataBackupPath = path.join(app.getPath('userData'), 'rosereader-data-backup.json');
+function resolveRoseDataDir() {
+  const customDirRaw = String(process.env.ROSE_DATA_DIR || '').trim();
+  if (customDirRaw) {
+    if (customDirRaw.startsWith('~/')) {
+      return path.join(app.getPath('home'), customDirRaw.slice(2));
+    }
+    return path.resolve(customDirRaw);
+  }
+
+  if (process.platform === 'linux') {
+    const xdgConfigHome = process.env.XDG_CONFIG_HOME
+      ? path.resolve(process.env.XDG_CONFIG_HOME)
+      : path.join(app.getPath('home'), '.config');
+    return path.join(xdgConfigHome, 'RoseReader');
+  }
+
+  return app.getPath('userData');
+}
+
+const roseDataDir = resolveRoseDataDir();
+const dataPath = path.join(roseDataDir, 'rosereader-data.json');
+const dataBackupPath = path.join(roseDataDir, 'rosereader-data-backup.json');
+
+function ensureRoseDataDir() {
+  try {
+    fs.mkdirSync(roseDataDir, { recursive: true });
+  } catch (e) {}
+}
 
 function loadData() {
+  ensureRoseDataDir();
   try {
     if (fs.existsSync(dataPath)) {
       const saved = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
@@ -134,6 +161,7 @@ function loadData() {
 }
 
 function saveData() {
+  ensureRoseDataDir();
   try {
     const data = JSON.stringify(appData, null, 2);
     fs.writeFileSync(dataPath, data);
@@ -1651,7 +1679,7 @@ async function readBookContent(id) {
 }
 
 function getCoversDir() {
-  const dir = path.join(app.getPath('userData'), 'covers');
+  const dir = path.join(roseDataDir, 'covers');
   try { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}
   return dir;
 }

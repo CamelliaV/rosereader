@@ -1,12 +1,12 @@
 # Maintainer: Cindy <cindy@example.com>
 pkgname=rosereader
 pkgver=1.0.0
-pkgrel=1
+pkgrel=2
 pkgdesc="E-book reader with infinite scroll, supporting EPUB, PDF, and TXT"
 arch=('x86_64')
-url="https://github.com/cindy/rosereader"
+url="https://github.com/CamelliaV/rosereader"
 license=('MIT')
-depends=('electron' 'nodejs')
+depends=('glibc' 'gtk3' 'nss' 'libxss')
 makedepends=('npm')
 source=()
 sha256sums=()
@@ -18,10 +18,6 @@ build() {
     export ELECTRON_BUILDER_CACHE="${srcdir}/electron-builder-cache"
     mkdir -p "$npm_config_cache" "$ELECTRON_BUILDER_CACHE"
 
-    export CFLAGS+=" -march=znver4 -mtune=znver4 -O3 -pipe -fomit-frame-pointer"
-    export CXXFLAGS+=" -march=znver4 -mtune=znver4 -O3 -pipe -fomit-frame-pointer"
-    export LDFLAGS+=" -Wl,-O1,--as-needed"
-
     npm ci --prefer-offline
     npm run pack
 }
@@ -32,18 +28,14 @@ package() {
     install -dm755 "$pkgdir/usr/lib/rosereader"
     cp -r dist/linux-unpacked/* "$pkgdir/usr/lib/rosereader/"
 
-    install -dm755 "$pkgdir/usr/bin"
-    ln -s /usr/lib/rosereader/rosereader "$pkgdir/usr/bin/rosereader"
-
-    install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/rosereader.desktop" <<EOF
-[Desktop Entry]
-Name=RoseReader
-Comment=E-book reader with infinite scroll
-Exec=rosereader
-Icon=rosereader
-Terminal=false
-Type=Application
-Categories=Office;Viewer;
-MimeType=application/epub+zip;application/pdf;text/plain;
+    install -Dm755 /dev/stdin "$pkgdir/usr/bin/rosereader" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+: "${ROSE_DATA_DIR:=${XDG_CONFIG_HOME:-$HOME/.config}/RoseReader}"
+export ROSE_DATA_DIR
+exec /usr/lib/rosereader/rosereader "$@"
 EOF
+
+    install -Dm644 rosereader.desktop "$pkgdir/usr/share/applications/rosereader.desktop"
+    install -Dm644 build/icon.png "$pkgdir/usr/share/pixmaps/rosereader.png"
 }
