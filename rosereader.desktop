@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=RoseReader
+Comment=E-book reader with infinite scroll
+Exec=rosereader %U
+Icon=rosereader
+Type=Application
+Categories=Office;Viewer;
+MimeType=application/epub+zip;application/pdf;text/plain;
+StartupWMClass=rosereader

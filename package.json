@@ -1,0 +1,39 @@
+{
+  "name": "rosereader",
+  "version": "1.0.0",
+  "description": "E-book reader with infinite scroll",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --linux",
+    "pack": "electron-builder --dir"
+  },
+  "author": "Cindy",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^39.2.7",
+    "epub2": "^3.0.2",
+    "pdf-parse": "^2.4.5",
+    "pdfjs-dist": "^5.4.530"
+  },
+  "devDependencies": {
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.cindy.rosereader",
+    "productName": "RoseReader",
+    "icon": "build/icon.png",
+    "linux": {
+      "target": [
+        "AppImage",
+        "pacman"
+      ],
+      "category": "Office",
+      "icon": "build/icon.png",
+      "executableName": "rosereader",
+      "desktop": {
+        "StartupWMClass": "rosereader"
+      }
+    }
+  }
+}

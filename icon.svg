@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d2a2e"/>
+      <stop offset="100%" style="stop-color:#1a1819"/>
+    </linearGradient>
+    <linearGradient id="roseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e8a4b8"/>
+      <stop offset="50%" style="stop-color:#d4436a"/>
+      <stop offset="100%" style="stop-color:#b8345a"/>
+    </linearGradient>
+    <linearGradient id="pageGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f5f0eb"/>
+      <stop offset="100%" style="stop-color:#e8e0d8"/>
+    </linearGradient>
+    <linearGradient id="coverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4436a"/>
+      <stop offset="100%" style="stop-color:#9a2d4d"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+    <filter id="innerGlow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bgGrad)"/>
+
+  <!-- Decorative rose petals in background -->
+  <g opacity="0.08">
+    <ellipse cx="420" cy="100" rx="80" ry="60" fill="#d4436a" transform="rotate(25 420 100)"/>
+    <ellipse cx="90" cy="420" rx="70" ry="50" fill="#d4436a" transform="rotate(-15 90 420)"/>
+  </g>
+
+  <!-- Open book -->
+  <g filter="url(#shadow)" transform="translate(256, 280)">
+    <!-- Left pages -->
+    <path d="M-8 -80 Q-100 -90 -140 -60 L-140 100 Q-100 70 -8 80 Z" fill="url(#pageGrad)"/>
+    <path d="M-8 -80 Q-90 -85 -130 -55 L-130 95 Q-90 70 -8 78 Z" fill="#faf8f5"/>
+    <path d="M-8 -80 Q-80 -80 -120 -50 L-120 90 Q-80 68 -8 76 Z" fill="#fffefa"/>
+
+    <!-- Right pages -->
+    <path d="M8 -80 Q100 -90 140 -60 L140 100 Q100 70 8 80 Z" fill="url(#pageGrad)"/>
+    <path d="M8 -80 Q90 -85 130 -55 L130 95 Q90 70 8 78 Z" fill="#faf8f5"/>
+    <path d="M8 -80 Q80 -80 120 -50 L120 90 Q80 68 8 76 Z" fill="#fffefa"/>
+
+    <!-- Book spine -->
+    <path d="M-8 -80 L-8 80 L8 80 L8 -80 Z" fill="#d4436a"/>
+
+    <!-- Text lines on left page -->
+    <g fill="#c8c0b8" opacity="0.6">
+      <rect x="-100" y="-50" width="70" height="3" rx="1.5"/>
+      <rect x="-100" y="-38" width="60" height="3" rx="1.5"/>
+      <rect x="-100" y="-26" width="75" height="3" rx="1.5"/>
+      <rect x="-100" y="-14" width="55" height="3" rx="1.5"/>
+      <rect x="-100" y="2" width="68" height="3" rx="1.5"/>
+      <rect x="-100" y="14" width="50" height="3" rx="1.5"/>
+      <rect x="-100" y="26" width="72" height="3" rx="1.5"/>
+      <rect x="-100" y="38" width="58" height="3" rx="1.5"/>
+    </g>
+
+    <!-- Text lines on right page -->
+    <g fill="#c8c0b8" opacity="0.6">
+      <rect x="30" y="-50" width="70" height="3" rx="1.5"/>
+      <rect x="30" y="-38" width="65" height="3" rx="1.5"/>
+      <rect x="30" y="-26" width="72" height="3" rx="1.5"/>
+      <rect x="30" y="-14" width="48" height="3" rx="1.5"/>
+      <rect x="30" y="2" width="60" height="3" rx="1.5"/>
+      <rect x="30" y="14" width="55" height="3" rx="1.5"/>
+      <rect x="30" y="26" width="68" height="3" rx="1.5"/>
+      <rect x="30" y="38" width="52" height="3" rx="1.5"/>
+    </g>
+  </g>
+
+  <!-- Rose bloom -->
+  <g transform="translate(256, 145)" filter="url(#innerGlow)">
+    <!-- Outer petals -->
+    <ellipse cx="0" cy="0" rx="42" ry="28" fill="url(#roseGrad)" transform="rotate(0)" opacity="0.9"/>
+    <ellipse cx="0" cy="0" rx="42" ry="28" fill="url(#roseGrad)" transform="rotate(72)" opacity="0.9"/>
+    <ellipse cx="0" cy="0" rx="42" ry="28" fill="url(#roseGrad)" transform="rotate(144)" opacity="0.9"/>
+    <ellipse cx="0" cy="0" rx="42" ry="28" fill="url(#roseGrad)" transform="rotate(216)" opacity="0.9"/>
+    <ellipse cx="0" cy="0" rx="42" ry="28" fill="url(#roseGrad)" transform="rotate(288)" opacity="0.9"/>
+
+    <!-- Middle petals -->
+    <ellipse cx="0" cy="0" rx="30" ry="20" fill="#e07090" transform="rotate(36)"/>
+    <ellipse cx="0" cy="0" rx="30" ry="20" fill="#e07090" transform="rotate(108)"/>
+    <ellipse cx="0" cy="0" rx="30" ry="20" fill="#e07090" transform="rotate(180)"/>
+    <ellipse cx="0" cy="0" rx="30" ry="20" fill="#e07090" transform="rotate(252)"/>
+    <ellipse cx="0" cy="0" rx="30" ry="20" fill="#e07090" transform="rotate(324)"/>
+
+    <!-- Inner petals -->
+    <ellipse cx="0" cy="0" rx="18" ry="12" fill="#d4436a" transform="rotate(18)"/>
+    <ellipse cx="0" cy="0" rx="18" ry="12" fill="#d4436a" transform="rotate(90)"/>
+    <ellipse cx="0" cy="0" rx="18" ry="12" fill="#d4436a" transform="rotate(162)"/>
+    <ellipse cx="0" cy="0" rx="18" ry="12" fill="#d4436a" transform="rotate(234)"/>
+    <ellipse cx="0" cy="0" rx="18" ry="12" fill="#d4436a" transform="rotate(306)"/>
+
+    <!-- Center -->
+    <circle cx="0" cy="0" r="8" fill="#b8345a"/>
+    <circle cx="0" cy="0" r="4" fill="#9a2d4d"/>
+  </g>
+
+  <!-- Subtle shine -->
+  <ellipse cx="180" cy="120" rx="60" ry="40" fill="white" opacity="0.03" transform="rotate(-20 180 120)"/>
+</svg>
