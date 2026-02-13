@@ -2,6 +2,9 @@ node_modules/
 dist/
 out/
 coverage/
+pkg/
+src/
+*.pkg.tar.*
 
 *.log
 npm-debug.log*

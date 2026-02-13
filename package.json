@@ -11,12 +11,12 @@
   "author": "Cindy",
   "license": "MIT",
   "dependencies": {
-    "electron": "^39.2.7",
     "epub2": "^3.0.2",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^5.4.530"
   },
   "devDependencies": {
+    "electron": "^39.2.7",
     "electron-builder": "^25.1.8"
   },
   "build": {
