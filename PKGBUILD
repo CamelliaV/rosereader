@@ -1,7 +1,7 @@
 # Maintainer: Cindy <cindy@example.com>
 pkgname=rosereader
 pkgver=1.0.0
-pkgrel=4
+pkgrel=5
 pkgdesc="E-book reader with infinite scroll, supporting EPUB, PDF, and TXT"
 arch=('x86_64')
 url="https://github.com/CamelliaV/rosereader"
@@ -24,9 +24,13 @@ build() {
 
 package() {
     cd "$srcdir/.."
+    umask 022
 
     install -dm755 "$pkgdir/usr/lib/rosereader"
-    cp -r index.html main.js package.json package-lock.json node_modules build icon.svg "$pkgdir/usr/lib/rosereader/"
+    cp -r --no-preserve=mode index.html main.js package.json package-lock.json node_modules build icon.svg "$pkgdir/usr/lib/rosereader/"
+    find "$pkgdir/usr/lib/rosereader" -type d -exec chmod 755 {} +
+    find "$pkgdir/usr/lib/rosereader" -type f -exec chmod 644 {} +
+    chmod 644 "$pkgdir/usr/lib/rosereader/main.js" "$pkgdir/usr/lib/rosereader/index.html"
 
     install -Dm755 /dev/stdin "$pkgdir/usr/bin/rosereader" <<'EOF'
 #!/usr/bin/env bash
