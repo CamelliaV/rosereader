@@ -31,6 +31,7 @@ const libraryWatchers = new Map();
 const LIBRARY_WATCH_DEBOUNCE_MS = 500;
 const LIBRARY_WATCH_RESYNC_MS = 800;
 const FILE_FINGERPRINT_SAMPLE_BYTES = 64 * 1024;
+const LIBRARY_RESET_VERSION = 1;
 
 // Performance: keep GPU accel enabled and reduce background throttling.
 try {
@@ -85,6 +86,7 @@ const defaultAnalytics = {
 let appData = {
   books: {},
   libraries: [],
+  libraryBookMap: {},
   bookmarks: {},
   highlights: {},
   notes: {},
@@ -131,7 +133,7 @@ function loadData() {
       appData.settings = { ...defaultSettings, ...(saved.settings || {}) };
       appData.stats = { ...defaultStats, ...(saved.stats || {}) };
       appData.analytics = { ...defaultAnalytics, ...(saved.analytics || {}) };
-      migrateData();
+      if (migrateData()) saveData();
     } else if (fs.existsSync(dataBackupPath)) {
       console.log('Main data not found, restoring from backup');
       const saved = JSON.parse(fs.readFileSync(dataBackupPath, 'utf8'));
@@ -211,19 +213,566 @@ function generateId() {
 }
 
 function migrateData() {
+  let changed = false;
+
   migrateLegacyBookIds();
+  appData.settings = { ...defaultSettings, ...(appData.settings || {}) };
+
+  if (resetLibrariesToAllBooksIfNeeded()) changed = true;
+  ensureLibraryTypes();
+  ensureLibraryBookMap();
   ensureLibraryNodeIds();
-  ensureBookDefaults();
-  recoverMovedBookProgress();
+  if (ensureBookDefaults()) changed = true;
+  if (clearStaleBookLibraryOwnership()) changed = true;
+
+  if (appData.settings.selectedLibraryId !== 'all') changed = true;
+  appData.settings.selectedLibraryId = 'all';
+  const markedMissing = markBooksMissingForUnavailableLibraries(true);
+  const mergedCount = recoverMovedBookProgress();
+  const syncedCount = synchronizeDuplicateBookProgress();
+  const dedupedCount = mergeDuplicateBooks();
+  ensureLibraryBookMap();
+
+  return changed || markedMissing > 0 || mergedCount > 0 || syncedCount > 0 || dedupedCount > 0;
+}
+
+function resetLibrariesToAllBooksIfNeeded() {
+  const currentVersion = Number(appData.settings?.libraryResetVersion || 0);
+  if (currentVersion >= LIBRARY_RESET_VERSION) return false;
+
+  for (const libraryId of [...libraryWatchers.keys()]) {
+    stopLibraryWatcher(libraryId);
+  }
+
+  appData.libraries = [];
+  appData.libraryBookMap = {};
+
+  for (const book of Object.values(appData.books || {})) {
+    if (!book || !book.libraryId) continue;
+    delete book.libraryId;
+  }
+
+  appData.settings.selectedLibraryId = 'all';
+  if (appData.settings.sidebarMode === 'folders') appData.settings.sidebarMode = 'libraries';
+  appData.settings.libraryResetVersion = LIBRARY_RESET_VERSION;
+  return true;
+}
+
+function clearStaleBookLibraryOwnership() {
+  const libraryIds = new Set((appData.libraries || []).map(lib => String(lib?.id || '')).filter(Boolean));
+  let changed = false;
+
+  for (const book of Object.values(appData.books || {})) {
+    if (!book?.libraryId) continue;
+    if (libraryIds.has(String(book.libraryId))) continue;
+    delete book.libraryId;
+    changed = true;
+  }
+
+  return changed;
+}
+
+function isPhysicalLibrary(library) {
+  if (!library) return false;
+  if (library.type === 'physical') return true;
+  if (library.type === 'logical') return false;
+  return !!library.path;
+}
+
+function isLogicalLibrary(library) {
+  return !!library && !isPhysicalLibrary(library);
+}
+
+function collectBookIdsFromNode(node, outSet = new Set()) {
+  if (!node) return outSet;
+  for (const id of node.books || []) outSet.add(String(id || ''));
+  for (const child of node.children || []) collectBookIdsFromNode(child, outSet);
+  return outSet;
+}
+
+function ensureLibraryTypes() {
+  appData.libraries = Array.isArray(appData.libraries) ? appData.libraries : [];
+  for (const library of appData.libraries) {
+    if (!library) continue;
+    if (library.path) {
+      library.type = 'physical';
+      continue;
+    }
+    library.type = 'logical';
+  }
+}
+
+function ensureLibraryBookMap() {
+  if (!appData.libraryBookMap || typeof appData.libraryBookMap !== 'object' || Array.isArray(appData.libraryBookMap)) {
+    appData.libraryBookMap = {};
+  }
+
+  const map = appData.libraryBookMap;
+  const existingBookIds = new Set(Object.keys(appData.books || {}));
+  const libraryIds = new Set((appData.libraries || []).map(lib => String(lib?.id || '')).filter(Boolean));
+
+  for (const key of Object.keys(map)) {
+    if (!libraryIds.has(key)) delete map[key];
+  }
+
+  const sanitizeIds = (ids) => {
+    const out = [];
+    const seen = new Set();
+    for (const rawId of ids || []) {
+      const id = String(rawId || '');
+      if (!id || !existingBookIds.has(id) || seen.has(id)) continue;
+      seen.add(id);
+      out.push(id);
+    }
+    return out;
+  };
+
+  for (const [libraryId, ids] of Object.entries(map)) {
+    map[libraryId] = sanitizeIds(Array.isArray(ids) ? ids : []);
+  }
+
+  for (const library of appData.libraries || []) {
+    if (!library?.id) continue;
+    if (!isLogicalLibrary(library)) {
+      if (map[library.id]) delete map[library.id];
+      continue;
+    }
+
+    let ids = Array.isArray(map[library.id]) ? map[library.id] : null;
+    if ((!ids || ids.length === 0) && library.structure) {
+      ids = [...collectBookIdsFromNode(library.structure)];
+    }
+    const legacyOwned = Object.values(appData.books || {})
+      .filter(book => String(book?.libraryId || '') === String(library.id))
+      .map(book => String(book.id || ''))
+      .filter(Boolean);
+    if (legacyOwned.length > 0) {
+      ids = [...(ids || []), ...legacyOwned];
+    }
+    map[library.id] = sanitizeIds(ids || []);
+  }
+}
+
+function replaceBookIdInLogicalLibraries(sourceBookId, targetBookId = null) {
+  const sourceId = String(sourceBookId || '');
+  const targetId = targetBookId ? String(targetBookId) : '';
+  if (!sourceId) return false;
+
+  ensureLibraryBookMap();
+  let changed = false;
+
+  for (const library of appData.libraries || []) {
+    if (!isLogicalLibrary(library) || !library?.id) continue;
+
+    const current = Array.isArray(appData.libraryBookMap[library.id]) ? appData.libraryBookMap[library.id] : [];
+    if (current.length === 0) continue;
+
+    let touched = false;
+    const seen = new Set();
+    const next = [];
+
+    for (const rawId of current) {
+      let id = String(rawId || '');
+      if (!id) continue;
+      if (id === sourceId) {
+        touched = true;
+        id = targetId;
+      }
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      next.push(id);
+    }
+
+    if (touched || next.length !== current.length) {
+      appData.libraryBookMap[library.id] = next;
+      changed = true;
+    }
+  }
+
+  return changed;
 }
 
 function normalizeIdentityText(value) {
   return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
+function normalizeLooseIdentityText(value) {
+  let text = normalizeIdentityText(value);
+  if (!text) return '';
+  text = text.replace(/\[[^\]]*]|\([^)]*\)|\{[^}]*}/g, ' ');
+  text = text.replace(/[^\p{L}\p{N}]+/gu, ' ');
+  text = text.replace(/\s+/g, ' ').trim();
+  return text;
+}
+
 function normalizeBaseName(filePath) {
   if (!filePath) return '';
   return normalizeIdentityText(path.basename(filePath, path.extname(filePath)));
+}
+
+function normalizeBookPathKey(filePath) {
+  const raw = String(filePath || '').trim();
+  if (!raw) return '';
+  try {
+    const resolved = path.resolve(raw);
+    return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
+  } catch (e) {
+    return process.platform === 'win32' ? raw.toLowerCase() : raw;
+  }
+}
+
+function getBookDuplicateMergeKey(book) {
+  if (!book) return '';
+  const fingerprint = String(book.fileFingerprint || '').trim();
+  if (fingerprint) return `fp|${fingerprint}`;
+  const pathKey = normalizeBookPathKey(book.path);
+  if (pathKey) return `path|${pathKey}`;
+  return '';
+}
+
+function getBookExactMetaMergeKey(book) {
+  if (!book) return '';
+  const formatKey = normalizeIdentityText(book.format || '');
+  const titleKey = normalizeIdentityText(book.title);
+  const authorKey = normalizeIdentityText(book.author || 'unknown');
+  if (!formatKey || !titleKey || !authorKey) return '';
+  return `meta|${formatKey}|${titleKey}|${authorKey}`;
+}
+
+function getBookLooseMetaMergeKey(book) {
+  if (!book) return '';
+  const formatKey = normalizeIdentityText(book.format || '');
+  const titleKey = normalizeLooseIdentityText(book.title);
+  const authorRaw = normalizeLooseIdentityText(book.author || '');
+  const authorKey = authorRaw || 'unknown';
+  if (!formatKey || !titleKey) return '';
+  return `loose|${formatKey}|${titleKey}|${authorKey}`;
+}
+
+function getBookIdentityKey(book) {
+  if (!book) return '';
+
+  const fingerprint = String(book.fileFingerprint || '').trim();
+  if (fingerprint) return `fp|${fingerprint}`;
+
+  const formatKey = normalizeIdentityText(book.format || '');
+  const titleKey = normalizeIdentityText(book.title);
+  const authorKey = normalizeIdentityText(book.author || 'unknown');
+
+  if (titleKey && authorKey) return `meta|${formatKey}|${titleKey}|${authorKey}`;
+  return '';
+}
+
+function getBookRecencyStamp(book) {
+  if (!book) return 0;
+  return Math.max(
+    Number(book.lastRead || 0),
+    Number(book?.epubLocation?.updatedAt || 0)
+  );
+}
+
+function pickMostRecentBookEntry(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) return null;
+
+  let best = entries[0];
+  let bestStamp = getBookRecencyStamp(best.book);
+
+  for (let i = 1; i < entries.length; i++) {
+    const candidate = entries[i];
+    const stamp = getBookRecencyStamp(candidate.book);
+    if (stamp > bestStamp) {
+      best = candidate;
+      bestStamp = stamp;
+      continue;
+    }
+    if (stamp < bestStamp) continue;
+
+    const candidateProgress = Number(candidate?.book?.progress || 0);
+    const bestProgress = Number(best?.book?.progress || 0);
+    if (candidateProgress > bestProgress) {
+      best = candidate;
+      bestStamp = stamp;
+    }
+  }
+
+  return best;
+}
+
+function pickEarliestPositiveTimestamp(values) {
+  let earliest = 0;
+  for (const value of values) {
+    const n = Number(value || 0);
+    if (n <= 0) continue;
+    if (earliest <= 0 || n < earliest) earliest = n;
+  }
+  return earliest;
+}
+
+function isSameEpubLocation(left, right) {
+  if (!left && !right) return true;
+  if (!left || !right) return false;
+  return String(left.href || '') === String(right.href || '')
+    && Number(left.ratio || 0) === Number(right.ratio || 0)
+    && String(left.anchor || '') === String(right.anchor || '')
+    && Number(left.anchorDelta || 0) === Number(right.anchorDelta || 0)
+    && Number(left.updatedAt || 0) === Number(right.updatedAt || 0);
+}
+
+function synchronizeDuplicateBookProgressForIds(bookIds) {
+  const ids = [...new Set((bookIds || []).map(id => String(id || '')).filter(Boolean))];
+  if (ids.length < 2) return false;
+
+  const entries = ids
+    .map(id => ({ id, book: appData.books?.[id] }))
+    .filter(entry => !!entry.book);
+  if (entries.length < 2) return false;
+
+  const source = pickMostRecentBookEntry(entries);
+  if (!source?.book) return false;
+  const sourceBook = source.book;
+
+  const progress = Math.max(0, Math.min(1, Number(sourceBook.progress || 0)));
+  const progressChapter = Math.max(0, Number(sourceBook.progressChapter || 0));
+  const progressOffset = Math.max(0, Number(sourceBook.progressOffset || 0));
+  const lastRead = Math.max(...entries.map(entry => Number(entry.book?.lastRead || 0)));
+  const timeSpent = Math.max(...entries.map(entry => Number(entry.book?.timeSpent || 0)));
+  const firstCompletedAt = pickEarliestPositiveTimestamp(entries.map(entry => entry.book?.firstCompletedAt));
+  const completedAt = pickEarliestPositiveTimestamp(entries.map(entry => entry.book?.completedAt));
+
+  let location = null;
+  let locationStamp = -1;
+  for (const entry of entries) {
+    const loc = entry.book?.epubLocation;
+    if (!loc || typeof loc !== 'object') continue;
+    const stamp = Number(loc.updatedAt || 0);
+    if (!location || stamp > locationStamp) {
+      location = { ...loc };
+      locationStamp = stamp;
+    }
+  }
+
+  let changed = false;
+  for (const entry of entries) {
+    const book = entry.book;
+    if (!book) continue;
+
+    if (Number(book.progress || 0) !== progress) {
+      book.progress = progress;
+      changed = true;
+    }
+    if (Number(book.progressChapter || 0) !== progressChapter) {
+      book.progressChapter = progressChapter;
+      changed = true;
+    }
+    if (Number(book.progressOffset || 0) !== progressOffset) {
+      book.progressOffset = progressOffset;
+      changed = true;
+    }
+    if (lastRead > 0 && Number(book.lastRead || 0) !== lastRead) {
+      book.lastRead = lastRead;
+      changed = true;
+    }
+    if (timeSpent > 0 && Number(book.timeSpent || 0) !== timeSpent) {
+      book.timeSpent = timeSpent;
+      changed = true;
+    }
+    if (firstCompletedAt > 0 && Number(book.firstCompletedAt || 0) !== firstCompletedAt) {
+      book.firstCompletedAt = firstCompletedAt;
+      changed = true;
+    }
+    if (completedAt > 0 && Number(book.completedAt || 0) !== completedAt) {
+      book.completedAt = completedAt;
+      changed = true;
+    }
+    if (location && !isSameEpubLocation(book.epubLocation, location)) {
+      book.epubLocation = { ...location };
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
+function synchronizeDuplicateBookProgress(bookIds = null) {
+  const booksById = appData.books || {};
+  const idsByKey = new Map();
+
+  for (const [bookId, book] of Object.entries(booksById)) {
+    const key = getBookIdentityKey(book);
+    if (!key) continue;
+    if (!idsByKey.has(key)) idsByKey.set(key, []);
+    idsByKey.get(key).push(bookId);
+  }
+
+  const keysToSync = new Set();
+  if (Array.isArray(bookIds) && bookIds.length > 0) {
+    for (const bookId of bookIds) {
+      const key = getBookIdentityKey(booksById[bookId]);
+      if (key) keysToSync.add(key);
+    }
+  } else {
+    for (const key of idsByKey.keys()) keysToSync.add(key);
+  }
+
+  let changedGroups = 0;
+  for (const key of keysToSync) {
+    const ids = idsByKey.get(key) || [];
+    if (ids.length < 2) continue;
+    if (synchronizeDuplicateBookProgressForIds(ids)) changedGroups += 1;
+  }
+
+  if (changedGroups > 0) {
+    console.log(`Synchronized duplicate reading progress for ${changedGroups} book group(s)`);
+  }
+  return changedGroups;
+}
+
+function isExistingFile(filePath) {
+  if (!filePath) return false;
+  try {
+    return fs.statSync(filePath).isFile();
+  } catch (e) {
+    return false;
+  }
+}
+
+function escapeHtmlText(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function decodeUtf16Be(buffer) {
+  const bytes = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer || []);
+  const evenLength = bytes.length - (bytes.length % 2);
+  if (evenLength <= 0) return '';
+  const swapped = Buffer.allocUnsafe(evenLength);
+  for (let i = 0; i < evenLength; i += 2) {
+    swapped[i] = bytes[i + 1];
+    swapped[i + 1] = bytes[i];
+  }
+  return swapped.toString('utf16le');
+}
+
+function readTextFileBestEffort(filePath) {
+  const bytes = fs.readFileSync(filePath);
+  if (bytes.length === 0) return '';
+
+  if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
+    return bytes.slice(3).toString('utf8');
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) {
+    return bytes.slice(2).toString('utf16le');
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) {
+    return decodeUtf16Be(bytes.slice(2));
+  }
+
+  const sampleLen = Math.min(bytes.length, 4096);
+  let evenZero = 0;
+  let oddZero = 0;
+  for (let i = 0; i < sampleLen; i++) {
+    if (bytes[i] !== 0) continue;
+    if (i % 2 === 0) evenZero += 1;
+    else oddZero += 1;
+  }
+
+  const zeroThreshold = Math.max(24, Math.floor(sampleLen * 0.12));
+  if (oddZero >= zeroThreshold && oddZero > evenZero * 2) return bytes.toString('utf16le');
+  if (evenZero >= zeroThreshold && evenZero > oddZero * 2) return decodeUtf16Be(bytes);
+
+  return bytes.toString('utf8');
+}
+
+function normalizeTxtChapterTitle(line) {
+  let title = String(line || '').trim();
+  if (!title) return '';
+  title = title.replace(/^#{1,6}\s+/, '').trim();
+  title = title.replace(/\s+/g, ' ').trim();
+  if (title.length > 120) title = `${title.slice(0, 117).trimEnd()}...`;
+  return title;
+}
+
+function detectTxtChapterMarkers(lines) {
+  const markers = [];
+  const patterns = [
+    /^#{1,6}\s+\S+/,
+    /^(?:chapter|chap\.|section|part|book)\s+[0-9ivxlcdm]+(?:\b|[\s:.\-])/i,
+    /^第[0-9一二三四五六七八九十百千零〇两]+[章节回卷部篇](?:\s|$)/
+  ];
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = String(lines[i] || '').trim();
+    if (!trimmed || trimmed.length > 140) continue;
+
+    let matched = patterns.some(pattern => pattern.test(trimmed));
+    if (!matched) {
+      const nextBlank = String(lines[i + 1] || '').trim() === '';
+      const upperLike = /^[A-Z0-9][A-Z0-9 \-:'",.!?]{2,80}$/.test(trimmed);
+      if (upperLike && nextBlank) matched = true;
+    }
+    if (!matched) continue;
+
+    const title = normalizeTxtChapterTitle(trimmed);
+    if (!title) continue;
+    if (markers.length > 0 && (i - markers[markers.length - 1].lineIndex) <= 1) continue;
+    markers.push({ lineIndex: i, title });
+  }
+
+  return markers;
+}
+
+function buildTxtContentWithToc(text, fallbackTitle = 'Text') {
+  const normalizedText = String(text || '').replace(/\r\n?/g, '\n');
+  const lines = normalizedText.split('\n');
+  const markers = detectTxtChapterMarkers(lines);
+  const safeFallbackTitle = String(fallbackTitle || '').trim() || 'Text';
+
+  const buildSingle = (title) => ({
+    chapters: [`<pre style="white-space:pre-wrap">${escapeHtmlText(normalizedText)}</pre>`],
+    toc: [{ title: title || safeFallbackTitle, href: 'txt-chapter-1', chapterIndex: 0, level: 0 }],
+    chapterIds: ['txt-chapter-1'],
+    rawChapters: [normalizedText]
+  });
+
+  if (markers.length < 2) {
+    return buildSingle(markers[0]?.title || safeFallbackTitle);
+  }
+
+  const boundaries = markers.slice();
+  const hasPreface = boundaries[0].lineIndex > 0
+    && lines.slice(0, boundaries[0].lineIndex).some(line => String(line || '').trim());
+  if (hasPreface) boundaries.unshift({ lineIndex: 0, title: 'Introduction' });
+
+  const chapters = [];
+  const toc = [];
+  const chapterIds = [];
+  const rawChapters = [];
+
+  for (let i = 0; i < boundaries.length; i++) {
+    const start = boundaries[i].lineIndex;
+    const end = i + 1 < boundaries.length ? boundaries[i + 1].lineIndex : lines.length;
+    const chunk = lines.slice(start, end).join('\n').trim();
+    if (!chunk) continue;
+
+    const chapterIndex = chapters.length;
+    const chapterId = `txt-chapter-${chapterIndex + 1}`;
+    const title = boundaries[i].title || `Chapter ${chapterIndex + 1}`;
+
+    chapters.push(`<pre style="white-space:pre-wrap">${escapeHtmlText(chunk)}</pre>`);
+    toc.push({ title, href: chapterId, chapterIndex, level: 0 });
+    chapterIds.push(chapterId);
+    rawChapters.push(chunk);
+  }
+
+  if (!chapters.length) {
+    return buildSingle(markers[0]?.title || safeFallbackTitle);
+  }
+
+  return { chapters, toc, chapterIds, rawChapters };
 }
 
 function collectionCountForBook(bookId) {
@@ -275,9 +824,17 @@ function mergeBookCollection(targetBookId, sourceBookId, collectionKey) {
 }
 
 function mergeBookState(targetBook, sourceBook) {
-  targetBook.progress = Math.max(Number(targetBook.progress || 0), Number(sourceBook.progress || 0));
-  targetBook.progressChapter = Math.max(Number(targetBook.progressChapter || 0), Number(sourceBook.progressChapter || 0));
-  targetBook.progressOffset = Math.max(Number(targetBook.progressOffset || 0), Number(sourceBook.progressOffset || 0));
+  const sourceRecency = getBookRecencyStamp(sourceBook);
+  const targetRecency = getBookRecencyStamp(targetBook);
+  if (sourceRecency >= targetRecency) {
+    targetBook.progress = Math.max(0, Math.min(1, Number(sourceBook.progress || 0)));
+    targetBook.progressChapter = Math.max(0, Number(sourceBook.progressChapter || 0));
+    targetBook.progressOffset = Math.max(0, Number(sourceBook.progressOffset || 0));
+  } else {
+    targetBook.progress = Math.max(0, Math.min(1, Number(targetBook.progress || 0)));
+    targetBook.progressChapter = Math.max(0, Number(targetBook.progressChapter || 0));
+    targetBook.progressOffset = Math.max(0, Number(targetBook.progressOffset || 0));
+  }
   targetBook.timeSpent = Number(targetBook.timeSpent || 0) + Number(sourceBook.timeSpent || 0);
   targetBook.lastRead = Math.max(Number(targetBook.lastRead || 0), Number(sourceBook.lastRead || 0));
 
@@ -313,8 +870,315 @@ function mergeBookState(targetBook, sourceBook) {
     targetBook.pinnedAt = sourceBook.pinnedAt;
   }
 
+  const sourceFirstReadAt = Number(sourceBook.firstReadAt || 0);
+  const targetFirstReadAt = Number(targetBook.firstReadAt || 0);
+  if (sourceFirstReadAt > 0 && (targetFirstReadAt <= 0 || sourceFirstReadAt < targetFirstReadAt)) {
+    targetBook.firstReadAt = sourceFirstReadAt;
+  }
+
+  const sourceLastReadStartAt = Number(sourceBook.lastReadStartAt || 0);
+  const targetLastReadStartAt = Number(targetBook.lastReadStartAt || 0);
+  if (sourceLastReadStartAt > targetLastReadStartAt) {
+    targetBook.lastReadStartAt = sourceLastReadStartAt;
+  }
+
+  const sourceSessions = Math.max(0, Number(sourceBook.readSessionCount || 0));
+  const targetSessions = Math.max(0, Number(targetBook.readSessionCount || 0));
+  if (sourceSessions > 0 || targetSessions > 0) {
+    targetBook.readSessionCount = targetSessions + sourceSessions;
+  }
+
   delete targetBook.missingOnDisk;
   delete targetBook.missingAt;
+}
+
+function toIsoTimestamp(value) {
+  const n = Number(value || 0);
+  if (n <= 0) return null;
+  try {
+    return new Date(n).toISOString();
+  } catch (e) {
+    return null;
+  }
+}
+
+function markBookReadingStart(bookId, startedAt = Date.now()) {
+  const id = String(bookId || '');
+  if (!id) return null;
+
+  const book = appData.books?.[id];
+  if (!book) return null;
+
+  const now = Date.now();
+  const tsRaw = Number(startedAt);
+  const ts = Number.isFinite(tsRaw) && tsRaw > 0 ? tsRaw : now;
+
+  if (!book.firstReadAt || Number(book.firstReadAt) <= 0) {
+    book.firstReadAt = ts;
+  }
+  book.lastReadStartAt = ts;
+  book.readSessionCount = Math.max(0, Number(book.readSessionCount || 0)) + 1;
+
+  saveData();
+  return {
+    bookId: id,
+    firstReadAt: Number(book.firstReadAt || 0),
+    lastReadStartAt: Number(book.lastReadStartAt || 0),
+    readSessionCount: Number(book.readSessionCount || 0)
+  };
+}
+
+function getBookMetainfo(bookId) {
+  const id = String(bookId || '');
+  if (!id) return null;
+
+  const book = appData.books?.[id];
+  if (!book) return null;
+
+  ensureLibraryBookMap();
+
+  const physicalLibrary = appData.libraries.find(lib => String(lib?.id || '') === String(book.libraryId || ''));
+  const logicalLibraries = [];
+  for (const lib of appData.libraries || []) {
+    if (!isLogicalLibrary(lib) || !lib?.id) continue;
+    const ids = Array.isArray(appData.libraryBookMap?.[lib.id]) ? appData.libraryBookMap[lib.id] : [];
+    if (ids.some(candidateId => String(candidateId || '') === id)) {
+      logicalLibraries.push({ id: lib.id, name: lib.name || 'Library' });
+    }
+  }
+
+  const fileMeta = {
+    exists: false,
+    sizeBytes: null,
+    modifiedAt: null,
+    modifiedAtISO: null
+  };
+  if (book.path && isExistingFile(book.path)) {
+    try {
+      const stats = fs.statSync(book.path);
+      if (stats.isFile()) {
+        fileMeta.exists = true;
+        fileMeta.sizeBytes = Number(stats.size || 0);
+        fileMeta.modifiedAt = Number(stats.mtimeMs || 0);
+        fileMeta.modifiedAtISO = toIsoTimestamp(stats.mtimeMs);
+      }
+    } catch (e) {}
+  }
+
+  const bookmarkCount = Array.isArray(appData.bookmarks?.[id]) ? appData.bookmarks[id].length : 0;
+  const highlightCount = Array.isArray(appData.highlights?.[id]) ? appData.highlights[id].length : 0;
+  const noteCount = Array.isArray(appData.notes?.[id]) ? appData.notes[id].length : 0;
+
+  const generatedAt = Date.now();
+  return {
+    schemaVersion: 1,
+    generatedAt,
+    generatedAtISO: toIsoTimestamp(generatedAt),
+    book: { ...book },
+    computed: {
+      physicalLibrary: physicalLibrary
+        ? { id: physicalLibrary.id, name: physicalLibrary.name || 'Library', type: physicalLibrary.type || 'physical' }
+        : null,
+      logicalLibraries,
+      libraryCount: logicalLibraries.length + (physicalLibrary ? 1 : 0),
+      bookmarkCount,
+      highlightCount,
+      noteCount,
+      annotationCount: bookmarkCount + highlightCount + noteCount,
+      file: fileMeta,
+      firstReadAtISO: toIsoTimestamp(book.firstReadAt),
+      lastReadStartAtISO: toIsoTimestamp(book.lastReadStartAt),
+      lastReadISO: toIsoTimestamp(book.lastRead),
+      firstCompletedAtISO: toIsoTimestamp(book.firstCompletedAt),
+      completedAtISO: toIsoTimestamp(book.completedAt),
+      createdAtISO: toIsoTimestamp(book.createdAt),
+      readSessionCount: Number(book.readSessionCount || 0)
+    }
+  };
+}
+
+function replaceBookIdInNode(root, sourceBookId, targetBookId) {
+  if (!root) return false;
+  const sourceId = String(sourceBookId || '');
+  const targetId = String(targetBookId || '');
+  if (!sourceId || !targetId || sourceId === targetId) return false;
+
+  let changed = false;
+  const nextBooks = [];
+  const seen = new Set();
+
+  for (const rawId of root.books || []) {
+    let id = String(rawId || '');
+    if (!id) {
+      changed = true;
+      continue;
+    }
+    if (id === sourceId) {
+      id = targetId;
+      changed = true;
+    }
+    if (seen.has(id)) {
+      changed = true;
+      continue;
+    }
+    seen.add(id);
+    nextBooks.push(id);
+  }
+
+  root.books = nextBooks;
+  for (const child of root.children || []) {
+    if (replaceBookIdInNode(child, sourceId, targetId)) changed = true;
+  }
+
+  return changed;
+}
+
+function mergeDuplicateBooksForIds(bookIds) {
+  const ids = [...new Set((bookIds || []).map(id => String(id || '')).filter(Boolean))];
+  if (ids.length < 2) return 0;
+
+  const entries = ids
+    .map(id => ({ id, book: appData.books?.[id] }))
+    .filter(entry => !!entry.book);
+  if (entries.length < 2) return 0;
+
+  const primaryEntry = pickMostRecentBookEntry(entries) || entries[0];
+  if (!primaryEntry?.book) return 0;
+
+  const primaryId = String(primaryEntry.id);
+  const primaryBook = primaryEntry.book;
+  let mergedCount = 0;
+
+  for (const entry of entries) {
+    const duplicateId = String(entry.id || '');
+    if (!duplicateId || duplicateId === primaryId) continue;
+
+    const duplicateBook = appData.books?.[duplicateId];
+    if (!duplicateBook) continue;
+
+    mergeBookState(primaryBook, duplicateBook);
+    mergeBookCollection(primaryId, duplicateId, 'bookmarks');
+    mergeBookCollection(primaryId, duplicateId, 'highlights');
+    mergeBookCollection(primaryId, duplicateId, 'notes');
+
+    const primaryPathMissing = !primaryBook.path || !isExistingFile(primaryBook.path);
+    const duplicatePathExists = !!duplicateBook.path && isExistingFile(duplicateBook.path);
+    if (primaryPathMissing && duplicatePathExists) {
+      primaryBook.path = duplicateBook.path;
+      delete primaryBook.missingOnDisk;
+      delete primaryBook.missingAt;
+    }
+
+    if (!primaryBook.libraryId && duplicateBook.libraryId) primaryBook.libraryId = duplicateBook.libraryId;
+    if (!primaryBook.coverFile && duplicateBook.coverFile) primaryBook.coverFile = duplicateBook.coverFile;
+    if (!primaryBook.coverMime && duplicateBook.coverMime) primaryBook.coverMime = duplicateBook.coverMime;
+    if (!primaryBook.fileFingerprint && duplicateBook.fileFingerprint) primaryBook.fileFingerprint = duplicateBook.fileFingerprint;
+
+    for (const library of appData.libraries || []) {
+      replaceBookIdInNode(library.structure, duplicateId, primaryId);
+    }
+    replaceBookIdInLogicalLibraries(duplicateId, primaryId);
+
+    delete appData.books[duplicateId];
+    delete appData.bookmarks[duplicateId];
+    delete appData.highlights[duplicateId];
+    delete appData.notes[duplicateId];
+    mergedCount += 1;
+  }
+
+  return mergedCount;
+}
+
+function hasSharedBaseName(entries) {
+  const seen = new Set();
+  for (const entry of entries || []) {
+    const base = normalizeBaseName(entry?.book?.path);
+    if (!base) continue;
+    if (seen.has(base)) return true;
+    seen.add(base);
+  }
+  return false;
+}
+
+function canMergeLooseMetadataGroup(entries) {
+  if (!Array.isArray(entries) || entries.length < 2) return false;
+  if (hasSharedBaseName(entries)) return true;
+
+  const meaningfulCount = entries.filter(entry => hasMeaningfulReadingState(entry.id, entry.book)).length;
+  if (meaningfulCount > 0 && meaningfulCount < entries.length) return true;
+
+  const hasMissing = entries.some(entry => !!entry?.book?.missingOnDisk);
+  const hasActive = entries.some(entry => !entry?.book?.missingOnDisk);
+  if (hasMissing && hasActive) return true;
+
+  return false;
+}
+
+function mergeDuplicateBooksByKey(keyFn, guardFn = null) {
+  if (typeof keyFn !== 'function') return 0;
+  const idsByKey = new Map();
+
+  for (const [bookId, book] of Object.entries(appData.books || {})) {
+    const key = keyFn(book);
+    if (!key) continue;
+    if (!idsByKey.has(key)) idsByKey.set(key, []);
+    idsByKey.get(key).push(bookId);
+  }
+
+  let mergedCount = 0;
+  for (const ids of idsByKey.values()) {
+    if (ids.length < 2) continue;
+    if (typeof guardFn === 'function') {
+      const entries = ids
+        .map(id => ({ id, book: appData.books?.[id] }))
+        .filter(entry => !!entry.book);
+      if (entries.length < 2) continue;
+      if (!guardFn(entries)) continue;
+    }
+    mergedCount += mergeDuplicateBooksForIds(ids);
+  }
+
+  return mergedCount;
+}
+
+function mergeDuplicateBooks() {
+  for (const book of Object.values(appData.books || {})) {
+    if (!book) continue;
+    if (!book.fileFingerprint && book.path && isExistingFile(book.path)) {
+      const fingerprint = computeFileFingerprint(book.path);
+      if (fingerprint) book.fileFingerprint = fingerprint;
+    }
+  }
+
+  let mergedCount = 0;
+  mergedCount += mergeDuplicateBooksByKey(getBookDuplicateMergeKey);
+  mergedCount += mergeDuplicateBooksByKey(getBookExactMetaMergeKey);
+  mergedCount += mergeDuplicateBooksByKey(getBookLooseMetaMergeKey, canMergeLooseMetadataGroup);
+
+  if (mergedCount > 0) {
+    ensureLibraryBookMap();
+    console.log(`Merged duplicate book records: ${mergedCount}`);
+  }
+
+  return mergedCount;
+}
+
+function getMovedBookMatchScore(sourceBook, targetBook) {
+  const fingerprintMatch = sourceBook.fileFingerprint
+    && targetBook.fileFingerprint
+    && sourceBook.fileFingerprint === targetBook.fileFingerprint;
+  const sourceBase = normalizeBaseName(sourceBook.path);
+  const targetBase = normalizeBaseName(targetBook.path);
+  const sameBaseName = sourceBase && sourceBase === targetBase;
+  const sourceMissingAt = Number(sourceBook.missingAt || 0);
+  const targetCreatedAt = Number(targetBook.createdAt || 0);
+  const createdNearMissing = sourceMissingAt > 0
+    && targetCreatedAt > 0
+    && targetCreatedAt >= (sourceMissingAt - 5 * 60 * 1000)
+    && targetCreatedAt <= (sourceMissingAt + 45 * 24 * 60 * 60 * 1000);
+
+  if (!fingerprintMatch && !sameBaseName && !createdNearMissing) return 0;
+  return (fingerprintMatch ? 100 : 0) + (sameBaseName ? 10 : 0) + (createdNearMissing ? 1 : 0);
 }
 
 function recoverMovedBookProgress() {
@@ -323,58 +1187,63 @@ function recoverMovedBookProgress() {
 
   for (const [bookId, book] of Object.entries(booksById)) {
     if (!book?.format) continue;
+    const fileMissing = book.path ? !isExistingFile(book.path) : false;
+    if (fileMissing && !book.missingOnDisk) markBookMissing(bookId);
+
     const titleKey = normalizeIdentityText(book.title);
     const authorKey = normalizeIdentityText(book.author || 'unknown');
     if (!titleKey || !authorKey) continue;
     const groupKey = `meta|${book.format}|${titleKey}|${authorKey}`;
     if (!groups.has(groupKey)) groups.set(groupKey, { active: [], missing: [] });
     const bucket = groups.get(groupKey);
-    if (book.missingOnDisk) bucket.missing.push(bookId);
+    if (book.missingOnDisk || fileMissing) bucket.missing.push(bookId);
     else bucket.active.push(bookId);
   }
 
   let mergedCount = 0;
 
   for (const bucket of groups.values()) {
-    if (bucket.active.length !== 1 || bucket.missing.length !== 1) continue;
+    if (bucket.active.length === 0 || bucket.missing.length === 0) continue;
 
-    const targetBookId = bucket.active[0];
-    const sourceBookId = bucket.missing[0];
-    const targetBook = booksById[targetBookId];
-    const sourceBook = booksById[sourceBookId];
-    if (!targetBook || !sourceBook) continue;
+    for (const sourceBookId of bucket.missing) {
+      const sourceBook = booksById[sourceBookId];
+      if (!sourceBook) continue;
+      if (!hasMeaningfulReadingState(sourceBookId, sourceBook)) continue;
 
-    const sourceHasState = hasMeaningfulReadingState(sourceBookId, sourceBook);
-    const targetHasState = hasMeaningfulReadingState(targetBookId, targetBook);
-    if (!sourceHasState || targetHasState) continue;
+      let bestTargetBookId = null;
+      let bestScore = 0;
+      for (const targetBookId of bucket.active) {
+        const targetBook = booksById[targetBookId];
+        if (!targetBook) continue;
+        if (hasMeaningfulReadingState(targetBookId, targetBook)) continue;
+        const score = getMovedBookMatchScore(sourceBook, targetBook);
+        if (score > bestScore) {
+          bestScore = score;
+          bestTargetBookId = targetBookId;
+        }
+      }
 
-    const fingerprintMatch = sourceBook.fileFingerprint
-      && targetBook.fileFingerprint
-      && sourceBook.fileFingerprint === targetBook.fileFingerprint;
-    const sameBaseName = normalizeBaseName(sourceBook.path) && normalizeBaseName(sourceBook.path) === normalizeBaseName(targetBook.path);
-    const sourceMissingAt = Number(sourceBook.missingAt || 0);
-    const targetCreatedAt = Number(targetBook.createdAt || 0);
-    const createdNearMissing = sourceMissingAt > 0
-      && targetCreatedAt > 0
-      && targetCreatedAt >= (sourceMissingAt - 5 * 60 * 1000)
-      && targetCreatedAt <= (sourceMissingAt + 45 * 24 * 60 * 60 * 1000);
+      if (!bestTargetBookId) continue;
 
-    if (!fingerprintMatch && !sameBaseName && !createdNearMissing) continue;
+      const targetBook = booksById[bestTargetBookId];
+      if (!targetBook) continue;
 
-    mergeBookState(targetBook, sourceBook);
-    mergeBookCollection(targetBookId, sourceBookId, 'bookmarks');
-    mergeBookCollection(targetBookId, sourceBookId, 'highlights');
-    mergeBookCollection(targetBookId, sourceBookId, 'notes');
+      mergeBookState(targetBook, sourceBook);
+      mergeBookCollection(bestTargetBookId, sourceBookId, 'bookmarks');
+      mergeBookCollection(bestTargetBookId, sourceBookId, 'highlights');
+      mergeBookCollection(bestTargetBookId, sourceBookId, 'notes');
 
-    for (const lib of appData.libraries || []) {
-      removeBookFromNode(lib.structure, sourceBookId);
+      for (const lib of appData.libraries || []) {
+        removeBookFromNode(lib.structure, sourceBookId);
+      }
+      replaceBookIdInLogicalLibraries(sourceBookId, bestTargetBookId);
+
+      delete booksById[sourceBookId];
+      delete appData.bookmarks[sourceBookId];
+      delete appData.highlights[sourceBookId];
+      delete appData.notes[sourceBookId];
+      mergedCount += 1;
     }
-
-    delete booksById[sourceBookId];
-    delete appData.bookmarks[sourceBookId];
-    delete appData.highlights[sourceBookId];
-    delete appData.notes[sourceBookId];
-    mergedCount += 1;
   }
 
   if (mergedCount > 0) {
@@ -421,10 +1290,19 @@ function migrateLegacyBookIds() {
     return out;
   };
 
+  const remapLibraryBookMap = (map) => {
+    const out = {};
+    for (const [libraryId, ids] of Object.entries(map || {})) {
+      out[libraryId] = (Array.isArray(ids) ? ids : []).map(id => idMap.get(id) || id);
+    }
+    return out;
+  };
+
   appData.books = newBooks;
   appData.bookmarks = remapKeyedCollection(appData.bookmarks);
   appData.highlights = remapKeyedCollection(appData.highlights);
   appData.notes = remapKeyedCollection(appData.notes);
+  appData.libraryBookMap = remapLibraryBookMap(appData.libraryBookMap);
 }
 
 function ensureLibraryNodeIds() {
@@ -448,10 +1326,47 @@ function ensureLibraryNodeIds() {
 }
 
 function ensureBookDefaults() {
+  let changed = false;
   for (const book of Object.values(appData.books || {})) {
     if (!book) continue;
-    if (!book.createdAt) book.createdAt = Date.now();
+
+    if (!book.createdAt) {
+      book.createdAt = Date.now();
+      changed = true;
+    }
+
+    const lastRead = Number(book.lastRead || 0);
+    const firstReadAt = Number(book.firstReadAt || 0);
+    if (firstReadAt <= 0 && lastRead > 0) {
+      book.firstReadAt = lastRead;
+      changed = true;
+    }
+
+    const normalizedFirstReadAt = Number(book.firstReadAt || 0);
+    const lastReadStartAt = Number(book.lastReadStartAt || 0);
+    if (lastReadStartAt <= 0) {
+      const backfilledStart = lastRead > 0 ? lastRead : normalizedFirstReadAt;
+      if (backfilledStart > 0) {
+        book.lastReadStartAt = backfilledStart;
+        changed = true;
+      }
+    }
+
+    const sessionCount = Number(book.readSessionCount || 0);
+    if (!(sessionCount > 0)) {
+      const hasReadingSignal = lastRead > 0
+        || Number(book.progress || 0) > 0.01
+        || Number(book.timeSpent || 0) > 0
+        || Number(book.firstCompletedAt || 0) > 0
+        || Number(book.completedAt || 0) > 0
+        || Number(book?.epubLocation?.updatedAt || 0) > 0;
+      if (hasReadingSignal) {
+        book.readSessionCount = 1;
+        changed = true;
+      }
+    }
   }
+  return changed;
 }
 
 function detectFormat(filePath) {
@@ -542,7 +1457,10 @@ async function ensureBooksForFiles(files, libraryId) {
 
   for (const [bookId, book] of Object.entries(appData.books || {})) {
     if (book?.path) existingByPath.set(book.path, bookId);
-    if (!book?.missingOnDisk || !book?.fileFingerprint) continue;
+    const fileMissing = book?.path ? !isExistingFile(book.path) : false;
+    if (fileMissing && !book?.missingOnDisk) markBookMissing(bookId);
+    const treatAsMissing = !!book?.missingOnDisk || fileMissing;
+    if (!treatAsMissing || !book?.fileFingerprint) continue;
     if (!missingByFingerprint.has(book.fileFingerprint)) missingByFingerprint.set(book.fileFingerprint, []);
     missingByFingerprint.get(book.fileFingerprint).push(bookId);
   }
@@ -680,9 +1598,11 @@ function buildDirStructure(dirPath, libraryId, libraryName, pathToBookId) {
 
 async function createLibrary(name, dirPath = null) {
   const id = generateId();
+  const physical = !!dirPath;
+  if (physical) markBooksMissingForUnavailableLibraries(true);
 
   let structure;
-  if (dirPath) {
+  if (physical) {
     const files = listBookFiles(dirPath);
     const pathToBookId = await ensureBooksForFiles(files, id);
     structure = buildDirStructure(dirPath, id, name || path.basename(dirPath), pathToBookId);
@@ -700,20 +1620,57 @@ async function createLibrary(name, dirPath = null) {
   const library = {
     id,
     name: name || 'Library',
-    path: dirPath,
+    type: physical ? 'physical' : 'logical',
+    path: physical ? dirPath : null,
     structure,
     createdAt: Date.now()
   };
 
   appData.libraries.push(library);
+  ensureLibraryBookMap();
+  if (isLogicalLibrary(library) && !Array.isArray(appData.libraryBookMap[library.id])) {
+    appData.libraryBookMap[library.id] = [];
+  }
   recoverMovedBookProgress();
+  synchronizeDuplicateBookProgress();
   saveData();
-  startLibraryWatcher(library);
+  if (isPhysicalLibrary(library)) startLibraryWatcher(library);
   return library;
 }
 
 async function createEmptyLibrary(name) {
   return createLibrary(name, null);
+}
+
+function addBookToLogicalLibrary(libraryId, bookId) {
+  const library = appData.libraries.find(l => l.id === libraryId);
+  if (!library) throw new Error('Library not found');
+  if (!isLogicalLibrary(library)) throw new Error('Can only add books to logical libraries');
+  const book = appData.books[bookId];
+  if (!book) throw new Error('Book not found');
+
+  ensureLibraryBookMap();
+  const list = Array.isArray(appData.libraryBookMap[libraryId]) ? appData.libraryBookMap[libraryId] : [];
+  const id = String(bookId);
+  if (!list.includes(id)) list.push(id);
+  appData.libraryBookMap[libraryId] = list;
+  saveData();
+  return { success: true, libraryId, count: list.length };
+}
+
+function removeBookFromLogicalLibrary(libraryId, bookId) {
+  const library = appData.libraries.find(l => l.id === libraryId);
+  if (!library) throw new Error('Library not found');
+  if (!isLogicalLibrary(library)) throw new Error('Can only remove books from logical libraries');
+
+  ensureLibraryBookMap();
+  const list = Array.isArray(appData.libraryBookMap[libraryId]) ? appData.libraryBookMap[libraryId] : [];
+  appData.libraryBookMap[libraryId] = list.filter(id => String(id) !== String(bookId));
+  if (appData.books?.[bookId] && String(appData.books[bookId].libraryId || '') === String(libraryId)) {
+    delete appData.books[bookId].libraryId;
+  }
+  saveData();
+  return { success: true, libraryId, count: appData.libraryBookMap[libraryId].length };
 }
 
 function deleteLibrary(libraryId, deleteMode = 'keep') {
@@ -722,17 +1679,19 @@ function deleteLibrary(libraryId, deleteMode = 'keep') {
 
   const library = appData.libraries.find(l => l.id === libraryId);
   if (!library) return;
-
   stopLibraryWatcher(libraryId);
 
-  const getBookIds = (node) => {
-    let ids = [...node.books];
-    node.children.forEach(c => ids = ids.concat(getBookIds(c)));
-    return ids;
-  };
-  const bookIds = new Set(getBookIds(library.structure));
+  if (isLogicalLibrary(library)) {
+    ensureLibraryBookMap();
+    delete appData.libraryBookMap[libraryId];
+    appData.libraries = appData.libraries.filter(l => l.id !== libraryId);
+    saveData();
+    return;
+  }
+
+  const bookIds = collectBookIdsFromNode(library.structure);
   for (const b of Object.values(appData.books || {})) {
-    if (b?.libraryId === libraryId) bookIds.add(b.id);
+    if (b?.libraryId === libraryId) bookIds.add(String(b.id));
   }
 
   bookIds.forEach((bookId) => {
@@ -741,6 +1700,7 @@ function deleteLibrary(libraryId, deleteMode = 'keep') {
       if (deleteMode === 'books' && fs.existsSync(book.path)) {
         try { fs.unlinkSync(book.path); } catch (e) {}
       }
+      replaceBookIdInLogicalLibraries(bookId, null);
       delete appData.books[bookId];
     }
     delete appData.bookmarks[bookId];
@@ -753,6 +1713,7 @@ function deleteLibrary(libraryId, deleteMode = 'keep') {
   }
 
   appData.libraries = appData.libraries.filter(l => l.id !== libraryId);
+  if (appData.libraryBookMap?.[libraryId]) delete appData.libraryBookMap[libraryId];
   saveData();
 }
 
@@ -766,6 +1727,7 @@ function deleteBook(bookId, deleteFile = false) {
 
   appData.libraries.forEach(lib => {
     const removeFromNode = (node) => {
+      if (!node) return;
       node.books = node.books.filter(id => id !== bookId);
       node.children.forEach(removeFromNode);
     };
@@ -776,19 +1738,41 @@ function deleteBook(bookId, deleteFile = false) {
   delete appData.bookmarks[bookId];
   delete appData.highlights[bookId];
   delete appData.notes[bookId];
+  replaceBookIdInLogicalLibraries(bookId, null);
   saveData();
 }
 
 function markBookMissing(bookId) {
   const book = appData.books[bookId];
   if (!book) return;
+  if (book.missingOnDisk) return;
   book.missingOnDisk = true;
   book.missingAt = Date.now();
 }
 
+function markBooksMissingForUnavailableLibraries(removeFromStructure = false, onlyLibraryId = null) {
+  let changed = 0;
+
+  for (const library of appData.libraries || []) {
+    if (!library?.id || !isPhysicalLibrary(library) || !library.path) continue;
+    if (onlyLibraryId && library.id !== onlyLibraryId) continue;
+    if (isExistingDirectory(library.path)) continue;
+
+    for (const [bookId, book] of Object.entries(appData.books || {})) {
+      if (!book || book.libraryId !== library.id) continue;
+      if (removeFromStructure && library.structure) removeBookFromNode(library.structure, bookId);
+      const wasMissing = !!book.missingOnDisk;
+      markBookMissing(bookId);
+      if (!wasMissing && appData.books[bookId]?.missingOnDisk) changed += 1;
+    }
+  }
+
+  return changed;
+}
+
 async function rescanLibrary(libraryId, patchOnly = false) {
   const library = appData.libraries.find(l => l.id === libraryId);
-  if (!library || !library.path) return;
+  if (!library || !isPhysicalLibrary(library) || !library.path) return;
 
   const files = listBookFiles(library.path);
   const fileSet = new Set(files);
@@ -869,13 +1853,16 @@ async function rescanLibrary(libraryId, patchOnly = false) {
     library.structure = buildDirStructure(library.path, libraryId, library.name, pathToBookId);
   }
   recoverMovedBookProgress();
+  synchronizeDuplicateBookProgress();
   saveData();
 }
 
 async function autoRefreshLibrariesOnLaunch() {
   const libraries = appData.libraries || [];
+  let hadChanges = markBooksMissingForUnavailableLibraries(true) > 0;
+
   for (const lib of libraries) {
-    if (!lib?.path) continue;
+    if (!lib?.path || !isPhysicalLibrary(lib)) continue;
     try {
       const stats = fs.statSync(lib.path);
       if (!stats.isDirectory()) continue;
@@ -885,11 +1872,13 @@ async function autoRefreshLibrariesOnLaunch() {
 
     try {
       await rescanLibrary(lib.id, true);
+      hadChanges = true;
     } catch (e) {
       console.warn('Auto refresh failed for library', lib.name || lib.id, e?.message || e);
     }
   }
 
+  if (hadChanges) saveData();
   notifyLibrariesAutoRefreshed({ source: 'launch', silent: false });
 }
 
@@ -977,7 +1966,8 @@ function syncLibraryWatcherDirectories(libraryId) {
   if (!state) return;
 
   const library = appData.libraries.find(l => l.id === libraryId);
-  if (!library?.path || !isExistingDirectory(library.path)) {
+  if (!isPhysicalLibrary(library) || !library?.path || !isExistingDirectory(library.path)) {
+    if (markBooksMissingForUnavailableLibraries(true, libraryId) > 0) saveData();
     stopLibraryWatcher(libraryId);
     return;
   }
@@ -1051,6 +2041,7 @@ function startLibraryWatcher(library) {
 
   stopLibraryWatcher(library.id);
 
+  if (!isPhysicalLibrary(library)) return;
   if (!library.path || !isExistingDirectory(library.path)) return;
 
   libraryWatchers.set(library.id, {
@@ -1113,6 +2104,7 @@ function uniquePath(destPath) {
 function createFolder(libraryId, parentNodeId, folderName, createOnDisk = true) {
   const library = appData.libraries.find(l => l.id === libraryId);
   if (!library) throw new Error('Library not found');
+  if (!isPhysicalLibrary(library)) throw new Error('Folders are only available for physical libraries');
   const parent = findNodeById(library.structure, parentNodeId);
   if (!parent) throw new Error('Target folder not found');
 
@@ -1146,6 +2138,7 @@ function createFolder(libraryId, parentNodeId, folderName, createOnDisk = true) 
 function moveBookToFolder(libraryId, bookId, targetNodeId, moveFile = false) {
   const library = appData.libraries.find(l => l.id === libraryId);
   if (!library) throw new Error('Library not found');
+  if (!isPhysicalLibrary(library)) throw new Error('Move is only available in physical libraries');
   const book = appData.books[bookId];
   if (!book) throw new Error('Book not found');
   if (book.libraryId !== libraryId) throw new Error('Book is not in this library');
@@ -1672,8 +2665,9 @@ async function readBookContent(id) {
       try { await parser.destroy(); } catch (e) {}
     }
   } else if (book.format === 'txt') {
-    const text = fs.readFileSync(book.path, 'utf8');
-    return { chapters: [`<pre style="white-space:pre-wrap">${text}</pre>`], toc: [], chapterIds: [], rawChapters: [text] };
+    const text = readTextFileBestEffort(book.path);
+    const fallbackTitle = book.title || path.basename(book.path || '', path.extname(book.path || ''));
+    return buildTxtContentWithToc(text, fallbackTitle);
   }
   return { chapters: [], toc: [], chapterIds: [], rawChapters: [] };
 }
@@ -1970,10 +2964,19 @@ ipcMain.handle('create-folder', (_, libraryId, parentNodeId, folderName, createO
 ipcMain.handle('move-book', (_, libraryId, bookId, targetNodeId, moveFile) =>
   moveBookToFolder(libraryId, bookId, targetNodeId, moveFile)
 );
+ipcMain.handle('add-book-to-library', (_, libraryId, bookId) =>
+  addBookToLogicalLibrary(libraryId, bookId)
+);
+ipcMain.handle('remove-book-from-library', (_, libraryId, bookId) =>
+  removeBookFromLogicalLibrary(libraryId, bookId)
+);
 ipcMain.handle('merge-moved-book-state', () => {
+  const markedMissing = markBooksMissingForUnavailableLibraries(true);
   const mergedCount = recoverMovedBookProgress();
-  if (mergedCount > 0) saveData();
-  return { mergedCount };
+  const syncedCount = synchronizeDuplicateBookProgress();
+  const dedupedCount = mergeDuplicateBooks();
+  if (markedMissing > 0 || mergedCount > 0 || syncedCount > 0 || dedupedCount > 0) saveData();
+  return { mergedCount, dedupedCount };
 });
 ipcMain.handle('list-system-fonts', async () => listSystemFonts());
 ipcMain.handle('get-system-locale', () => ({
@@ -2003,6 +3006,10 @@ ipcMain.handle('delete-book', (_, id, deleteFile) => deleteBook(id, deleteFile))
 ipcMain.handle('search-books', (_, query) => searchBooks(query));
 ipcMain.handle('get-settings', () => appData.settings);
 ipcMain.handle('update-settings', (_, settings) => { appData.settings = settings; saveData(); });
+ipcMain.handle('mark-book-reading-start', (_, id, startedAt = Date.now()) =>
+  markBookReadingStart(id, startedAt)
+);
+ipcMain.handle('get-book-metainfo', (_, id) => getBookMetainfo(id));
 ipcMain.handle('update-progress', (_, id, progress, timeSpent = 0, progressChapter = 0, progressOffset = 0, epubLocation = null) => {
   if (appData.books[id]) {
     const now = Date.now();
@@ -2030,6 +3037,15 @@ ipcMain.handle('update-progress', (_, id, progress, timeSpent = 0, progressChapt
       }
     }
 
+    const hasReadingSignal = Number(progress || 0) > 0
+      || Number(timeSpent || 0) > 0
+      || Number(progressChapter || 0) > 0
+      || Number(progressOffset || 0) > 0
+      || (epubLocation && typeof epubLocation === 'object');
+    if (hasReadingSignal && (!appData.books[id].firstReadAt || Number(appData.books[id].firstReadAt) <= 0)) {
+      appData.books[id].firstReadAt = now;
+    }
+
     appData.books[id].lastRead = now;
     if (progress >= 0.98) {
       if (!appData.books[id].firstCompletedAt) {
@@ -2055,6 +3071,7 @@ ipcMain.handle('update-progress', (_, id, progress, timeSpent = 0, progressChapt
         appData.analytics.updatedAt = Date.now();
       } catch (e) {}
     }
+    synchronizeDuplicateBookProgress([id]);
     saveData();
   }
 });
@@ -2073,6 +3090,7 @@ ipcMain.handle('import-directory', async (_, dirPath) => createLibrary(path.base
 ipcMain.handle('get-library', () => appData.libraries.map(l => l.structure));
 ipcMain.handle('get-state', () => ({
   libraries: appData.libraries,
+  libraryBookMap: appData.libraryBookMap || {},
   books: Object.values(appData.books),
   settings: appData.settings,
   stats: appData.stats,

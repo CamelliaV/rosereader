@@ -1604,26 +1604,26 @@
 	        <div class="pop-search-row">
 	          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
 	          <input type="text" id="library-search-input" placeholder="Search title, author, or file…" autocomplete="off" spellcheck="false" aria-label="Search books">
-	          <button type="button" class="pop-search-clear" id="library-search-clear" title="Clear" aria-label="Clear search">
-	            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-	          </button>
-	        </div>
-	        <div class="pop-filters" id="pop-filters">
-	          <button type="button" class="filter-chip" data-filter="format" data-value="epub">EPUB</button>
-	          <button type="button" class="filter-chip" data-filter="format" data-value="pdf">PDF</button>
-	          <button type="button" class="filter-chip" data-filter="format" data-value="txt">TXT</button>
-	          <span class="filter-sep"></span>
-	          <button type="button" class="filter-chip" data-filter="status" data-value="unread">Unread</button>
-	          <button type="button" class="filter-chip" data-filter="status" data-value="reading">Reading</button>
-	          <button type="button" class="filter-chip" data-filter="status" data-value="finished">Finished</button>
-	        </div>
-	        <div class="pop-list" id="library-search-list"></div>
-	        <div class="pop-hint">
-	          <span><kbd>↑↓</kbd> navigate</span>
-	          <span><kbd>↵</kbd> open</span>
-	          <span><kbd>esc</kbd> close</span>
-	        </div>
-	      </div>
+		          <button type="button" class="pop-search-clear" id="library-search-clear" title="Clear" aria-label="Clear search">
+		            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+		          </button>
+		        </div>
+		        <div class="pop-filters" id="pop-filters">
+		          <button type="button" class="filter-chip" data-filter="format" data-value="epub">EPUB</button>
+		          <button type="button" class="filter-chip" data-filter="format" data-value="pdf">PDF</button>
+		          <button type="button" class="filter-chip" data-filter="format" data-value="txt">TXT</button>
+		          <span class="filter-sep"></span>
+		          <button type="button" id="chip-status-unread" class="filter-chip" data-filter="status" data-value="unread">Unread</button>
+		          <button type="button" id="chip-status-reading" class="filter-chip" data-filter="status" data-value="reading">Reading</button>
+		          <button type="button" id="chip-status-finished" class="filter-chip" data-filter="status" data-value="finished">Finished</button>
+		        </div>
+		        <div class="pop-list" id="library-search-list"></div>
+		        <div class="pop-hint">
+		          <span id="search-hint-navigate"><kbd>↑↓</kbd> navigate</span>
+		          <span id="search-hint-open"><kbd>↵</kbd> open</span>
+		          <span id="search-hint-close"><kbd>esc</kbd> close</span>
+		        </div>
+		      </div>
 	      <!-- Library View -->
 	      <div id="library-view">
 	      <header>
@@ -1851,17 +1851,17 @@
 	        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h16"/></svg>
 	      </button>
 	      <div class="reader-wrapper">
-        <div class="toc-sidebar" id="toc-sidebar">
-          <h3>Table of Contents</h3>
-          <div id="toc-list"></div>
-        </div>
-        <div class="toc-sidebar hidden" id="bookmarks-sidebar">
-          <div style="padding:12px 16px 6px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <h3 style="padding:0;border:0;margin:0;flex:1;">Bookmarks & Highlights</h3>
-              <input id="annotation-search" type="text" placeholder="Search annotations" style="width: 52%; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--hairline); background: var(--glass-strong);" oninput="onAnnotationSearch(this.value, true)" autocomplete="off">
-            </div>
-          </div>
+	        <div class="toc-sidebar" id="toc-sidebar">
+	          <h3 id="toc-title">Table of Contents</h3>
+	          <div id="toc-list"></div>
+	        </div>
+	        <div class="toc-sidebar hidden" id="bookmarks-sidebar">
+	          <div style="padding:12px 16px 6px;">
+	            <div style="display:flex;align-items:center;gap:8px;">
+	              <h3 id="bookmarks-title" style="padding:0;border:0;margin:0;flex:1;">Bookmarks & Highlights</h3>
+	              <input id="annotation-search" type="text" placeholder="Search annotations" style="width: 52%; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--hairline); background: var(--glass-strong);" oninput="onAnnotationSearch(this.value, true)" autocomplete="off">
+	            </div>
+	          </div>
           <div id="bookmarks-list"></div>
         </div>
         <div class="reader-content" id="reader-content"></div>
@@ -1872,74 +1872,75 @@
     </div>
 	  </div>
 
-	  <!-- Settings Modal -->
+  <!-- Settings Modal -->
 		  <div id="settings-modal" class="modal hidden">
 		    <div class="modal-content">
 	      <h2 id="settings-title">Reader Settings</h2>
       <div class="setting-row">
-        <label>Font</label>
+        <label id="label-font">Font</label>
         <select id="font-mode" onchange="updateFontMode(this.value)">
-          <option value="book">Use book fonts (EPUB)</option>
-          <option value="system">System font</option>
-          <option value="custom">Choose a font…</option>
+          <option value="book" id="opt-font-book">Use book fonts (EPUB)</option>
+          <option value="system" id="opt-font-system">System font</option>
+          <option value="custom" id="opt-font-custom">Choose a font…</option>
         </select>
         <div id="font-custom" class="hidden" style="margin-top:10px;">
 	      <input type="text" id="font-family-input" list="system-fonts" placeholder="Type to search fonts…" style="width:100%;padding:10px 12px;" oninput="updateCustomFont(this.value)">
           <datalist id="system-fonts"></datalist>
-          <button class="btn-secondary" style="margin-top:10px;width:100%;padding:10px;border-radius:var(--radius-sm);" onclick="reloadSystemFonts()">Reload System Fonts</button>
+          <button id="btn-reload-fonts" class="btn-secondary" style="margin-top:10px;width:100%;padding:10px;border-radius:var(--radius-sm);" onclick="reloadSystemFonts()">Reload System Fonts</button>
         </div>
       </div>
       <div class="setting-row">
-        <label>Font Size: <span id="font-size-val">18</span>px</label>
+        <label><span id="label-font-size-text">Font Size</span>: <span id="font-size-val">18</span>px</label>
         <input type="range" id="font-size" min="12" max="32" value="18" oninput="updateSetting('fontSize', +this.value)">
       </div>
       <div class="setting-row">
-        <label>Line Height: <span id="line-height-val">1.8</span></label>
+        <label><span id="label-line-height-text">Line Height</span>: <span id="line-height-val">1.8</span></label>
         <input type="range" id="line-height" min="1" max="3" step="0.1" value="1.8" oninput="updateSetting('lineHeight', +this.value)">
       </div>
       <div class="setting-row">
-        <label>Margin: <span id="margin-val">40</span>px</label>
+        <label><span id="label-margin-text">Margin</span>: <span id="margin-val">40</span>px</label>
         <input type="range" id="margin" min="0" max="100" value="40" oninput="updateSetting('margin', +this.value)">
       </div>
       <div class="setting-row">
-        <label>Theme</label>
+        <label id="label-theme">Theme</label>
         <div class="theme-buttons">
-          <button data-theme="light" onclick="setTheme('light','#ffffff','#1a1a1a')">Light</button>
-          <button data-theme="sepia" onclick="setTheme('sepia','#f4ecd8','#5c4b37')">Sepia</button>
-          <button data-theme="dark" onclick="setTheme('dark','#1a1a1a','#e0e0e0')">Dark</button>
-          <button data-theme="midnight" onclick="setTheme('midnight','#0d1117','#c9d1d9')">Midnight</button>
+          <button id="btn-theme-light" data-theme="light" onclick="setTheme('light','#ffffff','#1a1a1a')">Light</button>
+          <button id="btn-theme-sepia" data-theme="sepia" onclick="setTheme('sepia','#f4ecd8','#5c4b37')">Sepia</button>
+          <button id="btn-theme-dark" data-theme="dark" onclick="setTheme('dark','#1a1a1a','#e0e0e0')">Dark</button>
+          <button id="btn-theme-midnight" data-theme="midnight" onclick="setTheme('midnight','#0d1117','#c9d1d9')">Midnight</button>
         </div>
       </div>
 		      <div class="setting-row">
 		        <label id="label-app-theme">App Theme</label>
 		        <select id="app-theme" onchange="updateSetting('appTheme', this.value)">
-		          <option value="silk">Silk</option>
-		          <option value="light">Light</option>
-		          <option value="dark">Dark</option>
-		          <option value="rose">Rose</option>
+		          <option value="silk" id="opt-app-theme-silk">Silk</option>
+		          <option value="light" id="opt-app-theme-light">Light</option>
+		          <option value="dark" id="opt-app-theme-dark">Dark</option>
+		          <option value="rose" id="opt-app-theme-rose">Rose</option>
 		        </select>
 		      </div>
 		      <div class="setting-row">
 		        <label id="label-color-variant">Color Variant</label>
 		        <select id="app-accent" onchange="updateSetting('appAccent', this.value)">
-		          <option value="rose-gold">Rose Gold</option>
-		          <option value="saffron">Saffron</option>
-		          <option value="copper">Copper</option>
-		          <option value="fig">Fig</option>
-		          <option value="moss">Moss</option>
-		        </select>
-		      </div>
-		      <div class="setting-row">
-		        <label id="label-language">Language</label>
-		        <select id="locale-select" onchange="updateSetting('locale', this.value)">
-		          <option value="system">System</option>
-		          <option value="en">English</option>
-		          <option value="zh-CN">简体中文</option>
+		          <option value="rose-gold" id="opt-app-accent-rose-gold">Rose Gold</option>
+		          <option value="saffron" id="opt-app-accent-saffron">Saffron</option>
+		          <option value="copper" id="opt-app-accent-copper">Copper</option>
+		          <option value="fig" id="opt-app-accent-fig">Fig</option>
+		          <option value="moss" id="opt-app-accent-moss">Moss</option>
 		        </select>
 		      </div>
 	      <div class="setting-row">
+	        <label id="label-language">Language</label>
+	        <select id="locale-select" onchange="updateSetting('locale', this.value)">
+	          <option value="system" id="opt-locale-system">System</option>
+	          <option value="en" id="opt-locale-en">English</option>
+	          <option value="zh-CN" id="opt-locale-zh-cn">简体中文</option>
+	        </select>
+	        <div id="locale-info" style="margin-top:8px;font-size:0.82rem;color:var(--text-secondary);"></div>
+	      </div>
+	      <div class="setting-row">
 	        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-	          <span>Show cover header in reader</span>
+	          <span id="label-show-hero-cover">Show cover header in reader</span>
 	          <input type="checkbox" id="hero-cover-toggle" onchange="updateSetting('showHeroCover', this.checked)">
 	        </label>
 	      </div>
@@ -1958,93 +1959,93 @@
 	      </div>
 	      <div class="setting-row">
 	        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-	          <span>Collapse library sidebar</span>
+	          <span id="label-sidebar-collapsed">Collapse library sidebar</span>
 	          <input type="checkbox" id="sidebar-collapsed-toggle" onchange="updateSetting('sidebarCollapsed', this.checked)">
 	        </label>
 	      </div>
 	      <div class="setting-row">
-	        <label>PDF Zoom: <span id="pdf-zoom-val">120</span>%</label>
+	        <label><span id="label-pdf-zoom-text">PDF Zoom</span>: <span id="pdf-zoom-val">120</span>%</label>
 	        <input type="range" id="pdf-zoom" min="50" max="220" value="120" oninput="updateSetting('pdfZoom', +this.value)">
 	      </div>
 		      <div class="setting-row">
-		        <label>Reader Width: <span id="reader-width-val">1600</span>px</label>
+		        <label><span id="label-reader-width-text">Reader Width</span>: <span id="reader-width-val">1600</span>px</label>
 		        <input type="range" id="reader-width" min="520" max="2200" value="1600" oninput="updateSetting('readerMaxWidth', +this.value)">
 		      </div>
 	      <div class="setting-row">
-	        <label>Reader Padding: <span id="reader-margin-val">48</span>px</label>
+	        <label><span id="label-reader-padding-text">Reader Padding</span>: <span id="reader-margin-val">48</span>px</label>
 	        <input type="range" id="reader-margin" min="16" max="200" value="48" oninput="updateSetting('readerMargin', +this.value)">
 	      </div>
 	      <div class="setting-row">
-	        <label>TOC Width: <span id="toc-width-val">300</span>px</label>
+	        <label><span id="label-toc-width-text">TOC Width</span>: <span id="toc-width-val">300</span>px</label>
 	        <input type="range" id="toc-width" min="240" max="520" value="300" oninput="updateSetting('tocWidth', +this.value)">
 	      </div>
 	      <div class="setting-row">
 	        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-	          <span>Fit reader width</span>
+	          <span id="label-fit-reader-width">Fit reader width</span>
 	          <input type="checkbox" id="fit-reader-width-toggle" onchange="updateSetting('fitReaderWidth', this.checked)">
 	        </label>
 	      </div>
 	      <div class="setting-row">
 	        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-	          <span>Show reader top bar</span>
+	          <span id="label-reader-topbar">Show reader top bar</span>
 	          <input type="checkbox" id="reader-topbar-toggle" onchange="updateSetting('readerTopBarVisible', this.checked)">
 	        </label>
 	      </div>
 	      <div class="setting-row">
 	        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-	          <span>Selection Popup</span>
+	          <span id="label-selection-popup">Selection Popup</span>
 	          <input type="checkbox" id="selection-popup-toggle" onchange="updateSetting('selectionPopupEnabled', this.checked)">
 	        </label>
 	      </div>
 	      <div class="setting-row">
-	        <label style="display:block;margin-bottom:8px;font-weight:500;font-size:0.9rem;">TOC Hide Delay: <span id="toc-hide-delay-val">500</span>ms</label>
+	        <label style="display:block;margin-bottom:8px;font-weight:500;font-size:0.9rem;"><span id="label-toc-hide-delay-text">TOC Hide Delay</span>: <span id="toc-hide-delay-val">500</span>ms</label>
 	        <input type="range" id="toc-hide-delay" min="200" max="2000" step="100" value="500" oninput="updateSetting('tocHideDelay', +this.value)">
 	      </div>
       <div class="setting-row">
-        <label>Reader Theme</label>
+        <label id="label-reader-theme">Reader Theme</label>
         <div class="reader-theme-presets" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;">
-          <button class="reader-theme-btn" data-bg="#f8f1e3" data-text="#4f321c" onclick="setReaderTheme('#f8f1e3','#4f321c')" style="background:#f8f1e3;color:#4f321c;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Warm</button>
-          <button class="reader-theme-btn" data-bg="#fdfcfa" data-text="#37352f" onclick="setReaderTheme('#fdfcfa','#37352f')" style="background:#fdfcfa;color:#37352f;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Cream</button>
-          <button class="reader-theme-btn" data-bg="#f8f5f0" data-text="#4a4540" onclick="setReaderTheme('#f8f5f0','#4a4540')" style="background:#f8f5f0;color:#4a4540;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Sepia</button>
-          <button class="reader-theme-btn" data-bg="#e8e4dc" data-text="#3d3a36" onclick="setReaderTheme('#e8e4dc','#3d3a36')" style="background:#e8e4dc;color:#3d3a36;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Paper</button>
-          <button class="reader-theme-btn" data-bg="#1e1e1e" data-text="#e0e0e0" onclick="setReaderTheme('#1e1e1e','#e0e0e0')" style="background:#1e1e1e;color:#e0e0e0;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Night</button>
+          <button id="btn-reader-theme-warm" class="reader-theme-btn" data-bg="#f8f1e3" data-text="#4f321c" onclick="setReaderTheme('#f8f1e3','#4f321c')" style="background:#f8f1e3;color:#4f321c;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Warm</button>
+          <button id="btn-reader-theme-cream" class="reader-theme-btn" data-bg="#fdfcfa" data-text="#37352f" onclick="setReaderTheme('#fdfcfa','#37352f')" style="background:#fdfcfa;color:#37352f;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Cream</button>
+          <button id="btn-reader-theme-sepia" class="reader-theme-btn" data-bg="#f8f5f0" data-text="#4a4540" onclick="setReaderTheme('#f8f5f0','#4a4540')" style="background:#f8f5f0;color:#4a4540;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Sepia</button>
+          <button id="btn-reader-theme-paper" class="reader-theme-btn" data-bg="#e8e4dc" data-text="#3d3a36" onclick="setReaderTheme('#e8e4dc','#3d3a36')" style="background:#e8e4dc;color:#3d3a36;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Paper</button>
+          <button id="btn-reader-theme-night" class="reader-theme-btn" data-bg="#1e1e1e" data-text="#e0e0e0" onclick="setReaderTheme('#1e1e1e','#e0e0e0')" style="background:#1e1e1e;color:#e0e0e0;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Night</button>
         </div>
       </div>
       <div class="setting-row">
-        <label>Background Color</label>
+        <label id="label-background-color">Background Color</label>
         <input type="color" id="bg-color" value="#fdfcfa" style="width:100%;height:38px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);" oninput="updateSetting('bgColor', this.value)">
       </div>
       <div class="setting-row">
-        <label>Text Color</label>
+        <label id="label-text-color">Text Color</label>
         <input type="color" id="text-color" value="#37352f" style="width:100%;height:38px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);" oninput="updateSetting('textColor', this.value)">
       </div>
       <div class="setting-row">
-        <label>App Background Image</label>
+        <label id="label-app-bg-image">App Background Image</label>
         <div class="theme-buttons">
-          <button onclick="chooseAppBackgroundImage()">Choose Image</button>
-          <button onclick="clearAppBackgroundImage()">Remove</button>
+          <button id="btn-app-bg-choose" onclick="chooseAppBackgroundImage()">Choose Image</button>
+          <button id="btn-app-bg-remove" onclick="clearAppBackgroundImage()">Remove</button>
         </div>
         <div style="margin-top:10px;">
-          <label style="display:block;margin-bottom:8px;font-weight:500;font-size:0.9rem;">Opacity: <span id="app-bg-opacity-val">0.14</span></label>
+          <label style="display:block;margin-bottom:8px;font-weight:500;font-size:0.9rem;"><span id="label-app-bg-opacity-text">Opacity</span>: <span id="app-bg-opacity-val">0.14</span></label>
           <input type="range" id="app-bg-opacity" min="0" max="0.5" step="0.01" value="0.14" oninput="updateSetting('appBgOpacity', +this.value)">
         </div>
         <div style="margin-top:10px;">
-          <label style="display:block;margin-bottom:8px;font-weight:500;font-size:0.9rem;">Blur: <span id="app-bg-blur-val">12</span>px</label>
+          <label style="display:block;margin-bottom:8px;font-weight:500;font-size:0.9rem;"><span id="label-app-bg-blur-text">Blur</span>: <span id="app-bg-blur-val">12</span>px</label>
           <input type="range" id="app-bg-blur" min="0" max="30" step="1" value="12" oninput="updateSetting('appBgBlur', +this.value)">
         </div>
       </div>
       <div class="setting-row">
         <label id="label-data-tools">Data</label>
         <div class="theme-buttons">
-          <button onclick="exportAppData()">Export</button>
-          <button onclick="importAppData()">Import</button>
+          <button id="btn-export-data" onclick="exportAppData()">Export</button>
+          <button id="btn-import-data" onclick="importAppData()">Import</button>
         </div>
       </div>
       <div class="setting-row">
         <label id="label-merge-moved-books">Reading state recovery</label>
         <button id="btn-merge-moved-books" class="btn-secondary" style="width:100%;" onclick="mergeMovedBookStateNow()">Merge moved/duplicate books</button>
       </div>
-      <button class="close-btn" onclick="hideSettings()">Close</button>
+      <button id="btn-settings-close" class="close-btn" onclick="hideSettings()">Close</button>
     </div>
   </div>
 
@@ -2055,64 +2056,73 @@
   <div id="delete-modal" class="modal hidden">
     <div class="modal-content delete-modal">
       <h3 id="delete-title">Delete book?</h3>
-      <p>Choose how you want to remove this book:</p>
-      <button onclick="deleteBook(false)">Remove from Library Only</button>
-      <button class="danger" onclick="deleteBook(true)">Delete from Disk</button>
-      <button onclick="hideDeleteModal()">Cancel</button>
+      <p id="delete-desc">Choose how you want to remove this book:</p>
+      <button id="delete-book-keep-btn" onclick="deleteBook(false)">Remove from Library Only</button>
+      <button class="danger" id="delete-book-disk-btn" onclick="deleteBook(true)">Delete from Disk</button>
+      <button id="delete-book-cancel-btn" onclick="hideDeleteModal()">Cancel</button>
     </div>
   </div>
 
   <!-- Create Library Modal -->
   <div id="create-library-modal" class="modal hidden">
     <div class="modal-content lib-modal">
-      <h3>Create New Library</h3>
-      <label style="display:block;margin-bottom:8px;font-weight:500;">Library Name</label>
+      <h3 id="create-library-title">Create New Library</h3>
+      <label id="create-library-name-label" style="display:block;margin-bottom:8px;font-weight:500;">Library Name</label>
       <input type="text" id="new-library-name" placeholder="My Library">
       <div class="btn-row">
-        <button class="close-btn btn-secondary" onclick="hideCreateLibraryModal()">Cancel</button>
-        <button class="close-btn" onclick="createEmptyLibrary()">Create Empty</button>
-        <button class="close-btn" onclick="createLibraryFromDir()">Choose Folder</button>
+        <button id="create-library-cancel-btn" class="close-btn btn-secondary" onclick="hideCreateLibraryModal()">Cancel</button>
+        <button id="create-library-logical-btn" class="close-btn" onclick="createEmptyLibrary()">Create Logical</button>
+        <button id="create-library-physical-btn" class="close-btn" onclick="createLibraryFromDir()">Create Physical (Folder)</button>
       </div>
     </div>
   </div>
 
   <!-- Delete Library Modal -->
-  <div id="delete-library-modal" class="modal hidden">
-    <div class="modal-content delete-modal">
-      <h3 id="delete-library-title">Delete library?</h3>
-      <p>This will remove the library from RoseReader.</p>
-      <button onclick="deleteLibrary('keep')">Remove from RoseReader (Keep Files)</button>
-      <button class="danger" id="delete-library-dir-btn" onclick="deleteLibrary('dir')">Delete Folder from Disk</button>
-      <button onclick="hideDeleteLibraryModal()">Cancel</button>
-    </div>
-  </div>
-
-	  <!-- Move Book Modal -->
-	  <div id="move-book-modal" class="modal hidden">
-	    <div class="modal-content delete-modal">
-	      <h3 id="move-book-title">Move book?</h3>
-	      <p id="move-book-desc">Choose destination and whether to also move the file on disk:</p>
-	      <select id="move-target-select" style="margin:10px 0;" onchange="if(pendingMove){pendingMove.targetNodeId=this.value}">
-	      </select>
-	      <button onclick="confirmMoveBook(false)">Move in Library Only</button>
-	      <button class="danger" id="move-book-disk-btn" onclick="confirmMoveBook(true)">Move File on Disk Too</button>
-	      <button onclick="hideMoveBookModal()">Cancel</button>
-	    </div>
-	  </div>
-
-	  <!-- Note Modal -->
-		  <div id="note-modal" class="modal hidden">
-		    <div class="modal-content">
-		      <h3 id="note-modal-title">Note</h3>
-		      <p id="note-modal-sub" style="margin-top:-8px;margin-bottom:14px;">Add an annotation for this passage.</p>
-		      <textarea id="note-text" rows="6" style="width:100%;padding:12px 12px;border:1px solid var(--hairline);border-radius:14px;background:var(--glass-strong);color:var(--text);font-size:0.95rem;resize:vertical;min-height:120px;"></textarea>
-		      <div style="display:flex;gap:10px;margin-top:14px;">
-		        <button class="btn-secondary" style="flex:1;" onclick="hideNoteModal()">Cancel</button>
-		        <button class="close-btn" style="flex:1;" onclick="saveNoteModal()">Save</button>
-		      </div>
-		      <button id="note-delete-btn" class="close-btn btn-secondary" style="margin-top:10px;border-color:color-mix(in srgb, #dc2626 35%, var(--hairline));color:#dc2626;" onclick="deleteNoteModal()">Delete Note</button>
+		  <div id="delete-library-modal" class="modal hidden">
+		    <div class="modal-content delete-modal">
+		      <h3 id="delete-library-title">Delete library?</h3>
+		      <p id="delete-library-desc">This will remove the library from RoseReader.</p>
+		      <button id="delete-library-keep-btn" onclick="deleteLibrary('keep')">Remove from RoseReader (Keep Files)</button>
+		      <button class="danger" id="delete-library-dir-btn" onclick="deleteLibrary('dir')">Delete Folder from Disk</button>
+		      <button id="delete-library-cancel-btn" onclick="hideDeleteLibraryModal()">Cancel</button>
 		    </div>
 		  </div>
+
+	  <!-- Move Book Modal -->
+		  <div id="move-book-modal" class="modal hidden">
+		    <div class="modal-content delete-modal">
+		      <h3 id="move-book-title">Move book?</h3>
+		      <p id="move-book-desc">Choose destination and whether to also move the file on disk:</p>
+		      <select id="move-target-select" style="margin:10px 0;" onchange="if(pendingMove){pendingMove.targetNodeId=this.value}">
+		      </select>
+		      <button id="move-book-keep-btn" onclick="confirmMoveBook(false)">Move in Library Only</button>
+		      <button class="danger" id="move-book-disk-btn" onclick="confirmMoveBook(true)">Move File on Disk Too</button>
+		      <button id="move-book-cancel-btn" onclick="hideMoveBookModal()">Cancel</button>
+		    </div>
+		  </div>
+
+	  <!-- Note Modal -->
+			  <div id="note-modal" class="modal hidden">
+			    <div class="modal-content">
+			      <h3 id="note-modal-title">Note</h3>
+			      <p id="note-modal-sub" style="margin-top:-8px;margin-bottom:14px;">Add an annotation for this passage.</p>
+			      <textarea id="note-text" rows="6" style="width:100%;padding:12px 12px;border:1px solid var(--hairline);border-radius:14px;background:var(--glass-strong);color:var(--text);font-size:0.95rem;resize:vertical;min-height:120px;"></textarea>
+			      <div style="display:flex;gap:10px;margin-top:14px;">
+			        <button id="note-cancel-btn" class="btn-secondary" style="flex:1;" onclick="hideNoteModal()">Cancel</button>
+			        <button id="note-save-btn" class="close-btn" style="flex:1;" onclick="saveNoteModal()">Save</button>
+			      </div>
+			      <button id="note-delete-btn" class="close-btn btn-secondary" style="margin-top:10px;border-color:color-mix(in srgb, #dc2626 35%, var(--hairline));color:#dc2626;" onclick="deleteNoteModal()">Delete Note</button>
+			    </div>
+			  </div>
+
+	  <!-- Book Metainfo Modal -->
+	  <div id="book-meta-modal" class="modal hidden" onclick="if(event.target===this)hideBookMetaModal()">
+	    <div class="modal-content" style="width: 780px; max-width: 94vw;">
+	      <h3 id="book-meta-title">Book Metainfo</h3>
+	      <pre id="book-meta-content" style="max-height:60vh;overflow:auto;padding:12px;border:1px solid var(--hairline);border-radius:12px;background:var(--glass-strong);font-size:0.85rem;line-height:1.45;margin:0;white-space:pre-wrap;word-break:break-word;"></pre>
+	      <button id="book-meta-close-btn" class="close-btn" style="margin-top:12px;" onclick="hideBookMetaModal()">Close</button>
+	    </div>
+	  </div>
 
 	  <!-- Insights Modal -->
 	  <div id="insights-modal" class="modal hidden" onclick="if(event.target===this)hideInsights()">
@@ -2171,6 +2181,8 @@
       tabFolders: document.getElementById('tab-folders'),
       sidebarAddLibrary: document.getElementById('sidebar-add-library'),
       sidebarAddFolder: document.getElementById('sidebar-add-folder'),
+      booksArea: document.getElementById('books-area'),
+      libraryContent: document.getElementById('library-content'),
 
       createLibraryModal: document.getElementById('create-library-modal'),
       newLibraryName: document.getElementById('new-library-name'),
@@ -2178,12 +2190,16 @@
       deleteTitle: document.getElementById('delete-title'),
       deleteLibraryModal: document.getElementById('delete-library-modal'),
       deleteLibraryTitle: document.getElementById('delete-library-title'),
+      deleteLibraryKeepBtn: document.getElementById('delete-library-keep-btn'),
       deleteLibraryDirBtn: document.getElementById('delete-library-dir-btn'),
       moveBookModal: document.getElementById('move-book-modal'),
       moveBookTitle: document.getElementById('move-book-title'),
       moveBookDesc: document.getElementById('move-book-desc'),
       moveBookDiskBtn: document.getElementById('move-book-disk-btn'),
       moveTargetSelect: document.getElementById('move-target-select'),
+      bookMetaModal: document.getElementById('book-meta-modal'),
+      bookMetaTitle: document.getElementById('book-meta-title'),
+      bookMetaContent: document.getElementById('book-meta-content'),
       contextMenu: document.getElementById('context-menu'),
 
       readerContent: document.getElementById('reader-content'),
@@ -2204,6 +2220,7 @@
 
 	    let state = {
 	      libraries: [],
+	      libraryBookMap: {},
 	      booksById: {},
 	      settings: {},
 	      stats: {},
@@ -2211,10 +2228,11 @@
 	    };
     let settings = {};
 
-    let selectedLibraryId = 'all';
-    let selectedFolderNodeId = '__ALL__';
-    const expandedFolderIds = new Set();
-    let libraryQuery = '';
+	    let selectedLibraryId = 'all';
+	    let selectedFolderNodeId = '__ALL__';
+	    let initializedLibrarySelection = false;
+	    const expandedFolderIds = new Set();
+	    let libraryQuery = '';
 
     let currentBook = null;
     let deleteTargetBookId = null;
@@ -2231,7 +2249,7 @@
       renderStats();
       renderBooks();
       if (payload?.silent) return;
-      showToast('Libraries synced automatically', 'success');
+      showToast(t('librariesSyncedAuto'), 'success');
     });
 
 	    // PDF.js state
@@ -3279,9 +3297,16 @@
 	        libraries: 'Libraries',
 	        folders: 'Folders',
 		        allBooks: 'All Books',
-		        searchBooks: 'Search title, author, or file…',
-		        searchRecent: 'Recent',
-		        searchTopResults: 'Top results',
+	        searchBooks: 'Search title, author, or file…',
+	        searchRecent: 'Recent',
+	        searchClear: 'Clear',
+	        filterUnread: 'Unread',
+	        filterReading: 'Reading',
+	        filterFinished: 'Finished',
+	        searchHintNavigate: 'navigate',
+	        searchHintOpen: 'open',
+	        searchHintClose: 'close',
+	        searchTopResults: 'Top results',
 		        searchNoRecent: 'No recent books yet.',
 		        searchNoMatches: 'No matches — try title, author, or file name.',
 		        newLibrary: '+ New Library',
@@ -3306,6 +3331,9 @@
 	        selectLibraryToViewFolders: 'Select a library to view folders.',
 	        noToc: 'No table of contents available',
 	        noBookmarks: 'No bookmarks or highlights yet.'
+	        , tableOfContents: 'Table of Contents'
+	        , bookmarksAndHighlights: 'Bookmarks & Highlights'
+	        , searchAnnotations: 'Search annotations'
 	        , pin: 'Pin'
 	        , unpin: 'Unpin'
 	        , pinned: 'Pinned'
@@ -3345,14 +3373,213 @@
 	        , unknownTimeShort: 'unknown time'
 	        , booksCompleted: 'Books completed'
 	        , avgPerBook: 'avg/book'
+	        , localeNameEnglish: 'English'
+	        , localeNameSimplifiedChinese: 'Simplified Chinese'
+	        , systemWithLocale: 'System ({locale})'
+	        , localeInfoTemplate: 'Active: {active} | System: {system}'
+	        , librariesSyncedAuto: 'Libraries synced automatically'
+	        , createLibraryTitle: 'Create New Library'
+	        , libraryName: 'Library Name'
+	        , libraryNamePlaceholder: 'My Library'
+	        , cancel: 'Cancel'
+	        , createLogical: 'Create Logical'
+	        , createPhysicalFolder: 'Create Physical (Folder)'
+	        , noPhysicalFolderStructure: 'No physical folder structure is available in this view'
+	        , noPhysicalTreeYet: 'No physical directory tree yet. Import books from folders to use this view.'
+	        , foldersPhysicalOnly: 'Folders are only available for physical libraries.'
+	        , createFolderPhysicalOnly: 'Create folders inside a physical library'
+	        , folderNamePrompt: 'Folder name'
+	        , createFolderOnDiskConfirm: 'Create folder on disk too?'
+	        , folderCreated: 'Folder created'
+	        , createLogicalLibraryFirst: 'Create a logical library first'
+	        , noMatchingLogicalLibrary: 'No matching logical library'
+	        , addToLogicalLibraryPrompt: 'Add to which logical library?'
+	        , addedToLibrary: 'Added to "{name}"'
+	        , removedFromLibrary: 'Removed from "{name}"'
+	        , mergeMovedBooksAndDeduped: 'Merged moved state for {merged} book(s) and removed {deduped} duplicate record(s).'
+	        , mergeDedupedOnly: 'Removed {deduped} duplicate book record(s).'
+	        , showFullMetainfo: 'Show full metainfo'
+	        , bookMetainfoTitle: 'Book Metainfo'
+	        , metainfoUnavailable: 'Book metainfo is unavailable'
+	        , font: 'Font'
+	        , fontModeBook: 'Use book fonts (EPUB)'
+	        , fontModeSystem: 'System font'
+	        , fontModeCustom: 'Choose a font…'
+	        , fontSearchPlaceholder: 'Type to search fonts…'
+	        , reloadSystemFonts: 'Reload System Fonts'
+	        , fontSize: 'Font Size'
+	        , lineHeight: 'Line Height'
+	        , marginLabel: 'Margin'
+	        , theme: 'Theme'
+	        , themeLight: 'Light'
+	        , themeSepia: 'Sepia'
+	        , themeDark: 'Dark'
+	        , themeMidnight: 'Midnight'
+	        , appThemeSilk: 'Silk'
+	        , appThemeLight: 'Light'
+	        , appThemeDark: 'Dark'
+	        , appThemeRose: 'Rose'
+	        , accentRoseGold: 'Rose Gold'
+	        , accentSaffron: 'Saffron'
+	        , accentCopper: 'Copper'
+	        , accentFig: 'Fig'
+	        , accentMoss: 'Moss'
+	        , readerThemeWarm: 'Warm'
+	        , readerThemeCream: 'Cream'
+	        , readerThemeSepia: 'Sepia'
+	        , readerThemePaper: 'Paper'
+	        , readerThemeNight: 'Night'
+	        , showHeroCover: 'Show cover header in reader'
+	        , collapseSidebar: 'Collapse library sidebar'
+	        , pdfZoom: 'PDF Zoom'
+	        , readerWidth: 'Reader Width'
+	        , readerPadding: 'Reader Padding'
+	        , tocWidth: 'TOC Width'
+	        , fitReaderWidth: 'Fit reader width'
+	        , showReaderTopBar: 'Show reader top bar'
+	        , selectionPopup: 'Selection Popup'
+	        , tocHideDelay: 'TOC Hide Delay'
+	        , readerTheme: 'Reader Theme'
+	        , backgroundColor: 'Background Color'
+	        , textColorLabel: 'Text Color'
+	        , appBackgroundImage: 'App Background Image'
+	        , chooseImage: 'Choose Image'
+	        , remove: 'Remove'
+	        , opacity: 'Opacity'
+	        , blur: 'Blur'
+	        , export: 'Export'
+	        , import: 'Import'
+	        , fontsLoaded: 'Loaded {n} fonts'
+	        , chooseBackgroundImageDialogTitle: 'Choose background image'
+	        , imageFilesLabel: 'Images'
+	        , setBackgroundImageFailed: 'Failed to set background image'
+	        , loadFontsFailed: 'Failed to load fonts'
+	        , exportDataDialogTitle: 'Export RoseReader data'
+	        , importDataDialogTitle: 'Import RoseReader data'
+	        , jsonFilesLabel: 'JSON'
+	        , exportDataDone: 'Exported data'
+	        , exportDataFailed: 'Export failed'
+	        , importDataDone: 'Imported data'
+	        , importDataFailed: 'Import failed'
+	        , untitled: 'Untitled'
+	        , unknownAuthor: 'Unknown'
+	        , libraryFallback: 'Library'
+	        , bookFallback: 'book'
+	        , folderFallback: 'folder'
+	        , logicalTag: 'Logical'
+	        , allFolders: 'All folders'
+	        , syncLibrary: 'Sync (add new/remove deleted)'
+	        , deleteLabel: 'Delete'
+	        , failedCreateFolder: 'Failed to create folder'
+	        , actionFailed: 'Action failed'
+	        , menuOpen: 'Open'
+	        , menuCopyBookName: 'Copy book name'
+	        , copiedBookName: 'Copied book name'
+	        , menuSearchInLibrary: 'Search in library'
+	        , menuAddToLogicalLibrary: 'Add to logical library…'
+	        , menuRemoveFromThisLibrary: 'Remove from this library'
+	        , menuMove: 'Move…'
+	        , menuRevealInFolder: 'Reveal in folder'
+	        , menuRegenerateCover: 'Regenerate cover'
+	        , regeneratingCover: 'Regenerating cover…'
+	        , coverRegenerated: 'Cover regenerated'
+	        , failedGenerateCover: 'Failed to generate cover'
+	        , menuDelete: 'Delete…'
+	        , moveBookTitleTemplate: 'Move "{title}"?'
+	        , moveBookDescTemplate: 'Move to "{folder}". Choose whether to also move the file on disk.'
+	        , movedBook: 'Moved book'
+	        , movedBookAndFile: 'Moved book and file'
+	        , moveFailed: 'Move failed'
+	        , booksCount: '{n} book(s)'
+	        , noMatchesShort: 'No matches'
+	        , noBooksInFolder: 'No books in this folder'
+	        , noBooks: 'No books'
+	        , tryDifferentSearchOrFolder: 'Try a different search or folder.'
+	        , tryDifferentSearchOrLibrary: 'Try a different search or library.'
+	        , clearSearch: 'Clear Search'
+	        , newLibraryDefaultName: 'New Library'
+	        , createdLogicalLibrary: 'Created logical library "{name}"'
+	        , failedCreateLibrary: 'Failed to create library'
+	        , importedLibrary: 'Imported "{name}"'
+	        , rescanConfirm: 'Full rescan will rebuild the folder structure from disk and may overwrite manual organization. Continue?'
+	        , fullRescanning: 'Full rescanning…'
+	        , syncing: 'Syncing…'
+	        , rescanComplete: 'Rescan complete'
+	        , syncComplete: 'Sync complete'
+	        , rescanFailed: 'Rescan failed'
+	        , deleteBookTitle: 'Delete "{name}"?'
+	        , deleteBookDesc: 'Choose how you want to remove this book:'
+	        , removeFromLibraryOnly: 'Remove from Library Only'
+	        , deleteFromDisk: 'Delete from Disk'
+	        , deleteLibraryDesc: 'This will remove the library from RoseReader.'
+	        , removeFromRoseReaderKeepFiles: 'Remove from RoseReader (Keep Files)'
+	        , deleteLogicalLibrary: 'Delete Logical Library'
+	        , deleteFolderFromDisk: 'Delete Folder from Disk'
+	        , deleteFolderConfirm: 'This will permanently delete the folder on disk:\n\n{path}\n\nContinue?'
+	        , deletedBookFromDisk: 'Deleted book from disk'
+	        , removedBook: 'Removed book'
+	        , deleteFailed: 'Delete failed'
+	        , deleteLibraryTitle: 'Delete "{name}"?'
+	        , deletedLibraryFolderFromDisk: 'Deleted library folder from disk'
+	        , removedLibrary: 'Removed library'
+	        , failedOpenBook: 'Failed to open book'
+	        , failedRenderPdf: 'Failed to render PDF'
+	        , recentSearches: 'Recent Searches'
+	        , recentBooks: 'Recent Books'
+	        , noRecentBooks: 'No recent books'
+	        , noResultsFound: 'No results found'
+	        , results: 'Results'
+	        , addBookmark: 'Add Bookmark'
+	        , allHighlights: 'All Highlights'
+	        , notes: 'Notes'
+	        , bookmarks: 'Bookmarks'
+	        , highlightItemFallback: 'Highlight'
+	        , noteItemFallback: 'Note'
+	        , bookmarkItemFallback: 'Bookmark'
+	        , changeColor: 'Change color'
+	        , noAnnotationsMatchSearch: 'No annotations match your search'
+	        , colorChanged: 'Color changed'
+	        , addedBookmark: 'Added bookmark'
+	        , selectionSearchGoogle: 'Search Google'
+	        , selectionSearchGoogleAi: 'Search Google AI'
+	        , selectionHighlight: 'Highlight:'
+	        , selectionNote: 'Note'
+	        , selectionRemoveHighlight: 'Remove highlight'
+	        , highlightSingleChapterOnly: 'Highlight within a single chapter only (for now)'
+	        , highlightSinglePageOnly: 'Highlight within a single page only (for now)'
+	        , colorUpdated: 'Color updated'
+	        , highlighted: 'Highlighted'
+	        , couldNotDeterminePdfPage: 'Could not determine PDF page'
+	        , noteSingleChapterOnly: 'Note within a single chapter only (for now)'
+	        , editNote: 'Edit Note'
+	        , newNote: 'New Note'
+	        , noteEmpty: 'Note is empty'
+	        , savedNote: 'Saved note'
+	        , deletedNote: 'Deleted note'
+	        , save: 'Save'
+	        , deleteNote: 'Delete Note'
+	        , moveBookQuestion: 'Move book?'
+	        , moveBookDescStatic: 'Choose destination and whether to also move the file on disk:'
+	        , moveInLibraryOnly: 'Move in Library Only'
+	        , moveFileOnDiskToo: 'Move File on Disk Too'
+	        , noteModalSub: 'Add an annotation for this passage.'
+	        , more: 'More'
+	        , removeFromContinueReading: 'Remove from Continue Reading'
 	      },
 	      'zh-CN': {
 	        libraries: '书库',
 	        folders: '文件夹',
 		        allBooks: '全部书籍',
-		        searchBooks: '搜索标题、作者或文件…',
-		        searchRecent: '最近',
-		        searchTopResults: '最佳匹配',
+	        searchBooks: '搜索标题、作者或文件…',
+	        searchRecent: '最近',
+	        searchClear: '清除',
+	        filterUnread: '未读',
+	        filterReading: '阅读中',
+	        filterFinished: '已读完',
+	        searchHintNavigate: '移动',
+	        searchHintOpen: '打开',
+	        searchHintClose: '关闭',
+	        searchTopResults: '最佳匹配',
 		        searchNoRecent: '暂无最近阅读。',
 		        searchNoMatches: '没有匹配结果，可尝试标题、作者或文件名。',
 		        newLibrary: '+ 新建书库',
@@ -3377,6 +3604,9 @@
 	        selectLibraryToViewFolders: '请选择一个书库以查看文件夹结构。',
 	        noToc: '没有目录',
 	        noBookmarks: '暂无书签或高亮。'
+	        , tableOfContents: '目录'
+	        , bookmarksAndHighlights: '书签与高亮'
+	        , searchAnnotations: '搜索标注'
 	        , pin: '置顶'
 	        , unpin: '取消置顶'
 	        , pinned: '已置顶'
@@ -3416,6 +3646,198 @@
 	        , unknownTimeShort: '时间未知'
 	        , booksCompleted: '完成书籍'
 	        , avgPerBook: '每本均值'
+	        , localeNameEnglish: '英语'
+	        , localeNameSimplifiedChinese: '简体中文'
+	        , systemWithLocale: '跟随系统（{locale}）'
+	        , localeInfoTemplate: '当前：{active} ｜ 系统：{system}'
+	        , librariesSyncedAuto: '书库已自动同步'
+	        , createLibraryTitle: '创建新书库'
+	        , libraryName: '书库名称'
+	        , libraryNamePlaceholder: '我的书库'
+	        , cancel: '取消'
+	        , createLogical: '创建逻辑书库'
+	        , createPhysicalFolder: '创建物理书库（文件夹）'
+	        , noPhysicalFolderStructure: '当前视图没有可用的物理目录结构'
+	        , noPhysicalTreeYet: '尚无可用物理目录树，请先从文件夹导入书籍。'
+	        , foldersPhysicalOnly: '仅物理书库支持文件夹视图。'
+	        , createFolderPhysicalOnly: '请在物理书库中创建文件夹'
+	        , folderNamePrompt: '文件夹名称'
+	        , createFolderOnDiskConfirm: '是否同时在磁盘创建该文件夹？'
+	        , folderCreated: '文件夹已创建'
+	        , createLogicalLibraryFirst: '请先创建逻辑书库'
+	        , noMatchingLogicalLibrary: '未找到匹配的逻辑书库'
+	        , addToLogicalLibraryPrompt: '要添加到哪个逻辑书库？'
+	        , addedToLibrary: '已添加到“{name}”'
+	        , removedFromLibrary: '已从“{name}”移除'
+	        , mergeMovedBooksAndDeduped: '已恢复 {merged} 本书的迁移状态，并移除 {deduped} 条重复记录。'
+	        , mergeDedupedOnly: '已移除 {deduped} 条重复书籍记录。'
+	        , showFullMetainfo: '显示完整元信息'
+	        , bookMetainfoTitle: '书籍元信息'
+	        , metainfoUnavailable: '书籍元信息不可用'
+	        , font: '字体'
+	        , fontModeBook: '使用书籍字体（EPUB）'
+	        , fontModeSystem: '系统字体'
+	        , fontModeCustom: '选择字体…'
+	        , fontSearchPlaceholder: '输入以搜索字体…'
+	        , reloadSystemFonts: '重新加载系统字体'
+	        , fontSize: '字号'
+	        , lineHeight: '行高'
+	        , marginLabel: '边距'
+	        , theme: '主题'
+	        , themeLight: '浅色'
+	        , themeSepia: '护眼'
+	        , themeDark: '深色'
+	        , themeMidnight: '午夜'
+	        , appThemeSilk: '丝绸'
+	        , appThemeLight: '浅色'
+	        , appThemeDark: '深色'
+	        , appThemeRose: '玫瑰'
+	        , accentRoseGold: '玫瑰金'
+	        , accentSaffron: '藏红花'
+	        , accentCopper: '铜色'
+	        , accentFig: '无花果'
+	        , accentMoss: '苔绿'
+	        , readerThemeWarm: '暖色'
+	        , readerThemeCream: '奶油'
+	        , readerThemeSepia: '怀旧'
+	        , readerThemePaper: '纸张'
+	        , readerThemeNight: '夜间'
+	        , showHeroCover: '在阅读页显示封面头图'
+	        , collapseSidebar: '折叠书库侧栏'
+	        , pdfZoom: 'PDF 缩放'
+	        , readerWidth: '阅读区宽度'
+	        , readerPadding: '阅读区内边距'
+	        , tocWidth: '目录宽度'
+	        , fitReaderWidth: '适配阅读区宽度'
+	        , showReaderTopBar: '显示阅读页顶栏'
+	        , selectionPopup: '文本选择弹窗'
+	        , tocHideDelay: '目录隐藏延迟'
+	        , readerTheme: '阅读主题'
+	        , backgroundColor: '背景颜色'
+	        , textColorLabel: '文字颜色'
+	        , appBackgroundImage: '应用背景图'
+	        , chooseImage: '选择图片'
+	        , remove: '移除'
+	        , opacity: '透明度'
+	        , blur: '模糊'
+	        , export: '导出'
+	        , import: '导入'
+	        , fontsLoaded: '已加载 {n} 种字体'
+	        , chooseBackgroundImageDialogTitle: '选择背景图片'
+	        , imageFilesLabel: '图片'
+	        , setBackgroundImageFailed: '设置背景图片失败'
+	        , loadFontsFailed: '加载字体失败'
+	        , exportDataDialogTitle: '导出 RoseReader 数据'
+	        , importDataDialogTitle: '导入 RoseReader 数据'
+	        , jsonFilesLabel: 'JSON'
+	        , exportDataDone: '数据已导出'
+	        , exportDataFailed: '导出失败'
+	        , importDataDone: '数据已导入'
+	        , importDataFailed: '导入失败'
+	        , untitled: '未命名'
+	        , unknownAuthor: '未知'
+	        , libraryFallback: '书库'
+	        , bookFallback: '书籍'
+	        , folderFallback: '文件夹'
+	        , logicalTag: '逻辑'
+	        , allFolders: '全部文件夹'
+	        , syncLibrary: '同步（新增/移除）'
+	        , deleteLabel: '删除'
+	        , failedCreateFolder: '创建文件夹失败'
+	        , actionFailed: '操作失败'
+	        , menuOpen: '打开'
+	        , menuCopyBookName: '复制书名'
+	        , copiedBookName: '已复制书名'
+	        , menuSearchInLibrary: '在书库中搜索'
+	        , menuAddToLogicalLibrary: '添加到逻辑书库…'
+	        , menuRemoveFromThisLibrary: '从此书库移除'
+	        , menuMove: '移动…'
+	        , menuRevealInFolder: '在文件夹中显示'
+	        , menuRegenerateCover: '重新生成封面'
+	        , regeneratingCover: '正在重新生成封面…'
+	        , coverRegenerated: '封面已重新生成'
+	        , failedGenerateCover: '生成封面失败'
+	        , menuDelete: '删除…'
+	        , moveBookTitleTemplate: '移动“{title}”？'
+	        , moveBookDescTemplate: '移动到“{folder}”。请选择是否同时移动磁盘文件。'
+	        , movedBook: '已移动书籍'
+	        , movedBookAndFile: '已移动书籍和文件'
+	        , moveFailed: '移动失败'
+	        , booksCount: '{n} 本书'
+	        , noMatchesShort: '无匹配结果'
+	        , noBooksInFolder: '此文件夹没有书籍'
+	        , noBooks: '没有书籍'
+	        , tryDifferentSearchOrFolder: '请尝试其他搜索词或文件夹。'
+	        , tryDifferentSearchOrLibrary: '请尝试其他搜索词或书库。'
+	        , clearSearch: '清空搜索'
+	        , newLibraryDefaultName: '新建书库'
+	        , createdLogicalLibrary: '已创建逻辑书库“{name}”'
+	        , failedCreateLibrary: '创建书库失败'
+	        , importedLibrary: '已导入“{name}”'
+	        , rescanConfirm: '完整重扫会按磁盘重建目录结构，可能覆盖手动整理。是否继续？'
+	        , fullRescanning: '正在完整重扫…'
+	        , syncing: '正在同步…'
+	        , rescanComplete: '重扫完成'
+	        , syncComplete: '同步完成'
+	        , rescanFailed: '重扫失败'
+	        , deleteBookTitle: '删除“{name}”？'
+	        , deleteBookDesc: '请选择移除方式：'
+	        , removeFromLibraryOnly: '仅从书库移除'
+	        , deleteFromDisk: '从磁盘删除'
+	        , deleteLibraryDesc: '这将从 RoseReader 中移除该书库。'
+	        , removeFromRoseReaderKeepFiles: '从 RoseReader 移除（保留文件）'
+	        , deleteLogicalLibrary: '删除逻辑书库'
+	        , deleteFolderFromDisk: '从磁盘删除文件夹'
+	        , deleteFolderConfirm: '这将永久删除磁盘上的文件夹：\n\n{path}\n\n是否继续？'
+	        , deletedBookFromDisk: '已从磁盘删除书籍'
+	        , removedBook: '已移除书籍'
+	        , deleteFailed: '删除失败'
+	        , deleteLibraryTitle: '删除“{name}”？'
+	        , deletedLibraryFolderFromDisk: '已从磁盘删除书库文件夹'
+	        , removedLibrary: '已移除书库'
+	        , failedOpenBook: '打开书籍失败'
+	        , failedRenderPdf: '渲染 PDF 失败'
+	        , recentSearches: '最近搜索'
+	        , recentBooks: '最近书籍'
+	        , noRecentBooks: '暂无最近书籍'
+	        , noResultsFound: '未找到结果'
+	        , results: '结果'
+	        , addBookmark: '添加书签'
+	        , allHighlights: '全部高亮'
+	        , notes: '笔记'
+	        , bookmarks: '书签'
+	        , highlightItemFallback: '高亮'
+	        , noteItemFallback: '笔记'
+	        , bookmarkItemFallback: '书签'
+	        , changeColor: '更改颜色'
+	        , noAnnotationsMatchSearch: '没有匹配搜索的标注'
+	        , colorChanged: '颜色已更改'
+	        , addedBookmark: '已添加书签'
+	        , selectionSearchGoogle: 'Google 搜索'
+	        , selectionSearchGoogleAi: 'Google AI 搜索'
+	        , selectionHighlight: '高亮：'
+	        , selectionNote: '笔记'
+	        , selectionRemoveHighlight: '移除高亮'
+	        , highlightSingleChapterOnly: '当前仅支持同一章节内高亮'
+	        , highlightSinglePageOnly: '当前仅支持同一页面内高亮'
+	        , colorUpdated: '颜色已更新'
+	        , highlighted: '已高亮'
+	        , couldNotDeterminePdfPage: '无法确定 PDF 页面'
+	        , noteSingleChapterOnly: '当前仅支持同一章节内笔记'
+	        , editNote: '编辑笔记'
+	        , newNote: '新建笔记'
+	        , noteEmpty: '笔记内容为空'
+	        , savedNote: '笔记已保存'
+	        , deletedNote: '笔记已删除'
+	        , save: '保存'
+	        , deleteNote: '删除笔记'
+	        , moveBookQuestion: '移动书籍？'
+	        , moveBookDescStatic: '请选择目标，以及是否同时移动磁盘文件：'
+	        , moveInLibraryOnly: '仅在书库中移动'
+	        , moveFileOnDiskToo: '同时移动磁盘文件'
+	        , noteModalSub: '为这段内容添加注释。'
+	        , more: '更多'
+	        , removeFromContinueReading: '从继续阅读中移除'
 	      }
 	    };
 
@@ -3441,6 +3863,37 @@
 	      return table[key] || I18N.en[key] || key;
 	    }
 
+	    function tf(key, replacements = {}) {
+	      let out = String(t(key));
+	      for (const [name, value] of Object.entries(replacements || {})) {
+	        out = out.replaceAll(`{${name}}`, String(value ?? ''));
+	      }
+	      return out;
+	    }
+
+	    function getSystemLocaleCode() {
+	      return String(systemLocaleInfo?.languages?.[0] || systemLocaleInfo?.locale || navigator.language || 'en-US');
+	    }
+
+	    function getLocaleDisplayLabel(rawLocale) {
+	      const raw = String(rawLocale || '').trim();
+	      const fallback = normalizeLocale(raw) === 'zh-CN'
+	        ? t('localeNameSimplifiedChinese')
+	        : t('localeNameEnglish');
+	      if (!raw) return fallback;
+
+	      try {
+	        const uiLocale = getActiveLocale() === 'zh-CN' ? 'zh-CN' : 'en';
+	        const dn = new Intl.DisplayNames([uiLocale], { type: 'language' });
+	        const languageCode = raw.split('-')[0];
+	        const display = String(dn.of(languageCode) || '').trim();
+	        if (!display) return `${fallback} (${raw})`;
+	        return raw.includes('-') ? `${display} (${raw})` : display;
+	      } catch (e) {
+	        return `${fallback} (${raw})`;
+	      }
+	    }
+
 	    function applyI18n() {
 	      const locale = getActiveLocale();
 	      const setText = (id, value) => {
@@ -3451,8 +3904,24 @@
 	        const el = document.getElementById(id);
 	        if (el) el.setAttribute('placeholder', value);
 	      };
+	      const setAttr = (id, attr, value) => {
+	        const el = document.getElementById(id);
+	        if (el) el.setAttribute(attr, value);
+	      };
 
 		      setPlaceholder('library-search-input', t('searchBooks'));
+		      setPlaceholder('library-search-trigger', t('searchBooks'));
+		      setAttr('library-search-clear', 'title', t('searchClear'));
+		      setAttr('library-search-clear', 'aria-label', t('searchClear'));
+		      setText('chip-status-unread', t('filterUnread'));
+		      setText('chip-status-reading', t('filterReading'));
+		      setText('chip-status-finished', t('filterFinished'));
+		      const navHint = document.getElementById('search-hint-navigate');
+		      if (navHint) navHint.innerHTML = `<kbd>↑↓</kbd> ${escapeHtml(t('searchHintNavigate'))}`;
+		      const openHint = document.getElementById('search-hint-open');
+		      if (openHint) openHint.innerHTML = `<kbd>↵</kbd> ${escapeHtml(t('searchHintOpen'))}`;
+		      const closeHint = document.getElementById('search-hint-close');
+		      if (closeHint) closeHint.innerHTML = `<kbd>esc</kbd> ${escapeHtml(t('searchHintClose'))}`;
 		      setText('btn-new-library', t('newLibrary'));
 	      setText('btn-import-dir', t('importDirectory'));
 	      setText('btn-settings', t('settings'));
@@ -3472,21 +3941,118 @@
 	      setText('label-merge-moved-books', t('mergeMovedBooks'));
 	      setText('btn-merge-moved-books', t('mergeMovedBooksAction'));
 	      setText('label-card-density', t('cardDensity'));
+	      setText('label-font', t('font'));
+	      setText('opt-font-book', t('fontModeBook'));
+	      setText('opt-font-system', t('fontModeSystem'));
+	      setText('opt-font-custom', t('fontModeCustom'));
+	      setPlaceholder('font-family-input', t('fontSearchPlaceholder'));
+	      setText('btn-reload-fonts', t('reloadSystemFonts'));
+	      setText('label-font-size-text', t('fontSize'));
+	      setText('label-line-height-text', t('lineHeight'));
+	      setText('label-margin-text', t('marginLabel'));
+	      setText('label-theme', t('theme'));
+	      setText('btn-theme-light', t('themeLight'));
+	      setText('btn-theme-sepia', t('themeSepia'));
+	      setText('btn-theme-dark', t('themeDark'));
+	      setText('btn-theme-midnight', t('themeMidnight'));
+	      setText('opt-app-theme-silk', t('appThemeSilk'));
+	      setText('opt-app-theme-light', t('appThemeLight'));
+	      setText('opt-app-theme-dark', t('appThemeDark'));
+	      setText('opt-app-theme-rose', t('appThemeRose'));
+	      setText('opt-app-accent-rose-gold', t('accentRoseGold'));
+	      setText('opt-app-accent-saffron', t('accentSaffron'));
+	      setText('opt-app-accent-copper', t('accentCopper'));
+	      setText('opt-app-accent-fig', t('accentFig'));
+	      setText('opt-app-accent-moss', t('accentMoss'));
+	      setText('btn-reader-theme-warm', t('readerThemeWarm'));
+	      setText('btn-reader-theme-cream', t('readerThemeCream'));
+	      setText('btn-reader-theme-sepia', t('readerThemeSepia'));
+	      setText('btn-reader-theme-paper', t('readerThemePaper'));
+	      setText('btn-reader-theme-night', t('readerThemeNight'));
+	      setText('label-show-hero-cover', t('showHeroCover'));
+	      setText('label-sidebar-collapsed', t('collapseSidebar'));
+	      setText('label-pdf-zoom-text', t('pdfZoom'));
+	      setText('label-reader-width-text', t('readerWidth'));
+	      setText('label-reader-padding-text', t('readerPadding'));
+	      setText('label-toc-width-text', t('tocWidth'));
+	      setText('label-fit-reader-width', t('fitReaderWidth'));
+	      setText('label-reader-topbar', t('showReaderTopBar'));
+	      setText('label-selection-popup', t('selectionPopup'));
+	      setText('label-toc-hide-delay-text', t('tocHideDelay'));
+	      setText('label-reader-theme', t('readerTheme'));
+	      setText('label-background-color', t('backgroundColor'));
+	      setText('label-text-color', t('textColorLabel'));
+	      setText('label-app-bg-image', t('appBackgroundImage'));
+	      setText('btn-app-bg-choose', t('chooseImage'));
+	      setText('btn-app-bg-remove', t('remove'));
+	      setText('label-app-bg-opacity-text', t('opacity'));
+	      setText('label-app-bg-blur-text', t('blur'));
+	      setText('btn-export-data', t('export'));
+	      setText('btn-import-data', t('import'));
+	      setText('btn-settings-close', t('close'));
 	      setText('label-continue-reading', t('continueReading'));
 	      setPlaceholder('book-search', t('searchInBook'));
 	      setText('settings-title', t('readerSettings'));
 		      setText('label-app-theme', t('appTheme'));
 		      setText('label-color-variant', t('colorVariant'));
-		      setText('label-language', t('language'));
-	      setText('btn-insights', t('insights'));
-	      setText('insights-title', t('insights'));
-	      setText('insights-share', t('shareSnapshot'));
-	      setText('insights-close', t('close'));
+	      setText('label-language', t('language'));
+		      setText('btn-insights', t('insights'));
+		      setText('insights-title', t('insights'));
+		      setText('insights-share', t('shareSnapshot'));
+		      setText('insights-close', t('close'));
+		      setText('toc-title', t('tableOfContents'));
+		      setText('bookmarks-title', t('bookmarksAndHighlights'));
+		      setPlaceholder('annotation-search', t('searchAnnotations'));
+		      setText('create-library-title', t('createLibraryTitle'));
+	      setText('create-library-name-label', t('libraryName'));
+	      setText('create-library-cancel-btn', t('cancel'));
+	      setText('create-library-logical-btn', t('createLogical'));
+	      setText('create-library-physical-btn', t('createPhysicalFolder'));
+	      setText('book-meta-title', t('bookMetainfoTitle'));
+	      setText('book-meta-close-btn', t('close'));
+	      setPlaceholder('new-library-name', t('libraryNamePlaceholder'));
+	      setText('books-header-title', t('allBooks'));
+	      setText('delete-desc', t('deleteBookDesc'));
+	      setText('delete-book-keep-btn', t('removeFromLibraryOnly'));
+	      setText('delete-book-disk-btn', t('deleteFromDisk'));
+	      setText('delete-book-cancel-btn', t('cancel'));
+	      setText('delete-library-desc', t('deleteLibraryDesc'));
+	      setText('delete-library-keep-btn', t('removeFromRoseReaderKeepFiles'));
+	      setText('delete-library-dir-btn', t('deleteFolderFromDisk'));
+	      setText('delete-library-cancel-btn', t('cancel'));
+	      setText('move-book-title', t('moveBookQuestion'));
+	      setText('move-book-desc', t('moveBookDescStatic'));
+	      setText('move-book-keep-btn', t('moveInLibraryOnly'));
+	      setText('move-book-disk-btn', t('moveFileOnDiskToo'));
+	      setText('move-book-cancel-btn', t('cancel'));
+	      setText('note-modal-sub', t('noteModalSub'));
+	      setText('note-cancel-btn', t('cancel'));
+	      setText('note-save-btn', t('save'));
+	      setText('note-delete-btn', t('deleteNote'));
 
 	      const localeSelect = document.getElementById('locale-select');
 	      if (localeSelect) {
+	        const systemRaw = getSystemLocaleCode();
+	        const enName = t('localeNameEnglish');
+	        const zhName = t('localeNameSimplifiedChinese');
+	        const systemName = getLocaleDisplayLabel(systemRaw);
 	        const systemOpt = localeSelect.querySelector('option[value="system"]');
-	        if (systemOpt) systemOpt.textContent = t('system');
+	        if (systemOpt) systemOpt.textContent = tf('systemWithLocale', { locale: systemName });
+	        const enOpt = localeSelect.querySelector('option[value="en"]');
+	        if (enOpt) enOpt.textContent = enName;
+	        const zhOpt = localeSelect.querySelector('option[value="zh-CN"]');
+	        if (zhOpt) zhOpt.textContent = zhName;
+	      }
+
+	      const localeInfo = document.getElementById('locale-info');
+	      if (localeInfo) {
+	        const pref = String(settings.locale || 'system');
+	        const systemRaw = getSystemLocaleCode();
+	        const activeRaw = pref === 'system' ? systemRaw : pref;
+	        const activeName = getLocaleDisplayLabel(activeRaw);
+	        const systemName = getLocaleDisplayLabel(systemRaw);
+	        localeInfo.textContent = tf('localeInfoTemplate', { active: activeName, system: systemName });
+	        localeInfo.title = `${activeRaw} | ${systemRaw}`;
 	      }
 
 	      const sortSelect = document.getElementById('sort-select');
@@ -3514,6 +4080,8 @@
 	        const mode = settings.sidebarMode || 'libraries';
 	        els.sidebarTitle.textContent = mode === 'folders' ? t('folders') : t('libraries');
 	      }
+
+	      document.documentElement.lang = locale === 'zh-CN' ? 'zh-CN' : 'en';
 
 	      return locale;
 	    }
@@ -3602,7 +4170,8 @@
 	      if (!n) return '-';
 	      const d = new Date(n);
 	      if (!Number.isFinite(d.getTime())) return '-';
-	      return d.toLocaleString(undefined, {
+	      const locale = getActiveLocale() === 'zh-CN' ? 'zh-CN' : 'en-US';
+	      return d.toLocaleString(locale, {
 	        year: 'numeric',
 	        month: 'short',
 	        day: 'numeric',
@@ -3714,7 +4283,7 @@
 	        .filter(b => (b.timeSpent || 0) > 0)
 	        .sort((a, b) => (b.timeSpent || 0) - (a.timeSpent || 0))
 	        .slice(0, 3)
-	        .map((b, i) => `${i + 1}. ${b.title || 'Untitled'} (${formatDurationSeconds(b.timeSpent || 0)})`)
+	        .map((b, i) => `${i + 1}. ${b.title || t('untitled')} (${formatDurationSeconds(b.timeSpent || 0)})`)
 	        .join('\n');
 	
 	      return [
@@ -3793,7 +4362,7 @@
 	          const isCompleted = Number(b.progress || 0) >= 0.98 || Number(b.completedAt || 0) > 0;
 	          if (completedAt) metaBits.push(`${t('first100Prefix')} ${formatDateTime(completedAt)}`);
 	          else if (isCompleted) metaBits.push(`${t('first100Prefix')} ${t('unknownFinishTime')}`);
-	          return `<div class="insights-item" onclick="openBook('${escapeHtml(b.id)}')"><div class="name">${escapeHtml(b.title || 'Untitled')}</div><div class="meta">${escapeHtml(metaBits.join(' · '))}</div></div>`;
+	          return `<div class="insights-item" onclick="openBook('${escapeHtml(b.id)}')"><div class="name">${escapeHtml(b.title || t('untitled'))}</div><div class="meta">${escapeHtml(metaBits.join(' · '))}</div></div>`;
 	        }).join('')
 	        : `<div style="padding:12px;color:var(--text-secondary);">${escapeHtml(t('totalReadingTime'))}: ${formatDurationSeconds(0)}</div>`;
 
@@ -3809,7 +4378,7 @@
 	            : (isCompleted ? `${t('first100Prefix')} ${t('unknownFinishTime')}` : '');
 	          const parts = [`${formatDateTime(b.lastRead)} · ${formatRelativeTime(b.lastRead)}`];
 	          if (completionMeta) parts.push(completionMeta);
-	          return `<div class="insights-item" onclick="openBook('${escapeHtml(b.id)}')"><div class="name">${escapeHtml(b.title || 'Untitled')}</div><div class="meta">${escapeHtml(parts.join(' · '))}</div></div>`;
+	          return `<div class="insights-item" onclick="openBook('${escapeHtml(b.id)}')"><div class="name">${escapeHtml(b.title || t('untitled'))}</div><div class="meta">${escapeHtml(parts.join(' · '))}</div></div>`;
 	        })
 	        .join('');
 
@@ -3881,6 +4450,115 @@
     function getCurrentLibrary() {
       if (selectedLibraryId === 'all') return null;
       return state.libraries.find(l => l.id === selectedLibraryId) || null;
+    }
+
+    function isPhysicalLibrary(lib) {
+      if (!lib) return false;
+      if (lib.type === 'physical') return true;
+      if (lib.type === 'logical') return false;
+      return !!lib.path;
+    }
+
+    function isLogicalLibrary(lib) {
+      return !!lib && !isPhysicalLibrary(lib);
+    }
+
+    function getLogicalLibraryBookIds(libraryId) {
+      const ids = state.libraryBookMap?.[libraryId];
+      return Array.isArray(ids) ? ids : [];
+    }
+
+    function getFolderNodeIdFromPath(absPath) {
+      const raw = String(absPath || '').trim();
+      if (!raw) return '';
+      const normalized = process.platform === 'win32' ? raw.toLowerCase() : raw;
+      return `dir:${encodeURIComponent(normalized)}`;
+    }
+
+    function buildAllBooksFolderStructure() {
+      const books = getActiveBooksArray().filter(book => !!book?.path);
+      if (!books.length) return null;
+
+      const root = {
+        id: '__ALL_BOOKS_DIR_ROOT__',
+        name: 'Physical Directories',
+        path: null,
+        relPath: '',
+        children: [],
+        books: []
+      };
+
+      const nodeById = new Map([[root.id, root]]);
+
+      const ensureNode = (parent, absPath, name) => {
+        const id = getFolderNodeIdFromPath(absPath);
+        if (!id) return parent;
+
+        let node = nodeById.get(id);
+        if (!node) {
+          node = {
+            id,
+            name: name || absPath,
+            path: absPath,
+            relPath: absPath,
+            children: [],
+            books: []
+          };
+          nodeById.set(id, node);
+        }
+        if (!parent.children.some(child => child.id === node.id)) {
+          parent.children.push(node);
+        }
+        return node;
+      };
+
+      for (const book of books) {
+        const filePath = String(book.path || '').trim();
+        if (!filePath) continue;
+
+        const dirPath = path.resolve(path.dirname(filePath));
+        const parsed = path.parse(dirPath);
+        const rootPath = parsed.root || path.sep;
+        let cursor = ensureNode(root, rootPath, rootPath);
+
+        const tail = dirPath.slice(rootPath.length).split(path.sep).filter(Boolean);
+        let abs = rootPath;
+        for (const segment of tail) {
+          abs = abs ? path.join(abs, segment) : segment;
+          cursor = ensureNode(cursor, abs, segment);
+        }
+
+        if (!cursor.books.includes(book.id)) cursor.books.push(book.id);
+      }
+
+      const sortTree = (node) => {
+        node.children.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+        node.books.sort((aId, bId) => {
+          const a = state.booksById[aId];
+          const b = state.booksById[bId];
+          return String(a?.title || '').localeCompare(String(b?.title || ''));
+        });
+        (node.children || []).forEach(sortTree);
+      };
+      sortTree(root);
+
+      return root.children.length ? root : null;
+    }
+
+    function getActiveFolderStructure() {
+      if (selectedLibraryId === 'all') return buildAllBooksFolderStructure();
+      const lib = getCurrentLibrary();
+      if (isPhysicalLibrary(lib) && lib?.structure) return lib.structure;
+      return null;
+    }
+
+    function canUseFolderMode() {
+      return !!getActiveFolderStructure();
+    }
+
+    function canMutateFolderStructure() {
+      const lib = getCurrentLibrary();
+      return !!(selectedLibraryId !== 'all' && isPhysicalLibrary(lib) && lib?.structure);
     }
 
 	    function findNodeById(root, nodeId) {
@@ -3959,18 +4637,33 @@
 	    let searchFilters = { format: null, status: null };
 
 	    function getBooksInCurrentScope() {
-	      const base = getActiveBooksArray()
-	        .filter(b => (selectedLibraryId === 'all' ? true : b.libraryId === selectedLibraryId));
-
-	      if (selectedLibraryId === 'all' || selectedFolderNodeId === '__ALL__') return base;
+	      const base = getActiveBooksArray();
+	      if (selectedLibraryId === 'all') {
+	        if (selectedFolderNodeId === '__ALL__') return base;
+	        const root = getActiveFolderStructure();
+	        const node = findNodeById(root, selectedFolderNodeId);
+	        if (!node) return base;
+	        const set = new Set();
+	        collectBookIds(node, set);
+	        return base.filter(b => set.has(b.id));
+	      }
 
 	      const lib = getCurrentLibrary();
-	      const node = findNodeById(lib?.structure, selectedFolderNodeId);
-	      if (!node) return base;
+	      if (!lib) return base;
 
+	      if (isLogicalLibrary(lib)) {
+	        const set = new Set(getLogicalLibraryBookIds(lib.id));
+	        return base.filter(b => set.has(b.id) || b.libraryId === lib.id);
+	      }
+
+	      const physicalBase = base.filter(b => b.libraryId === lib.id);
+	      if (selectedFolderNodeId === '__ALL__') return physicalBase;
+
+	      const node = findNodeById(lib?.structure, selectedFolderNodeId);
+	      if (!node) return physicalBase;
 	      const set = new Set();
 	      collectBookIds(node, set);
-	      return base.filter(b => set.has(b.id));
+	      return physicalBase.filter(b => set.has(b.id));
 	    }
 
 	    function getBookSearchHaystack(book) {
@@ -4072,21 +4765,25 @@
 	    async function refreshState() {
 	      const data = await ipcRenderer.invoke('get-state');
 	      state.libraries = data.libraries || [];
+	      state.libraryBookMap = data.libraryBookMap || {};
 	      state.booksById = (data.books || []).reduce((acc, b) => (acc[b.id] = b, acc), {});
 	      state.settings = data.settings || {};
 	      state.stats = data.stats || {};
 	      state.analytics = data.analytics || {};
 	      settings = state.settings;
+	      selectedLibraryId = state.settings.selectedLibraryId || 'all';
+	      if (selectedLibraryId !== 'all' && !state.libraries.some(l => l.id === selectedLibraryId)) {
+	        selectedLibraryId = 'all';
+	      }
+	      if (!initializedLibrarySelection) {
+	        selectedLibraryId = 'all';
+	        await persistSelectedLibrary('all');
+	        initializedLibrarySelection = true;
+	      }
 	      getSystemLocaleInfo().then(() => applyI18n()).catch(() => {});
 	      applyAppTheme();
 	      applySidebarMode();
-
-      selectedLibraryId = state.settings.selectedLibraryId || 'all';
-      if (selectedLibraryId !== 'all' && !state.libraries.some(l => l.id === selectedLibraryId)) {
-        selectedLibraryId = 'all';
-        await persistSelectedLibrary('all');
-      }
-    }
+	    }
 
     async function persistSelectedLibrary(id) {
       state.settings.selectedLibraryId = id;
@@ -4118,86 +4815,143 @@
       if (!els.libraryList) return;
 
       const libCounts = {};
-      for (const b of getActiveBooksArray()) {
+      for (const b of Object.values(state.booksById || {})) {
+        if (!b || b.missingOnDisk) continue;
         if (!b.libraryId) continue;
         libCounts[b.libraryId] = (libCounts[b.libraryId] || 0) + 1;
+      }
+      const logicalCounts = {};
+      for (const lib of state.libraries) {
+        if (!isLogicalLibrary(lib)) continue;
+        const idSet = new Set(getLogicalLibraryBookIds(lib.id));
+        for (const book of Object.values(state.booksById || {})) {
+          if (String(book?.libraryId || '') === String(lib.id) && book?.id) {
+            idSet.add(book.id);
+          }
+        }
+        let count = 0;
+        for (const id of idSet) {
+          const book = state.booksById[id];
+          if (book && !book.missingOnDisk) count += 1;
+        }
+        logicalCounts[lib.id] = count;
       }
 
       const allActive = selectedLibraryId === 'all';
       const items = [];
 
-      items.push(`
-        <div class="library-item ${allActive ? 'active' : ''}" onclick="selectLibrary('all')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span>All Books</span>
-        </div>
-      `);
+	      items.push(`
+	        <div class="library-item ${allActive ? 'active' : ''}" onclick="selectLibrary('all')">
+	          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+	          <span>${escapeHtml(t('allBooks'))}</span>
+	        </div>
+	      `);
 
       for (const lib of state.libraries) {
         const active = selectedLibraryId === lib.id;
-        const count = libCounts[lib.id] || 0;
-        const libName = lib.name || 'Untitled';
-        items.push(`
-          <div class="library-item ${active ? 'active' : ''}" onclick="selectLibrary('${escapeHtml(lib.id)}')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <span>${escapeHtml(libName)} (${count})</span>
-            <div class="lib-actions">
-              ${lib.path ? `<button title="Sync (add new/remove deleted)" onclick="event.stopPropagation();rescanLibrary('${escapeHtml(lib.id)}')" ondblclick="event.stopPropagation();rescanLibrary('${escapeHtml(lib.id)}', true)">⟳</button>` : ''}
-              <button title="Delete" onclick="event.stopPropagation();showDeleteLibraryModal('${escapeHtml(lib.id)}')">🗑</button>
-            </div>
-          </div>
-        `);
+        const physical = isPhysicalLibrary(lib);
+        const count = physical ? (libCounts[lib.id] || 0) : (logicalCounts[lib.id] || 0);
+	        const libName = lib.name || t('untitled');
+	        items.push(`
+	          <div class="library-item ${active ? 'active' : ''}" onclick="selectLibrary('${escapeHtml(lib.id)}')">
+	            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+	            <span>${escapeHtml(libName)} (${count})${physical ? '' : ` • ${escapeHtml(t('logicalTag'))}`}</span>
+	            <div class="lib-actions">
+	              ${physical && lib.path ? `<button title="${escapeHtml(t('syncLibrary'))}" onclick="event.stopPropagation();rescanLibrary('${escapeHtml(lib.id)}')" ondblclick="event.stopPropagation();rescanLibrary('${escapeHtml(lib.id)}', true)">⟳</button>` : ''}
+	              <button title="${escapeHtml(t('deleteLabel'))}" onclick="event.stopPropagation();showDeleteLibraryModal('${escapeHtml(lib.id)}')">🗑</button>
+	            </div>
+	          </div>
+	        `);
       }
 
       els.libraryList.innerHTML = items.join('');
     }
 
 	    function applySidebarMode() {
+	      const canFolders = canUseFolderMode();
+	      if (settings.sidebarMode === 'folders' && !canFolders) {
+	        settings.sidebarMode = 'libraries';
+	      }
 	      const mode = settings.sidebarMode || 'libraries';
+	      if (els.tabFolders) {
+	        els.tabFolders.disabled = !canFolders;
+	        els.tabFolders.title = canFolders ? '' : t('noPhysicalFolderStructure');
+	      }
 	      els.tabLibraries?.classList?.toggle('active', mode === 'libraries');
 	      els.tabFolders?.classList?.toggle('active', mode === 'folders');
 	      els.libraryList?.classList?.toggle('hidden', mode !== 'libraries');
 	      els.folderTree?.classList?.toggle('hidden', mode !== 'folders');
 	      els.sidebarAddLibrary?.classList?.toggle('hidden', mode !== 'libraries');
-	      els.sidebarAddFolder?.classList?.toggle('hidden', mode !== 'folders');
+	      els.sidebarAddFolder?.classList?.toggle('hidden', mode !== 'folders' || !canMutateFolderStructure());
 	      if (els.sidebarTitle) els.sidebarTitle.textContent = mode === 'folders' ? t('folders') : t('libraries');
 	    }
 
     function setSidebarMode(mode) {
+      if (mode === 'folders' && !canUseFolderMode()) {
+        showToast(t('noPhysicalFolderStructure'), 'error');
+        return;
+      }
       settings.sidebarMode = mode;
       ipcRenderer.invoke('update-settings', settings);
       applySidebarMode();
       renderFolderTree();
     }
 
+    function togglePhysicalStructureFromMainHallMiddleClick(event) {
+      if (!event || event.button !== 1) return;
+      if (currentBook) return;
+      if (!els.libraryView || getComputedStyle(els.libraryView).display === 'none') return;
+
+      const target = event.target;
+      const blocked = target?.closest?.(
+        'button, a, input, textarea, select, label, .book-card, .recent-book, .library-item, .folder-item, .context-menu, .modal, #library-search, #library-search-popover'
+      );
+      if (blocked) return;
+
+      event.preventDefault();
+      if ((settings.sidebarMode || 'libraries') === 'folders') {
+        setSidebarMode('libraries');
+      } else {
+        setSidebarMode('folders');
+      }
+    }
+
     function ensureFolderUiState() {
-      const lib = getCurrentLibrary();
-      if (!lib?.structure) return;
-      if (!expandedFolderIds.size) expandedFolderIds.add(lib.structure.id);
-      if (selectedFolderNodeId !== '__ALL__' && !findNodeById(lib.structure, selectedFolderNodeId)) {
+      const root = getActiveFolderStructure();
+      if (!root) return;
+      if (!expandedFolderIds.size) expandedFolderIds.add(root.id);
+      if (selectedFolderNodeId !== '__ALL__' && !findNodeById(root, selectedFolderNodeId)) {
         selectedFolderNodeId = '__ALL__';
       }
     }
 
     function renderFolderTree() {
       if (!els.folderTree) return;
-      const lib = getCurrentLibrary();
-
-	      if (!lib?.structure) {
-	        if (settings.sidebarMode === 'folders') {
-	          els.folderTree.innerHTML = `<div style="padding:16px;color:var(--text-secondary);">${escapeHtml(t('selectLibraryToViewFolders'))}</div>`;
-	        } else {
-	          els.folderTree.innerHTML = '';
-	        }
-	        return;
-	      }
+      const root = getActiveFolderStructure();
+      if (!root) {
+        if (settings.sidebarMode === 'folders') {
+          const msg = selectedLibraryId === 'all'
+            ? t('noPhysicalTreeYet')
+            : t('foldersPhysicalOnly');
+          els.folderTree.innerHTML = `<div style="padding:16px;color:var(--text-secondary);">${escapeHtml(msg)}</div>`;
+        } else {
+          els.folderTree.innerHTML = '';
+        }
+        return;
+      }
 
       ensureFolderUiState();
+      const mutable = canMutateFolderStructure();
 
       const countBooks = (node) => {
         const s = new Set();
         collectBookIds(node, s);
         return s.size;
+      };
+
+      const dropAttrs = (nodeId) => {
+        if (!mutable) return '';
+        return `ondragover="onFolderDragOver(event)" ondragleave="onFolderDragLeave(event)" ondrop="onFolderDrop(event,'${escapeHtml(nodeId)}')"`;
       };
 
       const renderNode = (node, depth) => {
@@ -4213,11 +4967,9 @@
                style="padding-left:${pad}px"
                onclick="selectFolder('${escapeHtml(node.id)}')"
                ondblclick="toggleFolderNode('${escapeHtml(node.id)}')"
-               ondragover="onFolderDragOver(event)"
-               ondragleave="onFolderDragLeave(event)"
-               ondrop="onFolderDrop(event,'${escapeHtml(node.id)}')">
+               ${dropAttrs(node.id)}>
             <span class="caret">${caret}</span>
-            <span class="name">${escapeHtml(node.name || 'Folder')} <span style="opacity:.55">(${total})</span></span>
+	            <span class="name">${escapeHtml(node.name || t('folderFallback'))} <span style="opacity:.55">(${total})</span></span>
           </div>
         `;
 
@@ -4226,20 +4978,18 @@
         return row + children;
       };
 
-      const rootId = lib.structure.id;
+      const rootId = root.id;
       const allActive = selectedFolderNodeId === '__ALL__';
-      const allRow = `
-        <div class="folder-item ${allActive ? 'active' : ''}"
-             onclick="selectFolder('__ALL__')"
-             ondragover="onFolderDragOver(event)"
-             ondragleave="onFolderDragLeave(event)"
-             ondrop="onFolderDrop(event,'${escapeHtml(rootId)}')">
-          <span class="caret">⌂</span>
-          <span class="name">All folders</span>
-        </div>
-      `;
+	      const allRow = `
+	        <div class="folder-item ${allActive ? 'active' : ''}"
+	             onclick="selectFolder('__ALL__')"
+	             ${dropAttrs(rootId)}>
+	          <span class="caret">⌂</span>
+	          <span class="name">${escapeHtml(t('allFolders'))}</span>
+	        </div>
+	      `;
 
-      els.folderTree.innerHTML = allRow + renderNode(lib.structure, 0);
+      els.folderTree.innerHTML = allRow + renderNode(root, 0);
     }
 
     function selectFolder(nodeId) {
@@ -4255,29 +5005,28 @@
     }
 
     async function createFolderPrompt() {
+      if (!canMutateFolderStructure()) {
+        showToast(t('createFolderPhysicalOnly'), 'error');
+        return;
+      }
       const lib = getCurrentLibrary();
       if (!lib?.structure) return;
       const parentId = (selectedFolderNodeId !== '__ALL__') ? selectedFolderNodeId : lib.structure.id;
-      const name = window.prompt('Folder name');
+      const name = window.prompt(t('folderNamePrompt'));
       if (!name) return;
 
-      let createOnDisk = true;
-      if (lib.path) {
-        createOnDisk = window.confirm('Create folder on disk too?');
-      } else {
-        createOnDisk = false;
-      }
+      const createOnDisk = window.confirm(t('createFolderOnDiskConfirm'));
 
-      try {
-        await ipcRenderer.invoke('create-folder', lib.id, parentId, name, createOnDisk);
-        await refreshState();
-        renderFolderTree();
-        renderBooks();
-        showToast('Folder created', 'success');
-      } catch (e) {
-        showToast(e?.message || 'Failed to create folder', 'error');
-      }
-    }
+	      try {
+	        await ipcRenderer.invoke('create-folder', lib.id, parentId, name, createOnDisk);
+	        await refreshState();
+	        renderFolderTree();
+	        renderBooks();
+	        showToast(t('folderCreated'), 'success');
+	      } catch (e) {
+	        showToast(e?.message || t('failedCreateFolder'), 'error');
+	      }
+	    }
 
     function onBookDragStart(event, bookId) {
       draggingBookId = bookId;
@@ -4295,6 +5044,49 @@
       els.contextMenu.style.top = '-9999px';
     }
 
+    function getLogicalLibraries() {
+      return (state.libraries || []).filter(isLogicalLibrary);
+    }
+
+    async function addBookToLogicalLibraryPrompt(bookId) {
+      const logicalLibraries = getLogicalLibraries();
+      if (!logicalLibraries.length) {
+        showToast(t('createLogicalLibraryFirst'), 'error');
+        return;
+      }
+
+      const currentLib = getCurrentLibrary();
+      let defaultIndex = 0;
+      if (currentLib && isLogicalLibrary(currentLib)) {
+        const idx = logicalLibraries.findIndex(lib => lib.id === currentLib.id);
+        if (idx >= 0) defaultIndex = idx;
+      }
+
+	      const options = logicalLibraries.map((lib, idx) => `${idx + 1}. ${lib.name || t('libraryFallback')}`).join('\n');
+	      const raw = window.prompt(`${t('addToLogicalLibraryPrompt')}\n\n${options}`, String(defaultIndex + 1));
+      if (raw === null) return;
+
+      let target = null;
+      const num = Number(raw);
+      if (Number.isInteger(num) && num >= 1 && num <= logicalLibraries.length) {
+        target = logicalLibraries[num - 1];
+      }
+      if (!target) {
+        const q = String(raw || '').trim().toLowerCase();
+        if (q) target = logicalLibraries.find(lib => String(lib.name || '').trim().toLowerCase() === q);
+      }
+      if (!target) {
+        showToast(t('noMatchingLogicalLibrary'), 'error');
+        return;
+      }
+
+      await ipcRenderer.invoke('add-book-to-library', target.id, bookId);
+	      await refreshState();
+	      renderLibraries();
+	      renderBooks();
+	      showToast(tf('addedToLibrary', { name: target.name || t('libraryFallback') }), 'success');
+	    }
+
     async function onBookContextMenu(event, bookId) {
       event.preventDefault();
       event.stopPropagation();
@@ -4308,70 +5100,91 @@
         const btn = document.createElement('button');
         btn.textContent = label;
         if (opts.danger) btn.classList.add('danger');
-        btn.addEventListener('click', async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          hideContextMenu();
-          try { await handler(); } catch (err) { showToast(err?.message || 'Action failed', 'error'); }
-        });
-        menu.appendChild(btn);
-      };
+	        btn.addEventListener('click', async (e) => {
+	          e.preventDefault();
+	          e.stopPropagation();
+	          hideContextMenu();
+	          try { await handler(); } catch (err) { showToast(err?.message || t('actionFailed'), 'error'); }
+	        });
+	        menu.appendChild(btn);
+	      };
       const sep = () => {
         const div = document.createElement('div');
         div.className = 'sep';
         menu.appendChild(div);
       };
 
-	      add('Open', async () => openBook(bookId));
-	      add('Copy book name', async () => {
-	        await navigator.clipboard.writeText(book.title || '');
-	        showToast('Copied book name', 'success');
+		      add(t('menuOpen'), async () => openBook(bookId));
+		      add(t('menuCopyBookName'), async () => {
+		        await navigator.clipboard.writeText(book.title || '');
+		        showToast(t('copiedBookName'), 'success');
+		      });
+	      add(t('showFullMetainfo'), async () => {
+	        await showBookMetainfo(bookId);
 	      });
 	      add(book.pinnedAt ? t('unpin') : t('pin'), async () => {
 	        await ipcRenderer.invoke('toggle-pin', bookId);
 	        await refreshState();
 	        renderBooks();
 	      });
-		      add('Search in library', async () => {
-		        if (els.librarySearchInput) els.librarySearchInput.value = book.title || '';
-		        openSearch();
-		        onLibrarySearchInput();
-		      });
+			      add(t('menuSearchInLibrary'), async () => {
+			        if (els.librarySearchInput) els.librarySearchInput.value = book.title || '';
+			        openSearch();
+			        onLibrarySearchInput();
+			      });
+	      add(t('menuAddToLogicalLibrary'), async () => {
+	        await addBookToLogicalLibraryPrompt(bookId);
+	      });
       sep();
 
-      add('Move…', async () => {
-        if (!book.libraryId) return;
-        if (selectedLibraryId !== book.libraryId) await selectLibrary(book.libraryId);
-        setSidebarMode('folders');
-        const lib = getCurrentLibrary();
-        if (!lib?.structure) return;
-        showMoveBookModal(bookId, lib.structure.id);
-      });
+      const currentLib = getCurrentLibrary();
+      if (currentLib && isLogicalLibrary(currentLib)
+        && (getLogicalLibraryBookIds(currentLib.id).includes(bookId) || book.libraryId === currentLib.id)) {
+	        add(t('menuRemoveFromThisLibrary'), async () => {
+	          await ipcRenderer.invoke('remove-book-from-library', currentLib.id, bookId);
+	          await refreshState();
+	          renderLibraries();
+	          renderBooks();
+	          showToast(tf('removedFromLibrary', { name: currentLib.name || t('libraryFallback') }), 'success');
+	        });
+	      }
 
-      add('Reveal in folder', async () => {
-        if (book.path) await ipcRenderer.invoke('show-item-in-folder', book.path);
-      });
+      const sourceLibrary = state.libraries.find(lib => lib.id === book.libraryId);
+      if (sourceLibrary && isPhysicalLibrary(sourceLibrary)) {
+	        add(t('menuMove'), async () => {
+	          if (!book.libraryId) return;
+	          if (selectedLibraryId !== book.libraryId) await selectLibrary(book.libraryId);
+	          setSidebarMode('folders');
+          const lib = getCurrentLibrary();
+          if (!lib?.structure) return;
+          showMoveBookModal(bookId, lib.structure.id);
+        });
+      }
 
-      add('Regenerate cover', async () => {
-        showToast('Regenerating cover…');
-        coverUrlCache.delete(bookId);
-        const url = await ipcRenderer.invoke('regenerate-cover', bookId);
-        if (url) {
+	      add(t('menuRevealInFolder'), async () => {
+	        if (book.path) await ipcRenderer.invoke('show-item-in-folder', book.path);
+	      });
+
+	      add(t('menuRegenerateCover'), async () => {
+	        showToast(t('regeneratingCover'));
+	        coverUrlCache.delete(bookId);
+	        const url = await ipcRenderer.invoke('regenerate-cover', bookId);
+	        if (url) {
           const selector = `img.book-cover[data-book-id="${cssEscape(bookId)}"]`;
           document.querySelectorAll(selector).forEach(img => {
             img.src = url + '?t=' + Date.now();
             img.closest('.book-card')?.classList?.add('has-cover');
             img.closest('.recent-book')?.classList?.add('has-cover');
-          });
-          coverUrlCache.set(bookId, url);
-          showToast('Cover regenerated', 'success');
-        } else {
-          showToast('Failed to generate cover', 'error');
-        }
-      });
+	          });
+	          coverUrlCache.set(bookId, url);
+	          showToast(t('coverRegenerated'), 'success');
+	        } else {
+	          showToast(t('failedGenerateCover'), 'error');
+	        }
+	      });
 
-      sep();
-      add('Delete…', async () => showDeleteModal(bookId), { danger: true });
+	      sep();
+	      add(t('menuDelete'), async () => showDeleteModal(bookId), { danger: true });
 
       const x = Math.min(window.innerWidth - 240, Math.max(8, event.clientX));
       const y = Math.min(window.innerHeight - 220, Math.max(8, event.clientY));
@@ -4396,23 +5209,23 @@
         try { return event.dataTransfer.getData('text/plain'); } catch (e) { return ''; }
       })() || draggingBookId;
 
-      if (!bookId || selectedLibraryId === 'all') return;
+      if (!bookId || !canMutateFolderStructure()) return;
       const lib = getCurrentLibrary();
       if (!lib?.structure) return;
 
       showMoveBookModal(bookId, targetNodeId || lib.structure.id);
     }
 
-    function flattenFolderOptions(root, depth = 0, out = []) {
-      if (!root) return out;
-      const prefix = depth ? `${'—'.repeat(Math.min(8, depth))} ` : '';
-      out.push({ id: root.id, label: `${prefix}${root.name || 'Folder'}` });
-      (root.children || []).forEach(child => flattenFolderOptions(child, depth + 1, out));
-      return out;
-    }
+	    function flattenFolderOptions(root, depth = 0, out = []) {
+	      if (!root) return out;
+	      const prefix = depth ? `${'—'.repeat(Math.min(8, depth))} ` : '';
+	      out.push({ id: root.id, label: `${prefix}${root.name || t('folderFallback')}` });
+	      (root.children || []).forEach(child => flattenFolderOptions(child, depth + 1, out));
+	      return out;
+	    }
 
     function showMoveBookModal(bookId, targetNodeId) {
-      if (selectedLibraryId === 'all') return;
+      if (!canMutateFolderStructure()) return;
       const lib = getCurrentLibrary();
       if (!lib?.structure) return;
       const book = state.booksById[bookId];
@@ -4426,13 +5239,13 @@
         els.moveTargetSelect.value = targetNodeId || lib.structure.id;
       }
 
-      pendingMove = { libraryId: lib.id, bookId, targetNodeId: targetNodeId || lib.structure.id };
-      const destNode = findNodeById(lib.structure, pendingMove.targetNodeId);
-      if (els.moveBookTitle) els.moveBookTitle.textContent = `Move "${book.title || 'book'}"?`;
-      if (els.moveBookDesc) els.moveBookDesc.textContent = `Move to "${destNode?.name || 'folder'}". Choose whether to also move the file on disk.`;
-      if (els.moveBookDiskBtn) els.moveBookDiskBtn.style.display = lib.path ? 'block' : 'none';
-      els.moveBookModal.classList.remove('hidden');
-    }
+	      pendingMove = { libraryId: lib.id, bookId, targetNodeId: targetNodeId || lib.structure.id };
+	      const destNode = findNodeById(lib.structure, pendingMove.targetNodeId);
+	      if (els.moveBookTitle) els.moveBookTitle.textContent = tf('moveBookTitleTemplate', { title: book.title || t('bookFallback') });
+	      if (els.moveBookDesc) els.moveBookDesc.textContent = tf('moveBookDescTemplate', { folder: destNode?.name || t('folderFallback') });
+	      if (els.moveBookDiskBtn) els.moveBookDiskBtn.style.display = lib.path ? 'block' : 'none';
+	      els.moveBookModal.classList.remove('hidden');
+	    }
 
     function hideMoveBookModal() {
       els.moveBookModal.classList.add('hidden');
@@ -4440,19 +5253,46 @@
       draggingBookId = null;
     }
 
+    function hideBookMetaModal() {
+      if (!els.bookMetaModal) return;
+      els.bookMetaModal.classList.add('hidden');
+      if (els.bookMetaContent) els.bookMetaContent.textContent = '';
+    }
+
+    async function showBookMetainfo(bookId) {
+      try {
+        const meta = await ipcRenderer.invoke('get-book-metainfo', bookId);
+        if (!meta) {
+          showToast(t('metainfoUnavailable'), 'error');
+          return;
+        }
+
+	        const title = meta?.book?.title || state.booksById?.[bookId]?.title || t('untitled');
+        if (els.bookMetaTitle) {
+          els.bookMetaTitle.textContent = `${t('bookMetainfoTitle')}: ${title}`;
+        }
+        if (els.bookMetaContent) {
+          els.bookMetaContent.textContent = JSON.stringify(meta, null, 2);
+        }
+        els.bookMetaModal?.classList?.remove('hidden');
+      } catch (e) {
+        showToast(e?.message || t('metainfoUnavailable'), 'error');
+      }
+    }
+
     async function confirmMoveBook(moveFile) {
       if (!pendingMove) return;
       try {
         await ipcRenderer.invoke('move-book', pendingMove.libraryId, pendingMove.bookId, pendingMove.targetNodeId, !!moveFile);
-        hideMoveBookModal();
-        await refreshState();
-        renderFolderTree();
-        renderBooks();
-        showToast(moveFile ? 'Moved book and file' : 'Moved book', 'success');
-      } catch (e) {
-        showToast(e?.message || 'Move failed', 'error');
-      }
-    }
+	        hideMoveBookModal();
+	        await refreshState();
+	        renderFolderTree();
+	        renderBooks();
+	        showToast(moveFile ? t('movedBookAndFile') : t('movedBook'), 'success');
+	      } catch (e) {
+	        showToast(e?.message || t('moveFailed'), 'error');
+	      }
+	    }
 
     function renderBooks() {
       if (!els.booksGrid || !els.booksContainer || !els.emptyMsg) return;
@@ -4471,35 +5311,46 @@
         return;
       }
 
-      els.emptyMsg.classList.add('hidden');
-      els.booksContainer.classList.remove('hidden');
-      renderFolderTree();
+	      els.emptyMsg.classList.add('hidden');
+	      els.booksContainer.classList.remove('hidden');
+	      renderFolderTree();
 
-	      const libTitle = selectedLibraryId === 'all'
-	        ? 'All Books'
-	        : (state.libraries.find(l => l.id === selectedLibraryId)?.name || 'Library');
-	      let headerTitle = libTitle;
-	      if (selectedLibraryId !== 'all' && selectedFolderNodeId !== '__ALL__') {
-	        const lib = getCurrentLibrary();
-	        const pathNodes = findPathToNode(lib?.structure, selectedFolderNodeId);
-	        const folderPath = (pathNodes || []).slice(1).map(n => n.name || 'Folder').join(' / ');
-	        if (folderPath) headerTitle = `${libTitle} / ${folderPath}`;
-	      }
-	      els.booksHeaderTitle.textContent = headerTitle;
-      els.booksCount.textContent = `${visible.length} book${visible.length === 1 ? '' : 's'}`;
-      renderSortControls();
+		      let headerTitle = t('allBooks');
+		      const currentLib = getCurrentLibrary();
+		      if (selectedLibraryId === 'all') {
+		        if (selectedFolderNodeId !== '__ALL__') {
+		          const root = getActiveFolderStructure();
+		          const pathNodes = findPathToNode(root, selectedFolderNodeId);
+		          const folderPath = (pathNodes || []).slice(1).map(n => n.name || t('folderFallback')).join(' / ');
+		          if (folderPath) headerTitle = `${t('allBooks')} / ${folderPath}`;
+		        }
+		      } else if (currentLib) {
+		        headerTitle = currentLib.name || t('libraryFallback');
+		        if (isLogicalLibrary(currentLib)) {
+		          headerTitle = `${headerTitle} • ${t('logicalTag')}`;
+		        } else if (selectedFolderNodeId !== '__ALL__') {
+		          const pathNodes = findPathToNode(currentLib?.structure, selectedFolderNodeId);
+		          const folderPath = (pathNodes || []).slice(1).map(n => n.name || t('folderFallback')).join(' / ');
+		          if (folderPath) headerTitle = `${headerTitle} / ${folderPath}`;
+		        }
+		      }
+		      els.booksHeaderTitle.textContent = headerTitle;
+		      els.booksCount.textContent = tf('booksCount', { n: visible.length });
+		      renderSortControls();
 
       if (!hasVisible) {
-        const msgTitle = libraryQuery.trim()
-          ? 'No matches'
-          : (selectedFolderNodeId !== '__ALL__' ? 'No books in this folder' : 'No books');
-        const msgAction = libraryQuery.trim()
-          ? `<button class="primary" onclick="clearLibrarySearch()">Clear Search</button>`
-          : '';
+	        const folderScoped = selectedFolderNodeId !== '__ALL__' && canUseFolderMode();
+	        const msgTitle = libraryQuery.trim()
+	          ? t('noMatchesShort')
+	          : (folderScoped ? t('noBooksInFolder') : t('noBooks'));
+	        const hint = folderScoped ? t('tryDifferentSearchOrFolder') : t('tryDifferentSearchOrLibrary');
+	        const msgAction = libraryQuery.trim()
+	          ? `<button class="primary" onclick="clearLibrarySearch()">${escapeHtml(t('clearSearch'))}</button>`
+	          : '';
         els.booksGrid.innerHTML = `
           <div style="grid-column:1/-1;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);">
             <div style="font-weight:600;margin-bottom:6px;">${msgTitle}</div>
-            <div style="color:var(--text-secondary);margin-bottom:14px;">Try a different search or folder.</div>
+            <div style="color:var(--text-secondary);margin-bottom:14px;">${hint}</div>
             ${msgAction}
           </div>
         `;
@@ -4515,8 +5366,8 @@
 
 	      els.booksGrid.innerHTML = visible.map((b, i) => {
 	        const pct = Math.max(0, Math.min(100, Math.round((b.progress || 0) * 100)));
-	        const title = escapeHtml(b.title || 'Untitled');
-	        const author = escapeHtml(b.author || 'Unknown');
+		        const title = escapeHtml(b.title || t('untitled'));
+		        const author = escapeHtml(b.author || t('unknownAuthor'));
 	        const completedAt = Number(b.firstCompletedAt || 0);
 	        const isCompleted = Number(b.progress || 0) >= 0.98 || Number(b.completedAt || 0) > 0;
 	        const showCompletionMeta = settings.showFirstCompletionInHall !== false;
@@ -4533,7 +5384,7 @@
 	        return `
 	          <div class="book-card" style="animation-delay:${Math.min(240, i * 14)}ms" draggable="true" ondragstart="onBookDragStart(event,'${escapeHtml(b.id)}')" oncontextmenu="onBookContextMenu(event,'${escapeHtml(b.id)}')" onclick="openBook('${escapeHtml(b.id)}')">
 	            ${b.pinnedAt ? `<div class="pin-badge">${escapeHtml(t('pinned'))}</div>` : ''}
-	            <button class="menu-btn" title="More" onclick="event.stopPropagation();onBookContextMenu(event,'${escapeHtml(b.id)}')">⋯</button>
+		            <button class="menu-btn" title="${escapeHtml(t('more'))}" onclick="event.stopPropagation();onBookContextMenu(event,'${escapeHtml(b.id)}')">⋯</button>
 	            <div class="book-icon">
 	              <img class="book-cover" data-book-id="${escapeHtml(b.id)}" alt="">
 	              ${iconSvg(b.format)}
@@ -4586,13 +5437,13 @@
 	          : '';
 	        return `
 	          <div class="recent-book" oncontextmenu="onBookContextMenu(event,'${escapeHtml(b.id)}')" onclick="openBook('${escapeHtml(b.id)}')">
-	            <button class="recent-remove" onclick="event.stopPropagation();removeFromRecent('${escapeHtml(b.id)}')" title="Remove from Continue Reading">&times;</button>
+		            <button class="recent-remove" onclick="event.stopPropagation();removeFromRecent('${escapeHtml(b.id)}')" title="${escapeHtml(t('removeFromContinueReading'))}">&times;</button>
 	            <div class="book-icon">
 	              <img class="book-cover" data-book-id="${escapeHtml(b.id)}" alt="">
 	              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;color:var(--primary);"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
 	            </div>
-	            <div class="book-title">${escapeHtml(b.title || 'Untitled')}</div>
-	            <div class="book-author">${escapeHtml(b.author || 'Unknown')}</div>
+		            <div class="book-title">${escapeHtml(b.title || t('untitled'))}</div>
+		            <div class="book-author">${escapeHtml(b.author || t('unknownAuthor'))}</div>
 	            <div class="book-footer">
 	              ${completionMetaHtml}
 	              <div class="book-progress-row">
@@ -4618,6 +5469,7 @@
 	      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 	      if (els.librarySearchKbd) els.librarySearchKbd.textContent = isMac ? '⌘K' : 'Ctrl+K';
 	      bindLibrarySearch();
+	      els.booksArea?.addEventListener('auxclick', togglePhysicalStructureFromMainHallMiddleClick);
 
 	      els.readerContent?.addEventListener('wheel', (e) => {
 	        if (!currentBook) return;
@@ -4668,7 +5520,8 @@
                               !document.getElementById('insights-modal')?.classList.contains('hidden') ||
                               !document.getElementById('create-library-modal')?.classList.contains('hidden') ||
 	                              !document.getElementById('delete-library-modal')?.classList.contains('hidden') ||
-	                              !document.getElementById('move-book-modal')?.classList.contains('hidden');
+	                              !document.getElementById('move-book-modal')?.classList.contains('hidden') ||
+                              !document.getElementById('book-meta-modal')?.classList.contains('hidden');
 
 		          closeSearch();
 		          hideSettings();
@@ -4677,6 +5530,7 @@
 		          hideCreateLibraryModal();
 		          hideDeleteLibraryModal();
 		          hideMoveBookModal();
+		          hideBookMetaModal();
 		          hideContextMenu();
 		          hideNoteModal();
 		          const hasBookSearch = currentBook && (isBookSearchResultsVisible() || (els.bookSearch?.value || '').trim());
@@ -4740,6 +5594,7 @@
       selectedFolderNodeId = '__ALL__';
       expandedFolderIds.clear();
       await persistSelectedLibrary(id);
+      applySidebarMode();
       renderLibraries();
       renderFolderTree();
       renderBooks();
@@ -4884,10 +5739,10 @@
 	      // Show recent searches when empty
 	      if (isEmpty && !hasFilters && recentSearches.length > 0) {
 	        const recentBooks = getRecentBooksForSearch(5);
-	        let html = `<div class="pop-section">Recent Searches</div>`;
+	        let html = `<div class="pop-section">${escapeHtml(t('recentSearches'))}</div>`;
 	        html += recentSearches.map(q => `<button type="button" class="pop-recent-search" data-query="${escapeHtml(q)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>${escapeHtml(q)}</button>`).join('');
 	        if (recentBooks.length) {
-	          html += `<div class="pop-section">Recent Books</div>`;
+	          html += `<div class="pop-section">${escapeHtml(t('recentBooks'))}</div>`;
 	          html += recentBooks.map((b, i) => renderSearchResultItem(b, i, tokens)).join('');
 	        }
 	        list.innerHTML = html;
@@ -4902,20 +5757,20 @@
 	      librarySearchState.selectedIndex = 0;
 
 	      if (!items.length) {
-	        const emptyMsg = isEmpty ? 'No recent books' : 'No results found';
+	        const emptyMsg = isEmpty ? t('noRecentBooks') : t('noResultsFound');
 	        list.innerHTML = `<div class="pop-empty"><svg class="pop-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>${escapeHtml(emptyMsg)}</div>`;
 	        return;
 	      }
 
-	      const sectionLabel = isEmpty ? 'Recent' : 'Results';
+	      const sectionLabel = isEmpty ? t('searchRecent') : t('results');
 	      list.innerHTML = `<div class="pop-section">${sectionLabel}</div>` + items.map((b, i) => renderSearchResultItem(b, i, tokens)).join('');
 	      loadCoversForLibrarySearch(list);
 	    }
 
 	    function renderSearchResultItem(b, i, tokens) {
 	      const pct = Math.max(0, Math.min(100, Math.round((b.progress || 0) * 100)));
-	      const titleHtml = highlightTokensHtml(b.title || 'Untitled', tokens);
-	      const authorHtml = highlightTokensHtml(b.author || 'Unknown', tokens);
+	      const titleHtml = highlightTokensHtml(b.title || t('untitled'), tokens);
+	      const authorHtml = highlightTokensHtml(b.author || t('unknownAuthor'), tokens);
 	      const formatBadge = b.format ? `<span class="pop-format">${b.format.toUpperCase()}</span>` : '';
 	      return `
 	        <button type="button" class="pop-item${i === 0 ? ' selected' : ''}" data-book-id="${escapeHtml(b.id)}" data-index="${i}">
@@ -5090,70 +5945,71 @@
       els.createLibraryModal.classList.add('hidden');
     }
 
-    async function createEmptyLibrary() {
-      const name = (els.newLibraryName.value || '').trim() || 'New Library';
-      try {
-        const lib = await ipcRenderer.invoke('create-empty-library', name);
-        hideCreateLibraryModal();
-        await refreshState();
-        showToast(`Created "${name}"`, 'success');
-        await selectLibrary(lib.id);
-      } catch (e) {
-        showToast(e?.message || 'Failed to create library', 'error');
-      }
-    }
+	    async function createEmptyLibrary() {
+	      const name = (els.newLibraryName.value || '').trim() || t('newLibraryDefaultName');
+	      try {
+	        const lib = await ipcRenderer.invoke('create-empty-library', name);
+	        hideCreateLibraryModal();
+	        await refreshState();
+	        showToast(tf('createdLogicalLibrary', { name }), 'success');
+	        await selectLibrary(lib.id);
+	      } catch (e) {
+	        showToast(e?.message || t('failedCreateLibrary'), 'error');
+	      }
+	    }
 
     async function createLibraryFromDir() {
       const name = (els.newLibraryName.value || '').trim();
       const dir = await ipcRenderer.invoke('select-directory');
       if (!dir) return;
       const libName = name || path.basename(dir);
-      try {
-        const lib = await ipcRenderer.invoke('create-library', libName, dir);
-        hideCreateLibraryModal();
-        await refreshState();
-        showToast(`Imported "${libName}"`, 'success');
-        await selectLibrary(lib.id);
-      } catch (e) {
-        showToast(e?.message || 'Import failed', 'error');
-      }
-    }
+	      try {
+	        const lib = await ipcRenderer.invoke('create-library', libName, dir);
+	        hideCreateLibraryModal();
+	        await refreshState();
+	        showToast(tf('importedLibrary', { name: libName }), 'success');
+	        await selectLibrary(lib.id);
+	      } catch (e) {
+	        showToast(e?.message || t('importDataFailed'), 'error');
+	      }
+	    }
 
     async function importDir() {
       const dir = await ipcRenderer.invoke('select-directory');
       if (!dir) return;
       const libName = path.basename(dir);
-      try {
-        const lib = await ipcRenderer.invoke('create-library', libName, dir);
-        await refreshState();
-        showToast(`Imported "${libName}"`, 'success');
-        await selectLibrary(lib.id);
-      } catch (e) {
-        showToast(e?.message || 'Import failed', 'error');
-      }
-    }
+	      try {
+	        const lib = await ipcRenderer.invoke('create-library', libName, dir);
+	        await refreshState();
+	        showToast(tf('importedLibrary', { name: libName }), 'success');
+	        await selectLibrary(lib.id);
+	      } catch (e) {
+	        showToast(e?.message || t('importDataFailed'), 'error');
+	      }
+	    }
 
-    async function rescanLibrary(libraryId, fullRescan = false) {
-      if (fullRescan) {
-        if (!window.confirm('Full rescan will rebuild the folder structure from disk and may overwrite manual organization. Continue?')) return;
-      }
-      showToast(fullRescan ? 'Full rescanning…' : 'Syncing…');
-      try {
-        await ipcRenderer.invoke('rescan-library', libraryId, !fullRescan);
-        await refreshState();
-        renderLibraries();
-        renderBooks();
-        showToast(fullRescan ? 'Rescan complete' : 'Sync complete', 'success');
-      } catch (e) {
-        showToast(e?.message || 'Rescan failed', 'error');
-      }
-    }
+	    async function rescanLibrary(libraryId, fullRescan = false) {
+	      if (fullRescan) {
+	        if (!window.confirm(t('rescanConfirm'))) return;
+	      }
+	      showToast(fullRescan ? t('fullRescanning') : t('syncing'));
+	      try {
+	        await ipcRenderer.invoke('rescan-library', libraryId, !fullRescan);
+	        await refreshState();
+	        renderLibraries();
+	        renderBooks();
+	        showToast(fullRescan ? t('rescanComplete') : t('syncComplete'), 'success');
+	      } catch (e) {
+	        showToast(e?.message || t('rescanFailed'), 'error');
+	      }
+	    }
 
-    function showDeleteModal(bookId) {
-      deleteTargetBookId = bookId;
-      els.deleteTitle.textContent = `Delete "${state.booksById[bookId]?.title || 'book'}"?`;
-      els.deleteModal.classList.remove('hidden');
-    }
+	    function showDeleteModal(bookId) {
+	      deleteTargetBookId = bookId;
+	      const title = state.booksById[bookId]?.title || t('bookFallback');
+	      els.deleteTitle.textContent = tf('deleteBookTitle', { name: title });
+	      els.deleteModal.classList.remove('hidden');
+	    }
 
     function hideDeleteModal() {
       els.deleteModal.classList.add('hidden');
@@ -5165,23 +6021,30 @@
       try {
         await ipcRenderer.invoke('delete-book', deleteTargetBookId, fromDisk);
         hideDeleteModal();
-        await refreshState();
-        renderLibraries();
-        renderBooks();
-        showToast(fromDisk ? 'Deleted book from disk' : 'Removed book', 'success');
-      } catch (e) {
-        showToast(e?.message || 'Delete failed', 'error');
-      }
-    }
+	        await refreshState();
+	        renderLibraries();
+	        renderBooks();
+	        showToast(fromDisk ? t('deletedBookFromDisk') : t('removedBook'), 'success');
+	      } catch (e) {
+	        showToast(e?.message || t('deleteFailed'), 'error');
+	      }
+	    }
 
-    function showDeleteLibraryModal(libraryId) {
-      deleteTargetLibraryId = libraryId;
-      const lib = state.libraries.find(l => l.id === libraryId);
-      els.deleteLibraryTitle.textContent = `Delete "${lib?.name || 'library'}"?`;
-      if (els.deleteLibraryDirBtn) {
-        els.deleteLibraryDirBtn.style.display = lib?.path ? 'block' : 'none';
-      }
-      els.deleteLibraryModal.classList.remove('hidden');
+	    function showDeleteLibraryModal(libraryId) {
+	      deleteTargetLibraryId = libraryId;
+	      const lib = state.libraries.find(l => l.id === libraryId);
+	      els.deleteLibraryTitle.textContent = tf('deleteLibraryTitle', { name: lib?.name || t('libraryFallback') });
+	      const physical = isPhysicalLibrary(lib);
+	      if (els.deleteLibraryKeepBtn) {
+	        els.deleteLibraryKeepBtn.textContent = physical
+	          ? t('removeFromRoseReaderKeepFiles')
+	          : t('deleteLogicalLibrary');
+	      }
+	      if (els.deleteLibraryDirBtn) {
+	        els.deleteLibraryDirBtn.textContent = t('deleteFolderFromDisk');
+	        els.deleteLibraryDirBtn.style.display = (physical && lib?.path) ? 'block' : 'none';
+	      }
+	      els.deleteLibraryModal.classList.remove('hidden');
     }
 
     function hideDeleteLibraryModal() {
@@ -5191,22 +6054,22 @@
 
     async function deleteLibrary(deleteMode) {
       if (!deleteTargetLibraryId) return;
-      try {
-        if (deleteMode === 'dir') {
-          const lib = state.libraries.find(l => l.id === deleteTargetLibraryId);
-          const ok = window.confirm(`This will permanently delete the folder on disk:\n\n${lib?.path || ''}\n\nContinue?`);
-          if (!ok) return;
-        }
-        await ipcRenderer.invoke('delete-library', deleteTargetLibraryId, deleteMode);
+	      try {
+	        if (deleteMode === 'dir') {
+	          const lib = state.libraries.find(l => l.id === deleteTargetLibraryId);
+	          const ok = window.confirm(tf('deleteFolderConfirm', { path: lib?.path || '' }));
+	          if (!ok) return;
+	        }
+	        await ipcRenderer.invoke('delete-library', deleteTargetLibraryId, deleteMode);
         hideDeleteLibraryModal();
-        await refreshState();
-        renderLibraries();
-        renderBooks();
-        showToast(deleteMode === 'dir' ? 'Deleted library folder from disk' : 'Removed library', 'success');
-      } catch (e) {
-        showToast(e?.message || 'Delete failed', 'error');
-      }
-    }
+	        await refreshState();
+	        renderLibraries();
+	        renderBooks();
+	        showToast(deleteMode === 'dir' ? t('deletedLibraryFolderFromDisk') : t('removedLibrary'), 'success');
+	      } catch (e) {
+	        showToast(e?.message || t('deleteFailed'), 'error');
+	      }
+	    }
 
     async function openBook(id, opts = { pushNav: true }) {
 	      // Refresh state to get latest progress
@@ -5227,7 +6090,7 @@
 
       els.readerContent.classList.toggle('pdf-mode', currentBook.format === 'pdf');
 
-      els.currentBookTitle.textContent = currentBook.title || 'Untitled';
+	      els.currentBookTitle.textContent = currentBook.title || t('untitled');
       els.libraryView.style.display = 'none';
       els.readerView.style.display = 'flex';
       els.readerView.classList.remove('hidden');
@@ -5239,13 +6102,13 @@
       els.tocSidebar.classList.remove('hidden');
 
       let data;
-      try {
-        data = await ipcRenderer.invoke('read-book', id);
-      } catch (e) {
-        showToast(e?.message || 'Failed to open book', 'error');
-        els.readerView.style.display = 'none';
-        els.libraryView.style.display = 'flex';
-        currentBook = null;
+	      try {
+	        data = await ipcRenderer.invoke('read-book', id);
+	      } catch (e) {
+	        showToast(e?.message || t('failedOpenBook'), 'error');
+	        els.readerView.style.display = 'none';
+	        els.libraryView.style.display = 'flex';
+	        currentBook = null;
         return;
       }
       currentToc = data.toc || [];
@@ -5261,7 +6124,7 @@
 	            <div class="book-hero">
 	              <div class="cover"><img src="${coverUrl}" alt=""></div>
 	              <div class="meta">
-	                <div class="title">${escapeHtml(currentBook.title || 'Untitled')}</div>
+		                <div class="title">${escapeHtml(currentBook.title || t('untitled'))}</div>
 	                <div class="sub">${escapeHtml(currentBook.author || '')}</div>
 	              </div>
 	            </div>
@@ -5281,7 +6144,7 @@
           // Progress restoration will be handled by the call after startReadingSession()
         } catch (e) {
           console.error('PDF render error:', e);
-          showToast('Failed to render PDF', 'error');
+          showToast(t('failedRenderPdf'), 'error');
         }
       }
 
@@ -5948,22 +6811,22 @@
       else backToLibrary({ pushNav: false });
     }
 
-    async function chooseAppBackgroundImage() {
-      try {
-        const files = await ipcRenderer.invoke('show-open-dialog', {
-          title: 'Choose background image',
-          properties: ['openFile'],
-          filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }]
-        });
-        const filePath = files?.[0];
-        if (!filePath) return;
-        settings.appBgImageUrl = pathToFileURL(filePath).toString();
-        ipcRenderer.invoke('update-settings', settings);
-        applyAppTheme();
-      } catch (e) {
-        showToast(e?.message || 'Failed to set background image', 'error');
-      }
-    }
+	    async function chooseAppBackgroundImage() {
+	      try {
+	        const files = await ipcRenderer.invoke('show-open-dialog', {
+	          title: t('chooseBackgroundImageDialogTitle'),
+	          properties: ['openFile'],
+	          filters: [{ name: t('imageFilesLabel'), extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'] }]
+	        });
+	        const filePath = files?.[0];
+	        if (!filePath) return;
+	        settings.appBgImageUrl = pathToFileURL(filePath).toString();
+	        ipcRenderer.invoke('update-settings', settings);
+	        applyAppTheme();
+	      } catch (e) {
+	        showToast(e?.message || t('setBackgroundImageFailed'), 'error');
+	      }
+	    }
 
     function clearAppBackgroundImage() {
       settings.appBgImageUrl = '';
@@ -5985,17 +6848,17 @@
       applySettings();
     }
 
-    async function reloadSystemFonts() {
-      try {
-        const fonts = await ipcRenderer.invoke('list-system-fonts');
+	    async function reloadSystemFonts() {
+	      try {
+	        const fonts = await ipcRenderer.invoke('list-system-fonts');
         const dl = document.getElementById('system-fonts');
         if (!dl) return;
-        dl.innerHTML = (fonts || []).slice(0, 5000).map(f => `<option value="${escapeHtml(f)}"></option>`).join('');
-        showToast(`Loaded ${Math.min((fonts || []).length, 5000)} fonts`, 'success');
-      } catch (e) {
-        showToast(e?.message || 'Failed to load fonts', 'error');
-      }
-    }
+	        dl.innerHTML = (fonts || []).slice(0, 5000).map(f => `<option value="${escapeHtml(f)}"></option>`).join('');
+	        showToast(tf('fontsLoaded', { n: Math.min((fonts || []).length, 5000) }), 'success');
+	      } catch (e) {
+	        showToast(e?.message || t('loadFontsFailed'), 'error');
+	      }
+	    }
 
     function setTheme(theme, bg, text) {
       settings.theme = theme;
@@ -6019,57 +6882,64 @@
       renderRecent();
     }
 
-    async function exportAppData() {
-      try {
-        const filePath = await ipcRenderer.invoke('show-save-dialog', {
-          title: 'Export RoseReader data',
-          defaultPath: 'rosereader-data.json',
-          filters: [{ name: 'JSON', extensions: ['json'] }]
-        });
-        if (!filePath) return;
-        const result = await ipcRenderer.invoke('export-data', filePath);
-        if (result?.success) showToast('Exported data', 'success');
-        else showToast(result?.error || 'Export failed', 'error');
-      } catch (e) {
-        showToast(e?.message || 'Export failed', 'error');
-      }
-    }
+	    async function exportAppData() {
+	      try {
+	        const filePath = await ipcRenderer.invoke('show-save-dialog', {
+	          title: t('exportDataDialogTitle'),
+	          defaultPath: 'rosereader-data.json',
+	          filters: [{ name: t('jsonFilesLabel'), extensions: ['json'] }]
+	        });
+	        if (!filePath) return;
+	        const result = await ipcRenderer.invoke('export-data', filePath);
+	        if (result?.success) showToast(t('exportDataDone'), 'success');
+	        else showToast(result?.error || t('exportDataFailed'), 'error');
+	      } catch (e) {
+	        showToast(e?.message || t('exportDataFailed'), 'error');
+	      }
+	    }
 
-    async function importAppData() {
-      try {
-        const files = await ipcRenderer.invoke('show-open-dialog', {
-          title: 'Import RoseReader data',
-          properties: ['openFile'],
-          filters: [{ name: 'JSON', extensions: ['json'] }]
-        });
-        const filePath = files?.[0];
-        if (!filePath) return;
-        const result = await ipcRenderer.invoke('import-data', filePath);
-        if (!result?.success) {
-          showToast(result?.error || 'Import failed', 'error');
-          return;
-        }
-        await refreshState();
-        renderLibraries();
-        renderStats();
-        renderBooks();
-        applySettings();
-        showToast('Imported data', 'success');
-      } catch (e) {
-        showToast(e?.message || 'Import failed', 'error');
-      }
-    }
+	    async function importAppData() {
+	      try {
+	        const files = await ipcRenderer.invoke('show-open-dialog', {
+	          title: t('importDataDialogTitle'),
+	          properties: ['openFile'],
+	          filters: [{ name: t('jsonFilesLabel'), extensions: ['json'] }]
+	        });
+	        const filePath = files?.[0];
+	        if (!filePath) return;
+	        const result = await ipcRenderer.invoke('import-data', filePath);
+	        if (!result?.success) {
+	          showToast(result?.error || t('importDataFailed'), 'error');
+	          return;
+	        }
+	        await refreshState();
+	        renderLibraries();
+	        renderStats();
+	        renderBooks();
+	        applySettings();
+	        showToast(t('importDataDone'), 'success');
+	      } catch (e) {
+	        showToast(e?.message || t('importDataFailed'), 'error');
+	      }
+	    }
 
     async function mergeMovedBookStateNow() {
       try {
         const result = await ipcRenderer.invoke('merge-moved-book-state');
         const mergedCount = Math.max(0, Number(result?.mergedCount || 0));
-        if (mergedCount > 0) {
+        const dedupedCount = Math.max(0, Number(result?.dedupedCount || 0));
+        if (mergedCount > 0 || dedupedCount > 0) {
           await refreshState();
           renderLibraries();
           renderStats();
           renderBooks();
-          showToast(t('mergeMovedBooksDone').replace('{n}', String(mergedCount)), 'success', 3200);
+          if (mergedCount > 0 && dedupedCount > 0) {
+            showToast(tf('mergeMovedBooksAndDeduped', { merged: mergedCount, deduped: dedupedCount }), 'success', 3200);
+          } else if (dedupedCount > 0) {
+            showToast(tf('mergeDedupedOnly', { deduped: dedupedCount }), 'success', 3200);
+          } else {
+            showToast(t('mergeMovedBooksDone').replace('{n}', String(mergedCount)), 'success', 3200);
+          }
           return;
         }
         showToast(t('mergeMovedBooksNone'), 'info');
@@ -6574,6 +7444,15 @@
       stopReadingSession();
       readSessionStartedAt = Date.now();
       readSessionLastSentAt = Date.now();
+
+      if (currentBook?.id) {
+        ipcRenderer.invoke('mark-book-reading-start', currentBook.id, readSessionStartedAt).then((meta) => {
+          if (!meta || !currentBook || currentBook.id !== meta.bookId) return;
+          if (Number(meta.firstReadAt || 0) > 0) currentBook.firstReadAt = Number(meta.firstReadAt);
+          if (Number(meta.lastReadStartAt || 0) > 0) currentBook.lastReadStartAt = Number(meta.lastReadStartAt);
+          if (Number(meta.readSessionCount || 0) > 0) currentBook.readSessionCount = Number(meta.readSessionCount);
+        }).catch(() => {});
+      }
 
       const onScroll = () => {
         if (readerResumeState?.applying) {
@@ -7550,7 +8429,7 @@
 
       const items = [];
       let renderedCount = 0;
-      items.push(`<button class="close-btn" style="margin:16px;" onclick="addBookmark()">Add Bookmark</button>`);
+      items.push(`<button class="close-btn" style="margin:16px;" onclick="addBookmark()">${escapeHtml(t('addBookmark'))}</button>`);
 
       const query = annotationQuery || '';
       const matchesQuery = (text) => {
@@ -7560,7 +8439,14 @@
 
 	      if (highlights?.length) {
 	        // Group highlights by color
-	        const colorNames = { yellow: 'Yellow', green: 'Green', blue: 'Blue', pink: 'Pink', purple: 'Purple', orange: 'Orange' };
+        const colorNames = {
+          yellow: getActiveLocale() === 'zh-CN' ? '黄色' : 'Yellow',
+          green: getActiveLocale() === 'zh-CN' ? '绿色' : 'Green',
+          blue: getActiveLocale() === 'zh-CN' ? '蓝色' : 'Blue',
+          pink: getActiveLocale() === 'zh-CN' ? '粉色' : 'Pink',
+          purple: getActiveLocale() === 'zh-CN' ? '紫色' : 'Purple',
+          orange: getActiveLocale() === 'zh-CN' ? '橙色' : 'Orange'
+        };
 	        const colorBgs = { yellow: '#FFEB3B', green: '#4CAF50', blue: '#2196F3', pink: '#E91E63', purple: '#9C27B0', orange: '#FF9800' };
 	        const byColor = {};
 	        for (const h of highlights) {
@@ -7570,9 +8456,9 @@
 	        }
 
 	        // Show "All Highlights" section first
-	        items.push(`<div style="padding:0 16px 10px;color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;gap:6px;">
-	          <span>All Highlights (${highlights.length})</span>
-	        </div>`);
+        items.push(`<div style="padding:0 16px 10px;color:var(--text-secondary);font-size:0.85rem;display:flex;align-items:center;gap:6px;">
+          <span>${escapeHtml(t('allHighlights'))} (${highlights.length})</span>
+        </div>`);
 
 	        // Then show by color groups
 	        for (const [color, list] of Object.entries(byColor)) {
@@ -7580,9 +8466,9 @@
 	          items.push(`<div style="padding:4px 16px 8px;color:var(--text-secondary);font-size:0.8rem;display:flex;align-items:center;">${colorDot}${colorNames[color] || color} (${list.length})</div>`);
 	          for (const h of list.slice().sort((a,b)=>b.timestamp-a.timestamp)) {
               if (query && !matchesQuery(h.text) && !matchesQuery(h.color) && !matchesQuery(h.note)) continue;
-              const excerpt = (h.text || '').slice(0, 120) || 'Highlight';
-	            const canLocate = (typeof h.chapterIndex === 'number' && typeof h.startChar === 'number') || (typeof h.pageNum === 'number');
-	            const colorIndicator = `<span class="hl-color-btn" data-hl-id="${escapeHtml(h.id)}" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${colorBgs[h.color] || '#FFEB3B'};margin-right:10px;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,0.3);" onclick="event.stopPropagation();showHighlightColorPicker('${escapeHtml(h.id)}', this)" title="Change color"></span>`;
+              const excerpt = (h.text || '').slice(0, 120) || t('highlightItemFallback');
+            const canLocate = (typeof h.chapterIndex === 'number' && typeof h.startChar === 'number') || (typeof h.pageNum === 'number');
+            const colorIndicator = `<span class="hl-color-btn" data-hl-id="${escapeHtml(h.id)}" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${colorBgs[h.color] || '#FFEB3B'};margin-right:10px;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,0.3);" onclick="event.stopPropagation();showHighlightColorPicker('${escapeHtml(h.id)}', this)" title="${escapeHtml(t('changeColor'))}"></span>`;
             items.push(`
 	              <div class="toc-item" style="display:flex;align-items:center;" onclick="${canLocate ? `scrollToHighlight('${escapeHtml(h.id)}')` : `jumpToProgress(${h.progress || 0})`}">
 	                ${colorIndicator}
@@ -7596,10 +8482,10 @@
 	      }
 
 	      if (notes?.length) {
-	        items.push(`<div style="padding:0 16px 10px;color:var(--text-secondary);font-size:0.85rem;">Notes</div>`);
-	        for (const n of notes.slice().sort((a,b)=>b.timestamp-a.timestamp)) {
+        items.push(`<div style="padding:0 16px 10px;color:var(--text-secondary);font-size:0.85rem;">${escapeHtml(t('notes'))}</div>`);
+        for (const n of notes.slice().sort((a,b)=>b.timestamp-a.timestamp)) {
             if (query && !matchesQuery(n.note) && !matchesQuery(n.title)) continue;
-	          const label = (n.note || '').trim().slice(0, 80) || 'Note';
+          const label = (n.note || '').trim().slice(0, 80) || t('noteItemFallback');
 	          const canLocate = (typeof n.chapterIndex === 'number' && typeof n.startChar === 'number');
           items.push(`
 	            <div class="toc-item" onclick="${canLocate ? `scrollToNote('${escapeHtml(n.id)}')` : `jumpToProgress(${n.progress || 0})`}">
@@ -7612,23 +8498,23 @@
 	      }
 
 	      if (bookmarks?.length) {
-	        items.push(`<div style="padding:0 16px 10px;color:var(--text-secondary);font-size:0.85rem;">Bookmarks</div>`);
-	        for (const b of bookmarks.slice().sort((a,b)=>b.timestamp-a.timestamp)) {
+        items.push(`<div style="padding:0 16px 10px;color:var(--text-secondary);font-size:0.85rem;">${escapeHtml(t('bookmarks'))}</div>`);
+        for (const b of bookmarks.slice().sort((a,b)=>b.timestamp-a.timestamp)) {
             if (query && !matchesQuery(b.label)) continue;
-	          items.push(`
-	            <div class="toc-item" onclick="jumpToProgress(${b.progress || 0})">
-	              ${escapeHtml(b.label || 'Bookmark')} • ${Math.round((b.progress || 0) * 100)}%
-	              <span style="float:right;color:#999;cursor:pointer;" onclick="event.stopPropagation();deleteBookmark('${escapeHtml(b.id)}')">×</span>
-	            </div>
-	          `);
+          items.push(`
+            <div class="toc-item" onclick="jumpToProgress(${b.progress || 0})">
+              ${escapeHtml(b.label || t('bookmarkItemFallback'))} • ${Math.round((b.progress || 0) * 100)}%
+              <span style="float:right;color:#999;cursor:pointer;" onclick="event.stopPropagation();deleteBookmark('${escapeHtml(b.id)}')">×</span>
+            </div>
+          `);
           renderedCount++;
 	        }
 	      }
 
       if (renderedCount === 0) {
-        const msg = query ? 'No annotations match your search' : t('noBookmarks');
+        const msg = query ? t('noAnnotationsMatchSearch') : t('noBookmarks');
         items.push(`<div style="padding:16px;color:var(--text-secondary);">${escapeHtml(msg)}</div>`);
-		      }
+	      }
 
 	      els.bookmarksList.innerHTML = items.join('');
 	    }
@@ -7770,18 +8656,18 @@
 	        // Re-apply highlights to DOM and refresh sidebar
 	        applyAnnotationsToDom();
 	        await refreshBookmarksAndHighlights();
-	        showToast('Color changed', 'success');
+	        showToast(t('colorChanged'), 'success');
 	      }
 	    }
 
-    async function addBookmark() {
-      if (!currentBook) return;
-      const progress = getReaderProgress().progress;
-      const label = `Bookmark at ${Math.round(progress * 100)}%`;
-      await ipcRenderer.invoke('add-bookmark', currentBook.id, { label, progress });
-      await refreshBookmarksAndHighlights();
-      showToast('Added bookmark', 'success');
-    }
+	    async function addBookmark() {
+	      if (!currentBook) return;
+	      const progress = getReaderProgress().progress;
+	      const label = `${t('bookmarkItemFallback')} ${Math.round(progress * 100)}%`;
+	      await ipcRenderer.invoke('add-bookmark', currentBook.id, { label, progress });
+	      await refreshBookmarksAndHighlights();
+	      showToast(t('addedBookmark'), 'success');
+	    }
 
     async function deleteBookmark(bookmarkId) {
       if (!currentBook) return;
@@ -7834,14 +8720,14 @@
 	        return btn;
 	      };
 
-	      popup.appendChild(mkBtn('Search Google', () => searchGoogle(text)));
-	      popup.appendChild(mkBtn('Search Google AI', () => searchGoogleAI(text)));
+	      popup.appendChild(mkBtn(t('selectionSearchGoogle'), () => searchGoogle(text)));
+	      popup.appendChild(mkBtn(t('selectionSearchGoogleAi'), () => searchGoogleAI(text)));
 
 	      // Highlight color picker
 	      const hlRow = document.createElement('div');
 	      hlRow.style.cssText = 'display:flex;align-items:center;gap:6px;padding:8px 14px;border-top:1px solid var(--border);';
 	      const hlLabel = document.createElement('span');
-	      hlLabel.textContent = 'Highlight:';
+	      hlLabel.textContent = t('selectionHighlight');
 	      hlLabel.style.cssText = 'font-size:0.85rem;color:var(--text-secondary);margin-right:4px;';
 	      hlRow.appendChild(hlLabel);
 
@@ -7868,11 +8754,11 @@
 	      });
 	      popup.appendChild(hlRow);
 
-	      popup.appendChild(mkBtn('Note', () => addNoteFromSelection()));
+	      popup.appendChild(mkBtn(t('selectionNote'), () => addNoteFromSelection()));
 
 	      const ids = getHighlightIdsInCurrentSelection();
 	      if (ids.length) {
-	        popup.appendChild(mkBtn('Remove highlight', () => removeHighlights(ids)));
+	        popup.appendChild(mkBtn(t('selectionRemoveHighlight'), () => removeHighlights(ids)));
 	      }
 
 	      const padding = 10;
@@ -8426,7 +9312,7 @@
 	      const chapterIndex = getChapterIndexForNode(range.startContainer);
 	      const chapterIndexEnd = getChapterIndexForNode(range.endContainer);
 	      if (chapterIndex < 0 || chapterIndexEnd !== chapterIndex) {
-	        showToast('Highlight within a single chapter only (for now)', 'error');
+	        showToast(t('highlightSingleChapterOnly'), 'error');
 	        return;
 	      }
 	      const chapterEl = document.getElementById(`chapter-${chapterIndex}`);
@@ -8459,7 +9345,7 @@
 	        hideSelectionPopup();
 	        window.getSelection()?.removeAllRanges();
 	        await refreshBookmarksAndHighlights();
-	        showToast('Color updated', 'success');
+	        showToast(t('colorUpdated'), 'success');
 	        return;
 	      }
 
@@ -8471,7 +9357,7 @@
 	      hideSelectionPopup();
 	      window.getSelection()?.removeAllRanges();
 	      await refreshBookmarksAndHighlights();
-	      showToast('Highlighted', 'success');
+	      showToast(t('highlighted'), 'success');
 	    }
 
       // Add highlight for PDF text selection
@@ -8482,7 +9368,7 @@
 	          pageEl = pageEl.parentElement;
 	        }
 	        if (!pageEl) {
-	          showToast('Could not determine PDF page', 'error');
+	          showToast(t('couldNotDeterminePdfPage'), 'error');
 	          return;
 	        }
 
@@ -8495,7 +9381,7 @@
 	          endPageEl = endPageEl.parentElement;
 	        }
 	        if (endPageEl && endPageEl !== pageEl) {
-	          showToast('Highlight within a single page only (for now)', 'error');
+	          showToast(t('highlightSinglePageOnly'), 'error');
 	          return;
 	        }
 
@@ -8580,13 +9466,13 @@
           await ipcRenderer.invoke('update-highlight-color', currentBook.id, exactMatch.id, color);
           const idx = currentHighlights.findIndex(x => x.id === exactMatch.id);
           if (idx >= 0) currentHighlights[idx].color = color;
-          updatePdfPageHighlights(pageNum);
-          hideSelectionPopup();
-          window.getSelection()?.removeAllRanges();
-          await refreshBookmarksAndHighlights();
-          showToast('Color updated', 'success');
-          return;
-        }
+	          updatePdfPageHighlights(pageNum);
+	          hideSelectionPopup();
+	          window.getSelection()?.removeAllRanges();
+	          await refreshBookmarksAndHighlights();
+	          showToast(t('colorUpdated'), 'success');
+	          return;
+	        }
 
 	        const progress = getReaderProgress().progress;
 	        const highlight = await ipcRenderer.invoke('add-highlight', currentBook.id, {
@@ -8598,12 +9484,12 @@
 	          color
 	        });
         currentHighlights = (currentHighlights || []).concat([highlight]);
-        updatePdfPageHighlights(pageNum);
-        hideSelectionPopup();
-        window.getSelection()?.removeAllRanges();
-        await refreshBookmarksAndHighlights();
-        showToast('Highlighted', 'success');
-      }
+	        updatePdfPageHighlights(pageNum);
+	        hideSelectionPopup();
+	        window.getSelection()?.removeAllRanges();
+	        await refreshBookmarksAndHighlights();
+	        showToast(t('highlighted'), 'success');
+	      }
 
 	    async function removeHighlights(ids) {
 	      if (!currentBook) return;
@@ -8639,7 +9525,7 @@
 	      const chapterIndex = getChapterIndexForNode(range.startContainer);
 	      const chapterIndexEnd = getChapterIndexForNode(range.endContainer);
 	      if (chapterIndex < 0 || chapterIndexEnd !== chapterIndex) {
-	        showToast('Note within a single chapter only (for now)', 'error');
+	        showToast(t('noteSingleChapterOnly'), 'error');
 	        return;
 	      }
 	      const chapterEl = document.getElementById(`chapter-${chapterIndex}`);
@@ -8662,12 +9548,12 @@
 	      const title = document.getElementById('note-modal-title');
 	      if (!modal || !text || !delBtn || !title) return;
 	      if (opts.mode === 'edit' && pendingNoteDraft?.noteId) {
-	        title.textContent = 'Edit Note';
+	        title.textContent = t('editNote');
 	        delBtn.style.display = 'block';
 	        const note = (currentNotes || []).find(n => n.id === pendingNoteDraft.noteId);
 	        text.value = note?.note || '';
 	      } else {
-	        title.textContent = 'New Note';
+	        title.textContent = t('newNote');
 	        delBtn.style.display = 'none';
 	        text.value = '';
 	      }
@@ -8686,7 +9572,7 @@
 	      const textEl = document.getElementById('note-text');
 	      const noteText = String(textEl?.value || '').trim();
 	      if (!noteText) {
-	        showToast('Note is empty', 'error');
+	        showToast(t('noteEmpty'), 'error');
 	        return;
 	      }
 	      if (pendingNoteDraft.mode === 'edit' && pendingNoteDraft.noteId) {
@@ -8708,7 +9594,7 @@
 	      hideNoteModal();
 	      applyAnnotationsToDom();
 	      await refreshBookmarksAndHighlights();
-	      showToast('Saved note', 'success');
+	      showToast(t('savedNote'), 'success');
 	    }
 
 	    async function deleteNoteModal() {
@@ -8718,7 +9604,7 @@
 	      hideNoteModal();
 	      applyAnnotationsToDom();
 	      await refreshBookmarksAndHighlights();
-	      showToast('Deleted note', 'success');
+	      showToast(t('deletedNote'), 'success');
 	    }
 
 	    function openNoteEditor(noteId) {

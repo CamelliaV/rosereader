@@ -1,7 +1,7 @@
 # Maintainer: Cindy <cindy@example.com>
 pkgname=rosereader
 pkgver=1.0.0
-pkgrel=5
+pkgrel=6
 pkgdesc="E-book reader with infinite scroll, supporting EPUB, PDF, and TXT"
 arch=('x86_64')
 url="https://github.com/CamelliaV/rosereader"
