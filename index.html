@@ -588,6 +588,18 @@
 		    .reader-progress-pill { font-size: 0.82rem; color: var(--text-secondary); padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: color-mix(in srgb, var(--bg-card) 75%, transparent); }
 		    #reader-view .icon-btn.active { background: color-mix(in srgb, var(--primary-light) 85%, transparent); border-color: color-mix(in srgb, var(--primary) 25%, var(--border) 75%); color: var(--primary-dark); }
 		    #reader-view header .reader-progress-pill { background: color-mix(in srgb, var(--bg-card) 86%, transparent); border-color: var(--hairline); color: color-mix(in srgb, var(--text) 82%, transparent); font-weight: 720; }
+    .markdown-view-btn {
+      width: auto !important;
+      min-width: 72px;
+      padding: 0 10px !important;
+      gap: 6px;
+      font-size: 0.74rem;
+      font-weight: 760;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .markdown-view-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .markdown-view-btn .mode-label { line-height: 1; }
     .reader-content { flex: 1; overflow-y: auto; width: 100%; padding: 0; line-height: 1.8; min-height: 0; font-feature-settings: "kern" 1, "liga" 1; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
     .reader-content { scroll-behavior: auto; }
     .reader-scroll-body { max-width: 100%; margin: 0; padding: var(--reader-margin, 48px); padding-top: 32px; }
@@ -597,6 +609,358 @@
     .reader-content p { margin-bottom: 1.2em; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
     .reader-content h1, .reader-content h2, .reader-content h3, .reader-content h4, .reader-content h5, .reader-content h6 { margin-top: 1.5em; margin-bottom: 0.6em; line-height: 1.3; }
     .reader-content a { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); text-underline-offset: 3px; }
+    .chapter.markdown-chapter {
+      --md-accent-primary: #cf4b67;
+      --md-accent-secondary: #3689a2;
+      --md-accent-tertiary: #cf8e2c;
+      --md-accent-ink: #b23f58;
+      position: relative;
+      padding: clamp(20px, 2.6vw, 34px) clamp(18px, 2.8vw, 34px);
+      border-radius: 22px;
+      border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--hairline) 82%);
+      background:
+        radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--primary-light) 28%, transparent) 0%, transparent 62%),
+        radial-gradient(100% 120% at 100% 100%, color-mix(in srgb, var(--primary) 10%, transparent) 0%, transparent 64%),
+        color-mix(in srgb, var(--bg-card) 78%, transparent);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 16px 38px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .chapter.markdown-chapter .md-article {
+      max-width: min(900px, 100%);
+      margin: 0 auto;
+      counter-reset: md-h2;
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter {
+      border-color: color-mix(in srgb, var(--md-accent-secondary) 34%, var(--border) 66%);
+      background:
+        radial-gradient(130% 100% at 0% 0%, color-mix(in srgb, var(--md-accent-secondary) 14%, transparent) 0%, transparent 64%),
+        radial-gradient(120% 100% at 100% 100%, color-mix(in srgb, var(--md-accent-primary) 11%, transparent) 0%, transparent 66%),
+        color-mix(in srgb, var(--bg-card) 86%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-article {
+      max-width: min(980px, 100%);
+      margin: 0 auto;
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-content {
+      margin: 0;
+      padding: 14px 0 6px;
+      white-space: pre;
+      line-height: 1.72;
+      overflow-x: auto;
+      font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.94rem;
+      color: color-mix(in srgb, var(--text) 92%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line {
+      display: block;
+      position: relative;
+      min-height: 1.2em;
+      padding: 0.03em 0.38em 0.03em 3.8em;
+      border-radius: 7px;
+      color: inherit;
+      scroll-margin-top: 120px;
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line::before {
+      content: attr(data-line);
+      position: absolute;
+      left: 0.56em;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2.55em;
+      text-align: right;
+      color: color-mix(in srgb, var(--text-secondary) 74%, transparent);
+      font-size: 0.76em;
+      letter-spacing: 0.02em;
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line:hover {
+      background: color-mix(in srgb, var(--md-accent-secondary) 11%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-code {
+      color: color-mix(in srgb, #eedcae 84%, var(--text) 16%);
+      background: color-mix(in srgb, #30261a 78%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-code-fence {
+      color: color-mix(in srgb, #a8d8e8 84%, var(--text) 16%);
+      font-weight: 680;
+      letter-spacing: 0.03em;
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-heading.h1 {
+      color: color-mix(in srgb, var(--md-accent-primary) 80%, var(--text) 20%);
+      font-weight: 760;
+      background: color-mix(in srgb, var(--md-accent-primary) 15%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-heading.h2 {
+      color: color-mix(in srgb, var(--md-accent-tertiary) 78%, var(--text) 22%);
+      font-weight: 730;
+      background: color-mix(in srgb, var(--md-accent-tertiary) 14%, transparent);
+      border-left: 3px solid color-mix(in srgb, var(--md-accent-tertiary) 42%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-heading.h3 {
+      color: color-mix(in srgb, var(--md-accent-secondary) 78%, var(--text) 22%);
+      font-weight: 700;
+      background: color-mix(in srgb, var(--md-accent-secondary) 14%, transparent);
+      border-left: 2px solid color-mix(in srgb, var(--md-accent-secondary) 36%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-list {
+      color: color-mix(in srgb, #7b8f29 78%, var(--text) 22%);
+      background: color-mix(in srgb, #dbe8a4 22%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-quote {
+      color: color-mix(in srgb, #7f5a37 80%, var(--text) 20%);
+      border-left: 2px solid color-mix(in srgb, #d0a96a 52%, transparent);
+      background: color-mix(in srgb, #ecd9b4 24%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-link {
+      color: color-mix(in srgb, #2a7ea3 78%, var(--text) 22%);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-table {
+      color: color-mix(in srgb, #9c4b85 80%, var(--text) 20%);
+      background: color-mix(in srgb, #cf9bc0 16%, transparent);
+    }
+    .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-rule {
+      color: color-mix(in srgb, #7b6d5b 82%, var(--text) 18%);
+      background: color-mix(in srgb, #d7cab6 26%, transparent);
+      letter-spacing: 0.08em;
+    }
+    .chapter.markdown-chapter .md-article > :first-child { margin-top: 0; }
+    .chapter.markdown-chapter p {
+      margin: 0.95em 0 1.15em;
+      text-align: left;
+      line-height: 1.95;
+      letter-spacing: 0.01em;
+      color: color-mix(in srgb, var(--text) 94%, transparent);
+    }
+    .chapter.markdown-chapter strong {
+      color: color-mix(in srgb, var(--md-accent-ink) 80%, var(--text) 20%);
+      font-weight: 780;
+      padding: 0 0.08em;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--md-accent-primary) 12%, transparent);
+    }
+    .chapter.markdown-chapter em {
+      color: color-mix(in srgb, var(--md-accent-secondary) 78%, var(--text) 22%);
+      font-style: italic;
+    }
+    .chapter.markdown-chapter del {
+      color: color-mix(in srgb, var(--text-secondary) 78%, transparent);
+      text-decoration-color: color-mix(in srgb, var(--md-accent-primary) 46%, transparent);
+    }
+    .chapter.markdown-chapter h1,
+    .chapter.markdown-chapter h2,
+    .chapter.markdown-chapter h3,
+    .chapter.markdown-chapter h4,
+    .chapter.markdown-chapter h5,
+    .chapter.markdown-chapter h6 {
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
+      text-wrap: balance;
+      line-height: 1.24;
+    }
+    .chapter.markdown-chapter h1 {
+      font-size: clamp(1.95rem, 2.9vw, 2.7rem);
+      margin-bottom: 0.55em;
+      letter-spacing: 0.02em;
+      background: linear-gradient(120deg, color-mix(in srgb, var(--primary-dark) 72%, #7a3b26 28%), color-mix(in srgb, var(--primary) 70%, #ad4f2f 30%));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      padding-bottom: 0.14em;
+      border-bottom: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border) 76%);
+    }
+    .chapter.markdown-chapter h2 {
+      counter-increment: md-h2;
+      counter-reset: md-h3;
+      font-size: clamp(1.45rem, 2.3vw, 2.02rem);
+      color: color-mix(in srgb, var(--primary) 64%, #9f5138 36%);
+      border-left: 5px solid color-mix(in srgb, var(--md-accent-primary) 52%, transparent);
+      padding: 0.34em 0.68em;
+      border-radius: 0 12px 12px 0;
+      background: linear-gradient(100deg, color-mix(in srgb, var(--md-accent-primary) 14%, transparent), color-mix(in srgb, var(--md-accent-secondary) 10%, transparent));
+      margin-top: 1.55em;
+      display: flex;
+      align-items: center;
+      gap: 0.62em;
+    }
+    .chapter.markdown-chapter h2::before {
+      content: counter(md-h2, decimal-leading-zero);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.1em;
+      height: 1.8em;
+      padding: 0 0.55em;
+      border-radius: 999px;
+      background: linear-gradient(120deg, color-mix(in srgb, var(--md-accent-primary) 88%, #1f1d1b 12%), color-mix(in srgb, var(--md-accent-tertiary) 86%, #1f1d1b 14%));
+      color: #fff9ef;
+      font-size: 0.68em;
+      font-weight: 760;
+      letter-spacing: 0.06em;
+      box-shadow: 0 6px 14px color-mix(in srgb, var(--md-accent-primary) 28%, transparent);
+    }
+    .chapter.markdown-chapter h3 {
+      counter-increment: md-h3;
+      font-size: clamp(1.2rem, 2vw, 1.58rem);
+      color: color-mix(in srgb, var(--md-accent-secondary) 76%, var(--text) 24%);
+      margin-top: 1.38em;
+      padding-left: 0.8em;
+      border-left: 3px solid color-mix(in srgb, var(--md-accent-secondary) 38%, transparent);
+      display: flex;
+      align-items: baseline;
+      gap: 0.52em;
+    }
+    .chapter.markdown-chapter h3::before {
+      content: counter(md-h2) "." counter(md-h3);
+      font-size: 0.72em;
+      font-weight: 760;
+      letter-spacing: 0.08em;
+      color: color-mix(in srgb, var(--md-accent-secondary) 80%, var(--md-accent-tertiary) 20%);
+      padding: 0.12em 0.18em;
+      border-radius: 4px;
+      background: color-mix(in srgb, var(--md-accent-secondary) 12%, transparent);
+    }
+    .chapter.markdown-chapter h3::after {
+      content: '';
+      display: block;
+      width: min(150px, 32%);
+      height: 2px;
+      margin-top: 0.36em;
+      border-radius: 999px;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 42%, #4a7b84 58%), transparent);
+    }
+    .chapter.markdown-chapter h4 {
+      font-size: 1.08rem;
+      color: color-mix(in srgb, var(--text) 76%, #6d5d8c 24%);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 1.28em;
+    }
+    .chapter.markdown-chapter h5 {
+      font-size: 1rem;
+      color: color-mix(in srgb, var(--text-secondary) 70%, var(--text) 30%);
+      margin-top: 1.12em;
+    }
+    .chapter.markdown-chapter h6 {
+      font-size: 0.92rem;
+      color: color-mix(in srgb, var(--text-secondary) 88%, var(--text) 12%);
+      margin-top: 1.08em;
+      letter-spacing: 0.04em;
+    }
+    .chapter.markdown-chapter blockquote {
+      margin: 1.3em 0;
+      padding: 0.9em 1.15em;
+      border-left: 4px solid color-mix(in srgb, var(--primary) 48%, transparent);
+      background: color-mix(in srgb, var(--primary-light) 22%, transparent);
+      border-radius: 10px;
+      color: color-mix(in srgb, var(--text) 88%, transparent);
+    }
+    .chapter.markdown-chapter blockquote p { margin: 0; line-height: 1.8; }
+    .chapter.markdown-chapter ul,
+    .chapter.markdown-chapter ol {
+      margin: 0.95em 0 1.2em;
+      padding-left: 1.45em;
+    }
+    .chapter.markdown-chapter li { margin: 0.42em 0; line-height: 1.8; }
+    .chapter.markdown-chapter li::marker {
+      color: color-mix(in srgb, var(--md-accent-secondary) 72%, var(--md-accent-tertiary) 28%);
+      font-weight: 700;
+    }
+    .chapter.markdown-chapter .md-table-wrap {
+      margin: 1.15em 0 1.35em;
+      border-radius: 16px;
+      border: 1px solid color-mix(in srgb, var(--md-accent-primary) 32%, var(--border) 68%);
+      background:
+        linear-gradient(150deg, color-mix(in srgb, var(--md-accent-primary) 12%, transparent) 0%, transparent 50%),
+        linear-gradient(210deg, color-mix(in srgb, var(--md-accent-secondary) 10%, transparent) 0%, transparent 55%),
+        color-mix(in srgb, var(--bg-card) 88%, transparent);
+      box-shadow: 0 8px 26px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.45);
+      overflow: auto;
+    }
+    .chapter.markdown-chapter table.md-table {
+      width: 100%;
+      min-width: 640px;
+      border-collapse: collapse;
+      font-size: 0.96rem;
+    }
+    .chapter.markdown-chapter table.md-table thead th {
+      padding: 0.68em 0.78em;
+      color: #fdf9f3;
+      font-weight: 740;
+      letter-spacing: 0.02em;
+      border-right: 1px solid color-mix(in srgb, #ffffff 30%, transparent);
+      background: linear-gradient(110deg, color-mix(in srgb, var(--md-accent-primary) 78%, #1f1d1b 22%), color-mix(in srgb, var(--md-accent-secondary) 74%, #1f1d1b 26%));
+      text-wrap: nowrap;
+    }
+    .chapter.markdown-chapter table.md-table thead th:last-child { border-right: none; }
+    .chapter.markdown-chapter table.md-table tbody td {
+      padding: 0.62em 0.78em;
+      border-top: 1px solid color-mix(in srgb, var(--md-accent-secondary) 18%, var(--border) 82%);
+      border-right: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+      vertical-align: top;
+      line-height: 1.65;
+      color: color-mix(in srgb, var(--text) 94%, transparent);
+    }
+    .chapter.markdown-chapter table.md-table tbody td:last-child { border-right: none; }
+    .chapter.markdown-chapter table.md-table tbody tr:nth-child(odd) td {
+      background: color-mix(in srgb, var(--md-accent-secondary) 8%, transparent);
+    }
+    .chapter.markdown-chapter table.md-table tbody tr:nth-child(even) td {
+      background: color-mix(in srgb, var(--md-accent-tertiary) 8%, transparent);
+    }
+    .chapter.markdown-chapter table.md-table tbody td:first-child {
+      color: color-mix(in srgb, var(--md-accent-ink) 70%, var(--text) 30%);
+      font-weight: 650;
+    }
+    .chapter.markdown-chapter code {
+      font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.92em;
+      padding: 0.13em 0.36em;
+      border-radius: 6px;
+      color: color-mix(in srgb, var(--md-accent-tertiary) 82%, var(--text) 18%);
+      background: color-mix(in srgb, var(--md-accent-tertiary) 16%, var(--bg-card) 84%);
+      border: 1px solid color-mix(in srgb, var(--md-accent-tertiary) 34%, var(--border) 66%);
+    }
+    .chapter.markdown-chapter pre.md-code-block {
+      margin: 1.1em 0 1.35em;
+      padding: 1.05em 1.15em;
+      border-radius: 14px;
+      background: color-mix(in srgb, #1f1d1a 88%, var(--bg-card) 12%);
+      color: #f5eee2;
+      border: 1px solid color-mix(in srgb, #f5eee2 16%, transparent);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+      overflow-x: auto;
+    }
+    .chapter.markdown-chapter pre.md-code-block code {
+      background: transparent;
+      border: none;
+      color: inherit;
+      padding: 0;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+    .chapter.markdown-chapter hr {
+      border: 0;
+      height: 1px;
+      margin: 1.6em 0;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 40%, var(--border) 60%), transparent);
+    }
+    .chapter.markdown-chapter img {
+      display: block;
+      margin: 1.2em auto;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.11);
+    }
+    .chapter.markdown-chapter a {
+      color: color-mix(in srgb, var(--md-accent-secondary) 74%, #1f5f7a 26%);
+      font-weight: 600;
+      text-decoration-color: color-mix(in srgb, currentColor 60%, transparent);
+      text-underline-offset: 3px;
+    }
+    @media (max-width: 900px) {
+      .chapter.markdown-chapter { padding: 18px 14px; border-radius: 16px; }
+      .chapter.markdown-chapter h1 { font-size: clamp(1.66rem, 7.2vw, 2.2rem); }
+      .chapter.markdown-chapter h2 { font-size: clamp(1.28rem, 5.8vw, 1.72rem); }
+      .chapter.markdown-chapter h3 { font-size: clamp(1.12rem, 4.6vw, 1.38rem); }
+    }
     .book-hero { display: flex; gap: 18px; align-items: flex-end; padding: 26px 0 18px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
     .book-hero .cover { width: 160px; aspect-ratio: 3/4; border-radius: 14px; border: 1px solid var(--border); background: linear-gradient(135deg, var(--primary-light), #fff); overflow: hidden; box-shadow: var(--shadow); flex-shrink: 0; }
     .book-hero .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -1612,6 +1976,7 @@
 		          <button type="button" class="filter-chip" data-filter="format" data-value="epub">EPUB</button>
 		          <button type="button" class="filter-chip" data-filter="format" data-value="pdf">PDF</button>
 		          <button type="button" class="filter-chip" data-filter="format" data-value="txt">TXT</button>
+		          <button type="button" class="filter-chip" data-filter="format" data-value="md">MD</button>
 		          <span class="filter-sep"></span>
 		          <button type="button" id="chip-status-unread" class="filter-chip" data-filter="status" data-value="unread">Unread</button>
 		          <button type="button" id="chip-status-reading" class="filter-chip" data-filter="status" data-value="reading">Reading</button>
@@ -1816,6 +2181,10 @@
 		          </button>
 		          <button class="icon-btn" data-toggle="fit" onclick="fitReaderWidth()" title="Fit reader width">
 		            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V4h4"/><path d="M20 8V4h-4"/><path d="M4 16v4h4"/><path d="M20 16v4h-4"/><path d="M9 12h6"/></svg>
+		          </button>
+		          <button id="markdown-view-toggle" class="icon-btn markdown-view-btn hidden" onclick="toggleMarkdownViewMode(event)" title="Show raw Markdown" aria-label="Show raw Markdown">
+		            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 16V9l2 2 2-2v7"/><path d="M14 16V9h2.5a2 2 0 0 1 0 4H14"/></svg>
+		            <span class="mode-label" id="markdown-view-toggle-label">Rendered</span>
 		          </button>
 	          <div class="reader-search" id="reader-search">
 	            <div class="search-box">
@@ -2213,7 +2582,9 @@
       tocList: document.getElementById('toc-list'),
       bookmarksSidebar: document.getElementById('bookmarks-sidebar'),
       bookmarksList: document.getElementById('bookmarks-list'),
-      readerHeader: document.querySelector('#reader-view header.reader-header')
+      readerHeader: document.querySelector('#reader-view header.reader-header'),
+      markdownViewToggle: document.getElementById('markdown-view-toggle'),
+      markdownViewToggleLabel: document.getElementById('markdown-view-toggle-label')
     };
 
     const defaultEmptyHtml = els.emptyMsg ? els.emptyMsg.innerHTML : '';
@@ -3188,6 +3559,9 @@
 
 	    let currentToc = [];
     let chapterIds = [];
+    let currentBookRenderPayload = null;
+    let currentBookHeroHtml = '';
+    let lastMainHallMiddleToggleAt = 0;
     let currentTocActiveIndex = -1;
     let tocCollapseState = new Map(); // Track collapsed state by index
     let tocMetadata = []; // parentIndex, hasChildren for each item
@@ -3437,6 +3811,14 @@
 	        , tocWidth: 'TOC Width'
 	        , fitReaderWidth: 'Fit reader width'
 	        , showReaderTopBar: 'Show reader top bar'
+	        , markdownModeRendered: 'Rendered'
+	        , markdownModeRaw: 'Raw'
+	        , markdownModeRawRegional: 'Raw · Section'
+	        , markdownToggleShowRaw: 'Show raw Markdown'
+	        , markdownToggleShowRendered: 'Show rendered Markdown'
+	        , markdownToggleShortcutHint: 'Ctrl/Cmd+M · Ctrl/Cmd+Shift+M'
+	        , markdownScopeFull: 'Full document'
+	        , markdownScopeRegional: 'Current section'
 	        , selectionPopup: 'Selection Popup'
 	        , tocHideDelay: 'TOC Hide Delay'
 	        , readerTheme: 'Reader Theme'
@@ -3710,6 +4092,14 @@
 	        , tocWidth: '目录宽度'
 	        , fitReaderWidth: '适配阅读区宽度'
 	        , showReaderTopBar: '显示阅读页顶栏'
+	        , markdownModeRendered: '排版'
+	        , markdownModeRaw: '源码'
+	        , markdownModeRawRegional: '源码 · 区域'
+	        , markdownToggleShowRaw: '显示 Markdown 源码'
+	        , markdownToggleShowRendered: '显示排版预览'
+	        , markdownToggleShortcutHint: 'Ctrl/Cmd+M · Ctrl/Cmd+Shift+M'
+	        , markdownScopeFull: '全文'
+	        , markdownScopeRegional: '当前层级'
 	        , selectionPopup: '文本选择弹窗'
 	        , tocHideDelay: '目录隐藏延迟'
 	        , readerTheme: '阅读主题'
@@ -4080,6 +4470,7 @@
 	        const mode = settings.sidebarMode || 'libraries';
 	        els.sidebarTitle.textContent = mode === 'folders' ? t('folders') : t('libraries');
 	      }
+	      updateMarkdownViewToggleUi();
 
 	      document.documentElement.lang = locale === 'zh-CN' ? 'zh-CN' : 'en';
 
@@ -4115,6 +4506,419 @@
     function cssEscape(value) {
       if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(value);
       return String(value || '').replace(/[^a-zA-Z0-9_-]/g, (ch) => `\\${ch}`);
+    }
+
+    function escapeRegExp(value) {
+      return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function normalizeMarkdownHeadingTitle(raw) {
+      let title = String(raw || '').trim();
+      if (!title) return '';
+      title = title.replace(/\s+#+\s*$/, '').trim();
+      title = title.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '$1');
+      title = title.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+      title = title.replace(/[`*_~]/g, '');
+      title = title.replace(/\s+/g, ' ').trim();
+      if (title.length > 140) title = `${title.slice(0, 137).trimEnd()}...`;
+      return title;
+    }
+
+    function slugifyMarkdownHeading(rawTitle) {
+      const normalized = normalizeMarkdownHeadingTitle(rawTitle)
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\u4e00-\u9fff -]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-');
+      return normalized || 'section';
+    }
+
+    function normalizeMarkdownViewMode(mode) {
+      return String(mode || '').toLowerCase() === 'raw' ? 'raw' : 'rendered';
+    }
+
+    function normalizeMarkdownRawScope(scope) {
+      return String(scope || '').toLowerCase() === 'regional' ? 'regional' : 'full';
+    }
+
+    function isRawMarkdownMode() {
+      const mode = normalizeMarkdownViewMode(settings.markdownViewMode);
+      if (settings.markdownViewMode !== mode) settings.markdownViewMode = mode;
+      return mode === 'raw';
+    }
+
+    function isMarkdownRawScopeRegional() {
+      const scope = normalizeMarkdownRawScope(settings.markdownRawScope);
+      if (settings.markdownRawScope !== scope) settings.markdownRawScope = scope;
+      return scope === 'regional';
+    }
+
+    function getReaderScrollRatio() {
+      if (!els.readerContent) return 0;
+      const maxScroll = Math.max(0, (els.readerContent.scrollHeight || 0) - (els.readerContent.clientHeight || 0));
+      if (maxScroll <= 0) return 0;
+      return Math.max(0, Math.min(1, (els.readerContent.scrollTop || 0) / maxScroll));
+    }
+
+    function setReaderScrollRatio(ratio) {
+      if (!els.readerContent || !Number.isFinite(ratio)) return;
+      const clamped = Math.max(0, Math.min(1, ratio));
+      const apply = () => {
+        const maxScroll = Math.max(0, (els.readerContent.scrollHeight || 0) - (els.readerContent.clientHeight || 0));
+        els.readerContent.scrollTop = maxScroll * clamped;
+      };
+      apply();
+      requestAnimationFrame(() => requestAnimationFrame(apply));
+    }
+
+    function getPreferredMarkdownSectionTocIndex(preferredIndex) {
+      if (!Array.isArray(currentToc) || !currentToc.length) return -1;
+      let idx = Number(preferredIndex);
+      if (!Number.isFinite(idx) || idx < 0 || idx >= currentToc.length) idx = Number(currentTocActiveIndex);
+      if (!Number.isFinite(idx) || idx < 0 || idx >= currentToc.length) idx = computeActiveTocIndex();
+      if (!Number.isFinite(idx) || idx < 0 || idx >= currentToc.length) idx = 0;
+      return idx;
+    }
+
+    function buildMarkdownHeadingSpans(rawText) {
+      const lines = String(rawText || '').replace(/\r\n?/g, '\n').split('\n');
+      const headings = [];
+      const usedSlugs = new Set();
+      let inCodeFence = false;
+      let codeFenceMarker = '```';
+
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = String(lines[index] || '');
+        if (inCodeFence) {
+          const closeFence = new RegExp(`^\\s*${escapeRegExp(codeFenceMarker)}\\s*$`);
+          if (closeFence.test(line)) {
+            inCodeFence = false;
+            codeFenceMarker = '```';
+          }
+          continue;
+        }
+
+        const fenceMatch = line.match(/^\s*(```+|~~~+)\s*([A-Za-z0-9_-]+)?\s*$/);
+        if (fenceMatch) {
+          inCodeFence = true;
+          codeFenceMarker = String(fenceMatch[1] || '```');
+          continue;
+        }
+
+        const headingMatch = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*$/);
+        if (!headingMatch) continue;
+        const level = Math.max(1, Math.min(6, String(headingMatch[1] || '').length));
+        const headingRaw = String(headingMatch[2] || '').replace(/\s+#+\s*$/, '').trim();
+        const headingTitle = normalizeMarkdownHeadingTitle(headingRaw) || `section-${index + 1}`;
+        const slugBase = slugifyMarkdownHeading(headingTitle);
+        let slug = slugBase;
+        let serial = 2;
+        while (usedSlugs.has(slug)) {
+          slug = `${slugBase}-${serial}`;
+          serial += 1;
+        }
+        usedSlugs.add(slug);
+        headings.push({ slug, level, lineStart: index, lineEnd: lines.length - 1 });
+      }
+
+      for (let i = 0; i < headings.length; i += 1) {
+        const cur = headings[i];
+        let end = lines.length - 1;
+        for (let j = i + 1; j < headings.length; j += 1) {
+          if (headings[j].level <= cur.level) {
+            end = Math.max(cur.lineStart, headings[j].lineStart - 1);
+            break;
+          }
+        }
+        cur.lineEnd = end;
+      }
+
+      return { lines, headings };
+    }
+
+    function findMarkdownRawBoundaryTocIndex(startTocIndex, chapterIndex) {
+      if (!Array.isArray(currentToc) || startTocIndex < 0 || startTocIndex >= currentToc.length) return -1;
+      const startLevel = Math.max(0, Number(currentToc[startTocIndex]?.level || 0));
+      for (let i = startTocIndex + 1; i < currentToc.length; i += 1) {
+        const candidate = currentToc[i];
+        const candidateChapter = resolveTocChapterIndex(candidate);
+        if (Number.isFinite(candidateChapter) && candidateChapter >= 0 && candidateChapter !== chapterIndex) {
+          return i;
+        }
+        const candidateLevel = Math.max(0, Number(candidate?.level || 0));
+        if (candidateLevel <= startLevel) return i;
+      }
+      return -1;
+    }
+
+    function getMarkdownRawRegionalSelection(payload, preferredTocIndex = null) {
+      const tocIndex = getPreferredMarkdownSectionTocIndex(preferredTocIndex);
+      if (tocIndex < 0) return null;
+
+      const tocItem = currentToc[tocIndex] || {};
+      const chapterFromItem = resolveTocChapterIndex(tocItem);
+      const chapterIndex = Number.isFinite(chapterFromItem) && chapterFromItem >= 0 ? chapterFromItem : 0;
+      const rawChapters = Array.isArray(payload?.rawChapters) ? payload.rawChapters : [];
+      const chapterRaw = String(rawChapters[chapterIndex] ?? '');
+      if (!chapterRaw) return null;
+
+      const { anchor } = splitBookHref(tocItem?.href || '');
+      if (!anchor) {
+        return { tocIndex, chapterIndex, raw: chapterRaw, lineOffset: 0 };
+      }
+
+      const { lines, headings } = buildMarkdownHeadingSpans(chapterRaw);
+      const match = headings.find((heading) => heading.slug === anchor);
+      if (!match) {
+        return { tocIndex, chapterIndex, raw: chapterRaw, lineOffset: 0 };
+      }
+
+      let regionStart = Math.max(0, match.lineStart);
+      let regionEnd = Math.max(regionStart, match.lineEnd);
+      const boundaryTocIndex = findMarkdownRawBoundaryTocIndex(tocIndex, chapterIndex);
+      if (boundaryTocIndex >= 0) {
+        const boundaryItem = currentToc[boundaryTocIndex] || {};
+        const boundaryChapter = resolveTocChapterIndex(boundaryItem);
+        if (Number.isFinite(boundaryChapter) && boundaryChapter >= 0 && boundaryChapter !== chapterIndex) {
+          regionEnd = lines.length - 1;
+        } else {
+          const { anchor: boundaryAnchor } = splitBookHref(boundaryItem?.href || '');
+          if (boundaryAnchor) {
+            const boundaryHeading = headings.find((heading) => heading.slug === boundaryAnchor);
+            if (boundaryHeading && boundaryHeading.lineStart > regionStart) {
+              regionEnd = Math.min(regionEnd, boundaryHeading.lineStart - 1);
+            }
+          }
+        }
+      }
+      if (regionEnd < regionStart) regionEnd = regionStart;
+
+      const scopedLines = lines.slice(regionStart, regionEnd + 1);
+      const headingIdByLine = {};
+      headings.forEach((heading) => {
+        if (heading.lineStart < regionStart || heading.lineStart > regionEnd) return;
+        headingIdByLine[heading.lineStart] = heading.slug;
+      });
+      return {
+        tocIndex,
+        chapterIndex,
+        raw: scopedLines.join('\n'),
+        lineOffset: regionStart,
+        headingIdByLine
+      };
+    }
+
+    function buildMarkdownRawChapterHtml(rawText, usedHeadingSlugs, opts = {}) {
+      const lines = String(rawText || '').replace(/\r\n?/g, '\n').split('\n');
+      const usedSlugs = usedHeadingSlugs || new Set();
+      const lineOffset = Math.max(0, Number(opts.lineOffset || 0));
+      const headingIdByLine = opts.headingIdByLine && typeof opts.headingIdByLine === 'object'
+        ? opts.headingIdByLine
+        : null;
+      let inCodeFence = false;
+      let codeFenceMarker = '```';
+
+      const lineHtml = lines.map((rawLine, index) => {
+        const line = String(rawLine || '');
+        const trimmed = line.trim();
+        const classNames = ['md-raw-line'];
+        const attrs = [`data-line="${lineOffset + index + 1}"`];
+
+        if (inCodeFence) {
+          classNames.push('is-code');
+          const closeFence = new RegExp(`^\\s*${escapeRegExp(codeFenceMarker)}\\s*$`);
+          if (closeFence.test(line)) {
+            classNames.push('is-code-fence');
+            inCodeFence = false;
+            codeFenceMarker = '```';
+          }
+        } else {
+          const fenceMatch = line.match(/^\s*(```+|~~~+)\s*([A-Za-z0-9_-]+)?\s*$/);
+          if (fenceMatch) {
+            classNames.push('is-code', 'is-code-fence');
+            inCodeFence = true;
+            codeFenceMarker = String(fenceMatch[1] || '```');
+          } else {
+            const headingMatch = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*$/);
+            if (headingMatch) {
+              const level = Math.max(1, Math.min(6, String(headingMatch[1] || '').length));
+              const headingRaw = String(headingMatch[2] || '').replace(/\s+#+\s*$/, '').trim();
+              const absoluteLine = lineOffset + index;
+              let slug = String(headingIdByLine?.[absoluteLine] || '').trim();
+              if (!slug) {
+                const headingTitle = normalizeMarkdownHeadingTitle(headingRaw) || `section-${index + 1}`;
+                const slugBase = slugifyMarkdownHeading(headingTitle);
+                slug = slugBase;
+                let serial = 2;
+                while (usedSlugs.has(slug)) {
+                  slug = `${slugBase}-${serial}`;
+                  serial += 1;
+                }
+              }
+              usedSlugs.add(slug);
+              classNames.push('is-heading', `h${level}`);
+              attrs.push(`id="${escapeHtml(slug)}"`);
+            } else {
+              if (/^\s{0,3}>\s?/.test(line)) classNames.push('is-quote');
+              if (/^\s*(?:[-+*]\s+|\d+[.)]\s+)/.test(line)) classNames.push('is-list');
+              if (/^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)) classNames.push('is-rule');
+              if (/\[[^\]]+\]\([^)]+\)/.test(line) || /!\[[^\]]*\]\([^)]+\)/.test(line)) classNames.push('is-link');
+              if (line.includes('|') && /^\s*\|?.+\|.+\|?\s*$/.test(line)) classNames.push('is-table');
+            }
+          }
+        }
+
+        const safeLine = trimmed ? escapeHtml(line) : '&nbsp;';
+        return `<span class="${classNames.join(' ')}" ${attrs.join(' ')}>${safeLine}</span>`;
+      }).join('');
+
+      return `<article class="md-raw-article"><pre class="md-raw-content">${lineHtml}</pre></article>`;
+    }
+
+    function buildRenderedBookBodyHtml(payload, heroHtml) {
+      const chapterClass = currentBook?.format === 'md' ? 'chapter markdown-chapter' : 'chapter';
+      const chapters = Array.isArray(payload?.chapters) ? payload.chapters : [];
+      return String(heroHtml || '') + chapters.map((chapterHtml, index) => {
+        const href = chapterIds[index] || '';
+        return `<div class="${chapterClass}" id="chapter-${index}" data-href="${escapeHtml(href)}">${chapterHtml || ''}</div>`;
+      }).join('');
+    }
+
+    function buildRawMarkdownBookBodyHtml(payload, heroHtml) {
+      const rawChapters = Array.isArray(payload?.rawChapters) ? payload.rawChapters : [];
+      const renderedChapters = Array.isArray(payload?.chapters) ? payload.chapters : [];
+      const chapterCount = Math.max(rawChapters.length, renderedChapters.length, chapterIds.length, 1);
+      const regional = isMarkdownRawScopeRegional();
+      let chapterHtml = '';
+
+      if (regional) {
+        const scoped = getMarkdownRawRegionalSelection(payload);
+        if (scoped) {
+          const usedHeadingSlugs = new Set();
+          const href = chapterIds[scoped.chapterIndex] || `md-chapter-${scoped.chapterIndex + 1}`;
+          const article = buildMarkdownRawChapterHtml(scoped.raw, usedHeadingSlugs, {
+            lineOffset: scoped.lineOffset,
+            headingIdByLine: scoped.headingIdByLine
+          });
+          chapterHtml = `<div class="chapter markdown-chapter markdown-raw-chapter" id="chapter-${scoped.chapterIndex}" data-href="${escapeHtml(href)}">${article}</div>`;
+        }
+      }
+
+      if (!chapterHtml) {
+        const usedHeadingSlugs = new Set();
+        chapterHtml = Array.from({ length: chapterCount }, (_, index) => {
+          const raw = rawChapters[index] ?? '';
+          const href = chapterIds[index] || `md-chapter-${index + 1}`;
+          const article = buildMarkdownRawChapterHtml(raw, usedHeadingSlugs);
+          return `<div class="chapter markdown-chapter markdown-raw-chapter" id="chapter-${index}" data-href="${escapeHtml(href)}">${article}</div>`;
+        }).join('');
+      }
+
+      return String(heroHtml || '') + chapterHtml;
+    }
+
+    function bindReaderAnchorLinks() {
+      els.readerContent?.querySelectorAll?.('a[href]')?.forEach((link) => {
+        link.addEventListener('click', (e) => {
+          const href = link.getAttribute('href');
+          if (!href) return;
+          if (/^(https?:|mailto:|tel:)/i.test(href)) {
+            e.preventDefault();
+            ipcRenderer.invoke('open-external', href);
+            return;
+          }
+          if (/^(data:|blob:)/i.test(href)) return;
+          if (!href.startsWith('#') && /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href)) return;
+          e.preventDefault();
+          navigateToHref(href);
+        });
+      });
+    }
+
+    function renderCurrentBookBody(opts = {}) {
+      if (!currentBook || !currentBookRenderPayload || !els.readerContent || currentBook.format === 'pdf') return;
+      const preserveScroll = opts.preserveScroll === true;
+      const applyAnnotations = opts.applyAnnotations === true;
+      const ratio = preserveScroll ? getReaderScrollRatio() : 0;
+      const useRawMarkdown = currentBook.format === 'md' && isRawMarkdownMode();
+      const bodyHtml = useRawMarkdown
+        ? buildRawMarkdownBookBodyHtml(currentBookRenderPayload, currentBookHeroHtml)
+        : buildRenderedBookBodyHtml(currentBookRenderPayload, currentBookHeroHtml);
+
+      els.readerContent.innerHTML = `<div class="reader-scroll-body">${bodyHtml}</div>`;
+      bindReaderAnchorLinks();
+      if (applyAnnotations) applyAnnotationsToDom();
+      if (preserveScroll) setReaderScrollRatio(ratio);
+      updateMarkdownViewToggleUi();
+      scheduleTocHighlightUpdate();
+
+      if ((els.bookSearch?.value || '').trim()) {
+        scheduleBookSearch();
+      }
+    }
+
+    function updateMarkdownViewToggleUi() {
+      const button = els.markdownViewToggle;
+      if (!button) return;
+      const visible = !!currentBook && currentBook.format === 'md';
+      button.classList.toggle('hidden', !visible);
+      if (!visible) {
+        button.classList.remove('active');
+        if (els.markdownViewToggleLabel) {
+          els.markdownViewToggleLabel.textContent = t('markdownModeRendered');
+        }
+        return;
+      }
+
+      const raw = isRawMarkdownMode();
+      const regional = raw && isMarkdownRawScopeRegional();
+      const label = raw
+        ? (regional ? t('markdownModeRawRegional') : t('markdownModeRaw'))
+        : t('markdownModeRendered');
+      const title = raw ? t('markdownToggleShowRendered') : t('markdownToggleShowRaw');
+      if (els.markdownViewToggleLabel) els.markdownViewToggleLabel.textContent = label;
+      const scopeHint = raw
+        ? (regional ? t('markdownScopeRegional') : t('markdownScopeFull'))
+        : t('markdownScopeFull');
+      const hint = t('markdownToggleShortcutHint');
+      button.title = `${title} (${scopeHint})\n${hint}`;
+      button.setAttribute('aria-label', `${title} (${scopeHint})`);
+      button.classList.toggle('active', raw);
+    }
+
+    function toggleMarkdownRawScope(opts = {}) {
+      if (!currentBook || currentBook.format !== 'md' || !currentBookRenderPayload) return;
+      const preserveScroll = opts.preserveScroll === true;
+      const forceRaw = opts.forceRaw === true;
+      const nextScope = isMarkdownRawScopeRegional() ? 'full' : 'regional';
+      settings.markdownRawScope = nextScope;
+      state.settings.markdownRawScope = nextScope;
+      if (forceRaw && !isRawMarkdownMode()) {
+        settings.markdownViewMode = 'raw';
+        state.settings.markdownViewMode = 'raw';
+      }
+      if (isRawMarkdownMode() || forceRaw) {
+        renderCurrentBookBody({ preserveScroll, applyAnnotations: true });
+      } else {
+        updateMarkdownViewToggleUi();
+      }
+      ipcRenderer.invoke('update-settings', settings).catch(() => {});
+    }
+
+    function toggleMarkdownViewMode(event) {
+      if (!currentBook || currentBook.format !== 'md' || !currentBookRenderPayload) return;
+      if (event?.shiftKey) {
+        toggleMarkdownRawScope({ forceRaw: true });
+        return;
+      }
+      const nextMode = isRawMarkdownMode() ? 'rendered' : 'raw';
+      settings.markdownViewMode = nextMode;
+      state.settings.markdownViewMode = nextMode;
+      renderCurrentBookBody({ preserveScroll: true, applyAnnotations: true });
+      ipcRenderer.invoke('update-settings', settings).catch(() => {});
     }
 
     async function mapWithConcurrency(items, limit, fn) {
@@ -4897,18 +5701,24 @@
       renderFolderTree();
     }
 
-    function togglePhysicalStructureFromMainHallMiddleClick(event) {
-      if (!event || event.button !== 1) return;
-      if (currentBook) return;
-      if (!els.libraryView || getComputedStyle(els.libraryView).display === 'none') return;
-
-      const target = event.target;
-      const blocked = target?.closest?.(
+    function canTogglePhysicalStructureFromMainHall(target) {
+      if (currentBook) return false;
+      if (!els.libraryView || getComputedStyle(els.libraryView).display === 'none') return false;
+      const el = target && (target.nodeType === 1 ? target : target.parentElement);
+      if (!el || !els.libraryView.contains(el)) return false;
+      const blocked = el.closest(
         'button, a, input, textarea, select, label, .book-card, .recent-book, .library-item, .folder-item, .context-menu, .modal, #library-search, #library-search-popover'
       );
-      if (blocked) return;
+      return !blocked;
+    }
 
+    function togglePhysicalStructureFromMainHallMiddleClick(event) {
+      if (!event || event.button !== 1) return;
+      if (!canTogglePhysicalStructureFromMainHall(event.target)) return;
       event.preventDefault();
+      const now = Date.now();
+      if ((now - lastMainHallMiddleToggleAt) < 220) return;
+      lastMainHallMiddleToggleAt = now;
       if ((settings.sidebarMode || 'libraries') === 'folders') {
         setSidebarMode('libraries');
       } else {
@@ -5361,6 +6171,7 @@
       const iconSvg = (format) => {
         if (format === 'pdf') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
         if (format === 'txt') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h8"/><path d="M8 9h2"/></svg>';
+        if (format === 'md') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M7 16v-4l2 2 2-2v4"/><path d="M13 16v-4l2 2 2-2v4"/></svg>';
         return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>';
       };
 
@@ -5469,6 +6280,12 @@
 	      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 	      if (els.librarySearchKbd) els.librarySearchKbd.textContent = isMac ? '⌘K' : 'Ctrl+K';
 	      bindLibrarySearch();
+	      els.booksArea?.addEventListener('mousedown', (e) => {
+	        if (e.button !== 1) return;
+	        if (!canTogglePhysicalStructureFromMainHall(e.target)) return;
+	        e.preventDefault();
+	      });
+	      els.booksArea?.addEventListener('mouseup', togglePhysicalStructureFromMainHallMiddleClick);
 	      els.booksArea?.addEventListener('auxclick', togglePhysicalStructureFromMainHallMiddleClick);
 
 	      els.readerContent?.addEventListener('wheel', (e) => {
@@ -5577,6 +6394,15 @@
 	          }
 	          els.bookSearch?.focus();
 	          els.bookSearch?.select();
+	        }
+	        if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'm' && currentBook?.format === 'md') {
+	          e.preventDefault();
+	          if (e.shiftKey) {
+	            toggleMarkdownRawScope({ forceRaw: true });
+	          } else {
+	            toggleMarkdownViewMode();
+	          }
+	          return;
 	        }
 	        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'b' && currentBook) {
 	          e.preventDefault();
@@ -6115,6 +6941,11 @@
       tocCollapseState.clear();
       tocMetadata = [];
       chapterIds = data.chapterIds || [];
+      currentBookRenderPayload = data;
+      currentBookHeroHtml = '';
+      currentHighlights = [];
+      currentNotes = [];
+      updateMarkdownViewToggleUi();
 
 	      let heroHtml = '';
 	      try {
@@ -6131,40 +6962,27 @@
 	          `;
 	        }
 	      } catch (e) {}
-
-      const bodyHtml = heroHtml + (data.chapters || []).map((c, i) =>
-        `<div class="chapter" id="chapter-${i}" data-href="${escapeHtml(chapterIds[i] || '')}">${c}</div>`
-      ).join('');
-      els.readerContent.innerHTML = `<div class="reader-scroll-body">${bodyHtml}</div>`;
+      currentBookHeroHtml = heroHtml;
 
       // Handle PDF rendering with PDF.js
-      if (currentBook.format === 'pdf' && data.pdfData) {
-        try {
-          await renderPdfBook(data.pdfData);
-          // Progress restoration will be handled by the call after startReadingSession()
-        } catch (e) {
-          console.error('PDF render error:', e);
+      if (currentBook.format === 'pdf') {
+        els.readerContent.innerHTML = '<div class="reader-scroll-body"></div>';
+        if (data.pdfData) {
+          try {
+            await renderPdfBook(data.pdfData);
+            // Progress restoration will be handled by the call after startReadingSession()
+          } catch (e) {
+            console.error('PDF render error:', e);
+            showToast(t('failedRenderPdf'), 'error');
+          }
+        } else {
           showToast(t('failedRenderPdf'), 'error');
         }
+      } else {
+        renderCurrentBookBody();
       }
 
       onAnnotationSearch('');
-
-	      els.readerContent.querySelectorAll('a[href]').forEach(link => {
-	        link.addEventListener('click', (e) => {
-	          const href = link.getAttribute('href');
-	          if (!href) return;
-	          if (/^(https?:|mailto:|tel:)/i.test(href)) {
-	            e.preventDefault();
-	            ipcRenderer.invoke('open-external', href);
-	            return;
-	          }
-	          if (/^(data:|blob:)/i.test(href)) return;
-	          if (!href.startsWith('#') && /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href)) return;
-	          e.preventDefault();
-	          navigateToHref(href);
-	        });
-	      });
 
 	      renderToc();
 	      applySettings({ revealReaderUi: false });
@@ -6584,6 +7402,11 @@
       recordReaderPosition();
       setActiveTocIndex(index);
 
+      if (currentBook?.format === 'md' && isRawMarkdownMode() && isMarkdownRawScopeRegional()) {
+        renderCurrentBookBody({ applyAnnotations: true });
+        return;
+      }
+
       // Handle PDF TOC items - use pdfDest for precise navigation
       if (currentBook?.format === 'pdf') {
         if (tocItem.pdfDest) {
@@ -6638,11 +7461,14 @@
       document.getElementById('reader-view').style.display = 'none';
       document.getElementById('library-view').style.display = 'flex';
       currentBook = null;
+      currentBookRenderPayload = null;
+      currentBookHeroHtml = '';
       currentTocActiveIndex = -1;
       clearTimeout(readerUiHideTimer);
       clearTimeout(tocHideTimer);
       els.readerView?.classList?.remove('reader-ui-hidden');
       els.readerView?.classList?.remove('reader-toc-hidden');
+      updateMarkdownViewToggleUi();
       if (opts.pushNav) pushNav({ view: 'library' });
       refreshState().then(() => {
         renderLibraries();
@@ -6749,6 +7575,7 @@
         rerenderPdfPages();
         resumeReaderAtRecordedPosition();
       }
+      updateMarkdownViewToggleUi();
     }
 
 		    function updateSetting(key, val) {

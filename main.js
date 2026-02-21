@@ -60,6 +60,8 @@ const defaultSettings = {
   readerMargin: 48,
   tocWidth: 300,
   fitReaderWidth: true,
+  markdownViewMode: 'rendered',
+  markdownRawScope: 'full',
   readerTopBarVisible: true,
   selectionPopupEnabled: true,
   sidebarMode: 'libraries',
@@ -775,6 +777,401 @@ function buildTxtContentWithToc(text, fallbackTitle = 'Text') {
   return { chapters, toc, chapterIds, rawChapters };
 }
 
+function splitMarkdownFrontMatter(text) {
+  const normalized = String(text || '').replace(/\r\n?/g, '\n');
+  const match = normalized.match(/^---\n([\s\S]*?)\n---(?:\n|$)/);
+  if (!match) return { body: normalized, data: {} };
+
+  const data = {};
+  let parsedFields = 0;
+  for (const rawLine of match[1].split('\n')) {
+    const line = String(rawLine || '');
+    const fieldMatch = line.match(/^\s*([A-Za-z0-9_-]+)\s*:\s*(.+?)\s*$/);
+    if (!fieldMatch) continue;
+    let value = String(fieldMatch[2] || '').trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    data[String(fieldMatch[1] || '').toLowerCase()] = value;
+    parsedFields += 1;
+  }
+
+  if (parsedFields <= 0) return { body: normalized, data: {} };
+  return { body: normalized.slice(match[0].length), data };
+}
+
+function normalizeMarkdownTitle(raw) {
+  let title = String(raw || '').trim();
+  if (!title) return '';
+  title = title.replace(/\s+#+\s*$/, '').trim();
+  title = title.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '$1');
+  title = title.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1');
+  title = title.replace(/[`*_~]/g, '');
+  title = title.replace(/\s+/g, ' ').trim();
+  if (title.length > 140) title = `${title.slice(0, 137).trimEnd()}...`;
+  return title;
+}
+
+function slugifyMarkdownTitle(rawTitle) {
+  const normalized = normalizeMarkdownTitle(rawTitle)
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\u4e00-\u9fff -]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+  return normalized || 'section';
+}
+
+function sanitizeMarkdownHref(rawHref) {
+  const href = String(rawHref || '').trim();
+  if (!href) return '';
+  const lowered = href.toLowerCase();
+  if (lowered.startsWith('javascript:')) return '';
+  if (lowered.startsWith('vbscript:')) return '';
+  if (lowered.startsWith('data:')) return '';
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href) && !/^(https?:|mailto:|tel:)/i.test(href)) return '';
+  return href;
+}
+
+function resolveMarkdownImageSrc(bookPath, rawSrc) {
+  const source = sanitizeMarkdownHref(rawSrc);
+  if (!source) return '';
+  if (/^(https?:|file:|data:|blob:)/i.test(source)) return source;
+  if (source.startsWith('#')) return '';
+  if (!bookPath) return source;
+
+  const fileParts = source.split('#');
+  const pathAndQuery = fileParts[0] || '';
+  const hashPart = fileParts[1] ? `#${fileParts.slice(1).join('#')}` : '';
+  const querySplit = pathAndQuery.split('?');
+  const relPath = querySplit[0] || '';
+  const queryPart = querySplit[1] ? `?${querySplit.slice(1).join('?')}` : '';
+  if (!relPath) return '';
+
+  const absPath = path.resolve(path.dirname(bookPath), relPath);
+  return `${pathToFileURL(absPath).toString()}${queryPart}${hashPart}`;
+}
+
+function renderMarkdownInline(text, bookPath) {
+  const codeTokens = [];
+  const token = (idx) => `@@MD_CODE_${idx}@@`;
+
+  let source = String(text || '');
+  source = source.replace(/`([^`\n]+)`/g, (_, code) => {
+    const key = token(codeTokens.length);
+    codeTokens.push(`<code>${escapeHtmlText(code)}</code>`);
+    return key;
+  });
+
+  let escaped = escapeHtmlText(source);
+
+  escaped = escaped.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, (_, altRaw, srcRaw, titleRaw = '') => {
+    const src = resolveMarkdownImageSrc(bookPath, srcRaw);
+    if (!src) return '';
+    const alt = escapeHtmlText(altRaw || '');
+    const titleAttr = titleRaw ? ` title="${escapeHtmlText(titleRaw)}"` : '';
+    return `<img src="${escapeHtmlText(src)}" alt="${alt}" loading="lazy"${titleAttr}>`;
+  });
+
+  escaped = escaped.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, (_, labelRaw, hrefRaw, titleRaw = '') => {
+    const safeHref = sanitizeMarkdownHref(hrefRaw) || '#';
+    const titleAttr = titleRaw ? ` title="${escapeHtmlText(titleRaw)}"` : '';
+    return `<a href="${escapeHtmlText(safeHref)}"${titleAttr}>${labelRaw}</a>`;
+  });
+
+  escaped = escaped.replace(/&lt;(https?:\/\/[^&\s]+)&gt;/g, (_, hrefRaw) => {
+    const safeHref = sanitizeMarkdownHref(hrefRaw);
+    if (!safeHref) return '';
+    const href = escapeHtmlText(safeHref);
+    return `<a href="${href}">${href}</a>`;
+  });
+
+  escaped = escaped.replace(/\*\*\*([^*\n]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+  escaped = escaped.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  escaped = escaped.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  escaped = escaped.replace(/~~([^~\n]+)~~/g, '<del>$1</del>');
+
+  for (let i = 0; i < codeTokens.length; i++) {
+    escaped = escaped.replaceAll(token(i), codeTokens[i]);
+  }
+
+  return escaped;
+}
+
+function buildMarkdownContentWithToc(text, fallbackTitle = 'Text', bookPath = '') {
+  const normalizedText = String(text || '').replace(/\r\n?/g, '\n');
+  const { body: bodyText, data: frontMatter } = splitMarkdownFrontMatter(normalizedText);
+  const safeFallbackTitle = normalizeMarkdownTitle(frontMatter?.title || fallbackTitle) || 'Text';
+  const lines = [];
+  for (const rawLine of bodyText.split('\n')) {
+    const line = String(rawLine || '');
+    const trimmed = line.trim();
+    const looksLikeCompressedTable = trimmed.startsWith('|')
+      && line.includes('||')
+      && /\|[-:\s]{3,}\|/.test(line);
+    if (!looksLikeCompressedTable) {
+      lines.push(line);
+      continue;
+    }
+
+    const segments = line.split('||').map(segment => String(segment || '').trim()).filter(Boolean);
+    if (segments.length >= 2) lines.push(...segments);
+    else lines.push(line);
+  }
+  const chapterIds = ['md-chapter-1'];
+  const rawChapters = [bodyText];
+  const toc = [];
+  const htmlParts = [];
+  const usedSlugs = new Set();
+
+  let paragraphLines = [];
+  let listType = null;
+  let listItems = [];
+  let quoteLines = [];
+  let inCodeFence = false;
+  let codeFenceMarker = '```';
+  let codeLang = '';
+  let codeLines = [];
+
+  const flushParagraph = () => {
+    if (!paragraphLines.length) return;
+    const merged = paragraphLines.map(line => String(line || '').trim()).filter(Boolean).join(' ');
+    if (merged) htmlParts.push(`<p>${renderMarkdownInline(merged, bookPath)}</p>`);
+    paragraphLines = [];
+  };
+
+  const flushList = () => {
+    if (!listType || !listItems.length) {
+      listType = null;
+      listItems = [];
+      return;
+    }
+    const tag = listType === 'ol' ? 'ol' : 'ul';
+    htmlParts.push(`<${tag}>${listItems.map(item => `<li>${item}</li>`).join('')}</${tag}>`);
+    listType = null;
+    listItems = [];
+  };
+
+  const flushQuote = () => {
+    if (!quoteLines.length) return;
+    const quoteHtml = quoteLines
+      .map(line => String(line || '').trim())
+      .filter(Boolean)
+      .map(line => renderMarkdownInline(line, bookPath))
+      .join('<br>');
+    if (quoteHtml) htmlParts.push(`<blockquote><p>${quoteHtml}</p></blockquote>`);
+    quoteLines = [];
+  };
+
+  const flushCode = () => {
+    const classAttr = codeLang ? ` class="language-${escapeHtmlText(codeLang)}"` : '';
+    htmlParts.push(`<pre class="md-code-block"><code${classAttr}>${escapeHtmlText(codeLines.join('\n'))}</code></pre>`);
+    codeLines = [];
+    codeLang = '';
+  };
+
+  const flushBlocks = () => {
+    flushParagraph();
+    flushList();
+    flushQuote();
+  };
+
+  const splitMarkdownTableRow = (rawLine) => {
+    let row = String(rawLine || '').trim();
+    if (row.startsWith('|')) row = row.slice(1);
+    if (row.endsWith('|')) row = row.slice(0, -1);
+    return row.split('|').map(cell => String(cell || '').trim());
+  };
+
+  const isMarkdownTableSeparator = (rawLine) => {
+    const cells = splitMarkdownTableRow(rawLine);
+    if (cells.length < 2) return false;
+    return cells.every(cell => /^:?-{3,}:?$/.test(cell.replace(/\s+/g, '')));
+  };
+
+  const parseMarkdownTableAlignments = (separatorLine, columnCount) => {
+    const cells = splitMarkdownTableRow(separatorLine);
+    const alignments = [];
+    for (let i = 0; i < columnCount; i += 1) {
+      const marker = String(cells[i] || '').replace(/\s+/g, '');
+      if (marker.startsWith(':') && marker.endsWith(':')) alignments.push('center');
+      else if (marker.endsWith(':')) alignments.push('right');
+      else alignments.push('left');
+    }
+    return alignments;
+  };
+
+  const buildMarkdownTableHtml = (headerRow, separatorRow, bodyRows) => {
+    const columnCount = Math.max(2, headerRow.length, ...bodyRows.map(row => row.length));
+    const normalizeRow = (row) => Array.from({ length: columnCount }, (_, idx) => String(row[idx] || '').trim());
+    const alignments = parseMarkdownTableAlignments(separatorRow, columnCount);
+    const headerCells = normalizeRow(headerRow);
+    const bodyCells = bodyRows.map(normalizeRow);
+
+    const theadHtml = `<tr>${headerCells.map((cell, idx) => {
+      const align = alignments[idx] || 'left';
+      const content = cell ? renderMarkdownInline(cell, bookPath) : '&nbsp;';
+      return `<th style="text-align:${align}">${content}</th>`;
+    }).join('')}</tr>`;
+
+    const tbodyHtml = bodyCells.map((row) => {
+      const cells = row.map((cell, idx) => {
+        const align = alignments[idx] || 'left';
+        const content = cell ? renderMarkdownInline(cell, bookPath) : '&nbsp;';
+        return `<td style="text-align:${align}">${content}</td>`;
+      }).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
+
+    return `<div class="md-table-wrap"><table class="md-table"><thead>${theadHtml}</thead><tbody>${tbodyHtml}</tbody></table></div>`;
+  };
+
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = String(lines[lineIndex] || '');
+
+    if (inCodeFence) {
+      const closeFence = new RegExp(`^\\s*${codeFenceMarker}\\s*$`);
+      if (closeFence.test(line)) {
+        flushCode();
+        inCodeFence = false;
+      } else {
+        codeLines.push(line);
+      }
+      continue;
+    }
+
+    const fenceMatch = line.match(/^\s*(```+|~~~+)\s*([A-Za-z0-9_-]+)?\s*$/);
+    if (fenceMatch) {
+      flushBlocks();
+      inCodeFence = true;
+      codeFenceMarker = String(fenceMatch[1] || '```');
+      codeLang = String(fenceMatch[2] || '').trim();
+      codeLines = [];
+      continue;
+    }
+
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushBlocks();
+      continue;
+    }
+
+    const headingMatch = line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*$/);
+    if (headingMatch) {
+      flushBlocks();
+      const level = Math.max(1, Math.min(6, headingMatch[1].length));
+      const headingRaw = String(headingMatch[2] || '').replace(/\s+#+\s*$/, '').trim();
+      const headingTitle = normalizeMarkdownTitle(headingRaw) || `${safeFallbackTitle} ${toc.length + 1}`;
+      const slugBase = slugifyMarkdownTitle(headingTitle);
+      let slug = slugBase;
+      let serial = 2;
+      while (usedSlugs.has(slug)) {
+        slug = `${slugBase}-${serial}`;
+        serial += 1;
+      }
+      usedSlugs.add(slug);
+
+      htmlParts.push(`<h${level} id="${escapeHtmlText(slug)}">${renderMarkdownInline(headingRaw, bookPath)}</h${level}>`);
+      toc.push({ title: headingTitle, href: `md-chapter-1#${slug}`, chapterIndex: 0, level: level - 1 });
+      continue;
+    }
+
+    const nextLine = String(lines[lineIndex + 1] || '');
+    const headerCells = line.includes('|') ? splitMarkdownTableRow(line) : [];
+    if (headerCells.length >= 2 && isMarkdownTableSeparator(nextLine)) {
+      flushBlocks();
+
+      const bodyRows = [];
+      let cursor = lineIndex + 2;
+      while (cursor < lines.length) {
+        const rowLine = String(lines[cursor] || '');
+        const rowTrimmed = rowLine.trim();
+        if (!rowTrimmed) break;
+        if (!rowLine.includes('|')) break;
+        if (isMarkdownTableSeparator(rowLine)) break;
+        bodyRows.push(splitMarkdownTableRow(rowLine));
+        cursor += 1;
+      }
+
+      htmlParts.push(buildMarkdownTableHtml(headerCells, nextLine, bodyRows));
+      lineIndex = cursor - 1;
+      continue;
+    }
+
+    if (/^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
+      flushBlocks();
+      htmlParts.push('<hr>');
+      continue;
+    }
+
+    const quoteMatch = line.match(/^\s{0,3}>\s?(.*)$/);
+    if (quoteMatch) {
+      flushParagraph();
+      flushList();
+      quoteLines.push(quoteMatch[1] || '');
+      continue;
+    }
+
+    const unorderedMatch = line.match(/^\s*[-+*]\s+(.+)$/);
+    const orderedMatch = line.match(/^\s*\d+[.)]\s+(.+)$/);
+    if (unorderedMatch || orderedMatch) {
+      flushParagraph();
+      flushQuote();
+      const nextType = orderedMatch ? 'ol' : 'ul';
+      if (listType && listType !== nextType) flushList();
+      listType = nextType;
+      listItems.push(renderMarkdownInline(orderedMatch ? orderedMatch[1] : unorderedMatch[1], bookPath));
+      continue;
+    }
+
+    flushList();
+    flushQuote();
+    paragraphLines.push(trimmed);
+  }
+
+  if (inCodeFence) {
+    flushCode();
+    inCodeFence = false;
+  }
+
+  flushBlocks();
+
+  if (!toc.length) {
+    toc.push({ title: safeFallbackTitle, href: 'md-chapter-1#overview', chapterIndex: 0, level: 0 });
+    htmlParts.unshift(`<h1 id="overview">${escapeHtmlText(safeFallbackTitle)}</h1>`);
+  }
+
+  const chapterHtml = `<article class="md-article">${htmlParts.join('\n')}</article>`;
+  return { chapters: [chapterHtml], toc, chapterIds, rawChapters };
+}
+
+async function getMarkdownMetadata(filePath) {
+  const fallbackTitle = path.basename(filePath, path.extname(filePath));
+  try {
+    const text = readTextFileBestEffort(filePath);
+    const { body, data } = splitMarkdownFrontMatter(text);
+    const frontMatterTitle = normalizeMarkdownTitle(data?.title || '');
+    const frontMatterAuthor = String(data?.author || '').trim();
+    if (frontMatterTitle || frontMatterAuthor) {
+      return {
+        title: frontMatterTitle || fallbackTitle,
+        author: frontMatterAuthor || 'Unknown'
+      };
+    }
+
+    const lines = String(body || '').replace(/\r\n?/g, '\n').split('\n');
+    for (const rawLine of lines) {
+      const heading = rawLine.match(/^\s{0,3}#\s+(.+?)\s*$/);
+      if (!heading) continue;
+      const title = normalizeMarkdownTitle(heading[1]);
+      if (title) return { title, author: 'Unknown' };
+    }
+  } catch (e) {}
+  return { title: fallbackTitle, author: 'Unknown' };
+}
+
 function collectionCountForBook(bookId) {
   const bookmarks = Array.isArray(appData.bookmarks?.[bookId]) ? appData.bookmarks[bookId].length : 0;
   const highlights = Array.isArray(appData.highlights?.[bookId]) ? appData.highlights[bookId].length : 0;
@@ -1330,6 +1727,13 @@ function ensureBookDefaults() {
   for (const book of Object.values(appData.books || {})) {
     if (!book) continue;
 
+    const detectedFormat = detectFormat(String(book.path || ''));
+    const currentFormat = String(book.format || '').toLowerCase();
+    if (detectedFormat && currentFormat !== detectedFormat) {
+      book.format = detectedFormat;
+      changed = true;
+    }
+
     if (!book.createdAt) {
       book.createdAt = Date.now();
       changed = true;
@@ -1370,10 +1774,15 @@ function ensureBookDefaults() {
 }
 
 function detectFormat(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
+  const fullPath = String(filePath || '');
+  const ext = path.extname(fullPath).toLowerCase().trim();
   if (ext === '.epub') return 'epub';
   if (ext === '.pdf') return 'pdf';
   if (ext === '.txt') return 'txt';
+  if (ext === '.md' || ext === '.markdown' || ext === '.mdown' || ext === '.mkd' || ext === '.mkdn' || ext === '.mdx') return 'md';
+
+  const normalizedName = path.basename(fullPath).toLowerCase().trim();
+  if (/\.(md|markdown|mdown|mkd|mkdn|mdx)$/.test(normalizedName)) return 'md';
   return null;
 }
 
@@ -1504,6 +1913,10 @@ async function ensureBooksForFiles(files, libraryId) {
 
       if (format === 'epub') {
         const meta = await getEpubMetadata(filePath);
+        title = meta.title;
+        author = meta.author;
+      } else if (format === 'md') {
+        const meta = await getMarkdownMetadata(filePath);
         title = meta.title;
         author = meta.author;
       }
@@ -1857,6 +2270,45 @@ async function rescanLibrary(libraryId, patchOnly = false) {
   saveData();
 }
 
+async function refreshStandaloneBooksFromKnownDirectories() {
+  const physicalLibraries = (appData.libraries || []).filter(lib => isPhysicalLibrary(lib) && !!lib?.path);
+  if (physicalLibraries.length > 0) return 0;
+
+  const books = Object.values(appData.books || {}).filter(book => {
+    const filePath = String(book?.path || '').trim();
+    return !!filePath && isExistingFile(filePath);
+  });
+  if (!books.length) return 0;
+
+  const rawDirs = [...new Set(books.map(book => path.resolve(path.dirname(String(book.path || '')))))];
+  rawDirs.sort((left, right) => left.length - right.length);
+
+  const roots = [];
+  for (const dir of rawDirs) {
+    if (!isExistingDirectory(dir)) continue;
+    const covered = roots.some(root => dir === root || dir.startsWith(`${root}${path.sep}`));
+    if (!covered) roots.push(dir);
+  }
+  if (!roots.length) return 0;
+
+  const fileSet = new Set();
+  for (const root of roots) {
+    const files = listBookFiles(root);
+    files.forEach(filePath => fileSet.add(filePath));
+  }
+
+  const files = [...fileSet];
+  if (!files.length) return 0;
+
+  const beforeCount = Object.keys(appData.books || {}).length;
+  await ensureBooksForFiles(files, null);
+  const afterCount = Object.keys(appData.books || {}).length;
+
+  recoverMovedBookProgress();
+  synchronizeDuplicateBookProgress();
+  return Math.max(0, afterCount - beforeCount);
+}
+
 async function autoRefreshLibrariesOnLaunch() {
   const libraries = appData.libraries || [];
   let hadChanges = markBooksMissingForUnavailableLibraries(true) > 0;
@@ -1876,6 +2328,16 @@ async function autoRefreshLibrariesOnLaunch() {
     } catch (e) {
       console.warn('Auto refresh failed for library', lib.name || lib.id, e?.message || e);
     }
+  }
+
+  try {
+    const addedFromStandalone = await refreshStandaloneBooksFromKnownDirectories();
+    if (addedFromStandalone > 0) {
+      hadChanges = true;
+      console.log(`Discovered ${addedFromStandalone} book(s) from standalone all-books directories`);
+    }
+  } catch (e) {
+    console.warn('Standalone all-books refresh failed', e?.message || e);
   }
 
   if (hadChanges) saveData();
@@ -2668,6 +3130,10 @@ async function readBookContent(id) {
     const text = readTextFileBestEffort(book.path);
     const fallbackTitle = book.title || path.basename(book.path || '', path.extname(book.path || ''));
     return buildTxtContentWithToc(text, fallbackTitle);
+  } else if (book.format === 'md') {
+    const markdown = readTextFileBestEffort(book.path);
+    const fallbackTitle = book.title || path.basename(book.path || '', path.extname(book.path || ''));
+    return buildMarkdownContentWithToc(markdown, fallbackTitle, book.path || '');
   }
   return { chapters: [], toc: [], chapterIds: [], rawChapters: [] };
 }
