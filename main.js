@@ -6,6 +6,13 @@ const { execFile } = require('child_process');
 const { pathToFileURL } = require('url');
 const EPub = require('epub2').default;
 const { PDFParse } = require('pdf-parse');
+const {
+  buildSearchIndexFromContent,
+  isReusableSearchIndex,
+  sanitizeSearchIndex,
+  searchPersistedIndex,
+  summarizeSearchIndex
+} = require('./search-index');
 
 // Set app name and WM class for Wayland/Linux icon support
 app.name = 'RoseReader';
@@ -32,6 +39,7 @@ const LIBRARY_WATCH_DEBOUNCE_MS = 500;
 const LIBRARY_WATCH_RESYNC_MS = 800;
 const FILE_FINGERPRINT_SAMPLE_BYTES = 64 * 1024;
 const LIBRARY_RESET_VERSION = 1;
+const TXT_TOC_CACHE_VERSION = 1;
 
 // Performance: keep GPU accel enabled and reduce background throttling.
 try {
@@ -46,12 +54,12 @@ const defaultSettings = {
   fontSize: 18,
   lineHeight: 1.8,
   margin: 60,
-  theme: 'light',
+  theme: 'archive-paper',
   appTheme: 'silk',
   appAccent: 'rose-gold',
   locale: 'system',
-  bgColor: '#f8f1e3',
-  textColor: '#4f321c',
+  bgColor: '#f3eadb',
+  textColor: '#4a2f20',
   selectedLibraryId: 'all',
   librarySort: 'recent',
   librarySortDir: 'desc',
@@ -219,6 +227,7 @@ function migrateData() {
 
   migrateLegacyBookIds();
   appData.settings = { ...defaultSettings, ...(appData.settings || {}) };
+  if (migrateDefaultReaderThemeToArchive()) changed = true;
 
   if (resetLibrariesToAllBooksIfNeeded()) changed = true;
   ensureLibraryTypes();
@@ -236,6 +245,19 @@ function migrateData() {
   ensureLibraryBookMap();
 
   return changed || markedMissing > 0 || mergedCount > 0 || syncedCount > 0 || dedupedCount > 0;
+}
+
+function migrateDefaultReaderThemeToArchive() {
+  const settings = appData.settings || {};
+  const isOldDefaultReaderTheme = settings.theme === 'light'
+    && settings.bgColor === '#f8f1e3'
+    && settings.textColor === '#4f321c';
+  if (!isOldDefaultReaderTheme) return false;
+
+  settings.theme = 'archive-paper';
+  settings.bgColor = '#f3eadb';
+  settings.textColor = '#4a2f20';
+  return true;
 }
 
 function resetLibrariesToAllBooksIfNeeded() {
@@ -702,8 +724,9 @@ function detectTxtChapterMarkers(lines) {
   const markers = [];
   const patterns = [
     /^#{1,6}\s+\S+/,
-    /^(?:chapter|chap\.|section|part|book)\s+[0-9ivxlcdm]+(?:\b|[\s:.\-])/i,
-    /^第[0-9一二三四五六七八九十百千零〇两]+[章节回卷部篇](?:\s|$)/
+    /^(?:chapter|chap\.|section|part|book)\s+[0-9ivxlcdm]+(?:\b|[\s:：.\-—])/i,
+    /^第[0-9一二三四五六七八九十百千万零〇两]+[章节回卷部篇](?:[\s:：、，,.\-—]|$)/,
+    /^(?:序章|序言|前言|楔子|引子|尾声|后记|番外)(?:[\s:：、，,.\-—]|$)/
   ];
 
   for (let i = 0; i < lines.length; i++) {
@@ -712,9 +735,12 @@ function detectTxtChapterMarkers(lines) {
 
     let matched = patterns.some(pattern => pattern.test(trimmed));
     if (!matched) {
+      const prevBlank = i === 0 || String(lines[i - 1] || '').trim() === '';
       const nextBlank = String(lines[i + 1] || '').trim() === '';
       const upperLike = /^[A-Z0-9][A-Z0-9 \-:'",.!?]{2,80}$/.test(trimmed);
-      if (upperLike && nextBlank) matched = true;
+      const numberedHeading = /^(?:[0-9]{1,3}|[一二三四五六七八九十百千零〇两]{1,8})[、.．]\s*\S+/.test(trimmed);
+      const compactChineseHeading = /^第[0-9一二三四五六七八九十百千万零〇两]+[章节回卷部篇]\S{0,80}$/.test(trimmed);
+      if ((upperLike || numberedHeading || compactChineseHeading) && (prevBlank || nextBlank)) matched = true;
     }
     if (!matched) continue;
 
@@ -727,10 +753,52 @@ function detectTxtChapterMarkers(lines) {
   return markers;
 }
 
-function buildTxtContentWithToc(text, fallbackTitle = 'Text') {
+function sanitizeTxtTocBoundaries(boundaries, lineCount) {
+  const maxLine = Math.max(0, Number(lineCount || 0) - 1);
+  const seen = new Set();
+  return (Array.isArray(boundaries) ? boundaries : [])
+    .map((entry) => {
+      const lineIndex = Math.max(0, Math.min(maxLine, Math.floor(Number(entry?.lineIndex || 0))));
+      const title = normalizeTxtChapterTitle(entry?.title || '');
+      const level = Math.max(0, Math.min(6, Math.floor(Number(entry?.level || 0))));
+      return title ? { lineIndex, title, level } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.lineIndex - b.lineIndex)
+    .filter((entry) => {
+      if (seen.has(entry.lineIndex)) return false;
+      seen.add(entry.lineIndex);
+      return true;
+    });
+}
+
+function buildTxtTocPlanFromLines(lines, fallbackTitle = 'Text') {
+  const safeFallbackTitle = String(fallbackTitle || '').trim() || 'Text';
+  const markers = detectTxtChapterMarkers(lines);
+
+  if (markers.length < 2) {
+    return {
+      source: markers.length ? 'single-marker' : 'single',
+      markerCount: markers.length,
+      boundaries: [{ lineIndex: 0, title: markers[0]?.title || safeFallbackTitle, level: 0 }]
+    };
+  }
+
+  const boundaries = markers.map(marker => ({ ...marker, level: 0 }));
+  const hasPreface = boundaries[0].lineIndex > 0
+    && lines.slice(0, boundaries[0].lineIndex).some(line => String(line || '').trim());
+  if (hasPreface) boundaries.unshift({ lineIndex: 0, title: 'Introduction', level: 0 });
+
+  return {
+    source: 'detected-headings',
+    markerCount: markers.length,
+    boundaries: sanitizeTxtTocBoundaries(boundaries, lines.length)
+  };
+}
+
+function buildTxtContentFromPlan(text, fallbackTitle = 'Text', plan = null) {
   const normalizedText = String(text || '').replace(/\r\n?/g, '\n');
   const lines = normalizedText.split('\n');
-  const markers = detectTxtChapterMarkers(lines);
   const safeFallbackTitle = String(fallbackTitle || '').trim() || 'Text';
 
   const buildSingle = (title) => ({
@@ -740,14 +808,8 @@ function buildTxtContentWithToc(text, fallbackTitle = 'Text') {
     rawChapters: [normalizedText]
   });
 
-  if (markers.length < 2) {
-    return buildSingle(markers[0]?.title || safeFallbackTitle);
-  }
-
-  const boundaries = markers.slice();
-  const hasPreface = boundaries[0].lineIndex > 0
-    && lines.slice(0, boundaries[0].lineIndex).some(line => String(line || '').trim());
-  if (hasPreface) boundaries.unshift({ lineIndex: 0, title: 'Introduction' });
+  const boundaries = sanitizeTxtTocBoundaries(plan?.boundaries || [], lines.length);
+  if (boundaries.length < 2) return buildSingle(boundaries[0]?.title || safeFallbackTitle);
 
   const chapters = [];
   const toc = [];
@@ -765,13 +827,13 @@ function buildTxtContentWithToc(text, fallbackTitle = 'Text') {
     const title = boundaries[i].title || `Chapter ${chapterIndex + 1}`;
 
     chapters.push(`<pre style="white-space:pre-wrap">${escapeHtmlText(chunk)}</pre>`);
-    toc.push({ title, href: chapterId, chapterIndex, level: 0 });
+    toc.push({ title, href: chapterId, chapterIndex, level: Math.max(0, Number(boundaries[i].level || 0)) });
     chapterIds.push(chapterId);
     rawChapters.push(chunk);
   }
 
   if (!chapters.length) {
-    return buildSingle(markers[0]?.title || safeFallbackTitle);
+    return buildSingle(boundaries[0]?.title || safeFallbackTitle);
   }
 
   return { chapters, toc, chapterIds, rawChapters };
@@ -1257,6 +1319,20 @@ function mergeBookState(targetBook, sourceBook) {
     targetBook.fileFingerprint = sourceBook.fileFingerprint;
   }
 
+  const sourceTocUpdated = Number(sourceBook?.generatedToc?.generatedAt || 0);
+  const targetTocUpdated = Number(targetBook?.generatedToc?.generatedAt || 0);
+  if (sourceBook.generatedToc && sourceTocUpdated >= targetTocUpdated) {
+    const cloned = cloneJson(sourceBook.generatedToc);
+    if (cloned) targetBook.generatedToc = cloned;
+  }
+
+  const sourceIndexUpdated = Number(sourceBook?.searchIndex?.generatedAt || 0);
+  const targetIndexUpdated = Number(targetBook?.searchIndex?.generatedAt || 0);
+  if (sourceBook.searchIndex && sourceIndexUpdated >= targetIndexUpdated) {
+    const cloned = cloneJson(sourceBook.searchIndex);
+    if (cloned) targetBook.searchIndex = cloned;
+  }
+
   const sourceCreatedAt = Number(sourceBook.createdAt || 0);
   const targetCreatedAt = Number(targetBook.createdAt || 0);
   if (sourceCreatedAt > 0 && (targetCreatedAt <= 0 || sourceCreatedAt < targetCreatedAt)) {
@@ -1371,7 +1447,7 @@ function getBookMetainfo(bookId) {
     schemaVersion: 1,
     generatedAt,
     generatedAtISO: toIsoTimestamp(generatedAt),
-    book: { ...book },
+    book: getBookForRenderer(book),
     computed: {
       physicalLibrary: physicalLibrary
         ? { id: physicalLibrary.id, name: physicalLibrary.name || 'Library', type: physicalLibrary.type || 'physical' }
@@ -1734,6 +1810,16 @@ function ensureBookDefaults() {
       changed = true;
     }
 
+    if (book.generatedToc && (typeof book.generatedToc !== 'object' || Array.isArray(book.generatedToc))) {
+      delete book.generatedToc;
+      changed = true;
+    }
+
+    if (book.searchIndex && !sanitizeSearchIndex(book.searchIndex)) {
+      delete book.searchIndex;
+      changed = true;
+    }
+
     if (!book.createdAt) {
       book.createdAt = Date.now();
       changed = true;
@@ -1858,6 +1944,128 @@ function computeFileFingerprint(filePath) {
   } catch (e) {
     return null;
   }
+}
+
+function getBookFileSignature(book) {
+  try {
+    if (!book?.path) return null;
+    const stats = fs.statSync(book.path);
+    if (!stats.isFile()) return null;
+    const existingFingerprint = String(book.fileFingerprint || '').trim();
+    const fingerprint = existingFingerprint || computeFileFingerprint(book.path) || null;
+    return {
+      sizeBytes: Number(stats.size || 0),
+      modifiedAt: Number(stats.mtimeMs || 0),
+      fingerprint
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+function isSameBookFileSignature(left, right) {
+  if (!left || !right) return false;
+  const leftSize = Number(left.sizeBytes);
+  const rightSize = Number(right.sizeBytes);
+  if (!Number.isFinite(leftSize) || !Number.isFinite(rightSize) || leftSize !== rightSize) return false;
+
+  const leftFingerprint = String(left.fingerprint || '').trim();
+  const rightFingerprint = String(right.fingerprint || '').trim();
+  const leftModified = Number(left.modifiedAt);
+  const rightModified = Number(right.modifiedAt);
+  const modifiedMatches = Number.isFinite(leftModified)
+    && Number.isFinite(rightModified)
+    && Math.abs(leftModified - rightModified) < 1;
+  if (!modifiedMatches) return false;
+
+  if (leftFingerprint || rightFingerprint) return !!leftFingerprint && leftFingerprint === rightFingerprint;
+  return true;
+}
+
+function cloneJson(value) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch (e) {
+    return null;
+  }
+}
+
+function getReusableTxtTocCache(book, signature, lineCount) {
+  const cache = book?.generatedToc;
+  if (!cache || typeof cache !== 'object' || Array.isArray(cache)) return null;
+  if (cache.type !== 'txt') return null;
+  if (Number(cache.version || 0) !== TXT_TOC_CACHE_VERSION) return null;
+  if (!isSameBookFileSignature(cache.signature, signature)) return null;
+
+  const boundaries = sanitizeTxtTocBoundaries(cache.boundaries, lineCount);
+  if (!boundaries.length) return null;
+  return {
+    source: cache.source || 'cached',
+    markerCount: Math.max(0, Number(cache.markerCount || 0)),
+    boundaries
+  };
+}
+
+function buildTxtGeneratedTocCache(plan, signature) {
+  const boundaries = sanitizeTxtTocBoundaries(plan?.boundaries || [], Number.MAX_SAFE_INTEGER);
+  return {
+    type: 'txt',
+    version: TXT_TOC_CACHE_VERSION,
+    source: plan?.source || 'generated',
+    markerCount: Math.max(0, Number(plan?.markerCount || 0)),
+    generatedAt: Date.now(),
+    signature: signature ? {
+      sizeBytes: Number(signature.sizeBytes || 0),
+      modifiedAt: Number(signature.modifiedAt || 0),
+      fingerprint: signature.fingerprint || null
+    } : null,
+    boundaries
+  };
+}
+
+function getBookForRenderer(book) {
+  if (!book || typeof book !== 'object') return book;
+  const out = { ...book };
+  delete out.searchIndex;
+  const summary = summarizeSearchIndex(book.searchIndex);
+  if (summary) out.searchIndexSummary = summary;
+  return out;
+}
+
+function getReusableBookSearchIndex(book, signature) {
+  if (!book || !isReusableSearchIndex(book.searchIndex, book.format, signature)) return null;
+  return sanitizeSearchIndex(book.searchIndex);
+}
+
+function ensureSearchIndexForContent(book, content, signature, extras = {}) {
+  let changed = false;
+  if (signature?.fingerprint && !book.fileFingerprint) {
+    book.fileFingerprint = signature.fingerprint;
+    changed = true;
+  }
+
+  const cached = getReusableBookSearchIndex(book, signature);
+  if (cached) return { index: cached, changed, cached: true };
+
+  const index = buildSearchIndexFromContent({
+    format: book.format,
+    signature,
+    toc: content?.toc || [],
+    chapterIds: content?.chapterIds || [],
+    rawChapters: content?.rawChapters || [],
+    chapters: content?.chapters || [],
+    pdfPages: extras.pdfPages || []
+  });
+
+  if (index) {
+    book.searchIndex = index;
+    changed = true;
+  } else if (book.searchIndex) {
+    delete book.searchIndex;
+    changed = true;
+  }
+
+  return { index, changed, cached: false };
 }
 
 async function ensureBooksForFiles(files, libraryId) {
@@ -3103,7 +3311,16 @@ async function readBookContent(id) {
           }));
         }
 
-        resolve({ chapters, toc, chapterIds, rawChapters });
+        const content = { chapters, toc, chapterIds, rawChapters };
+        const signature = getBookFileSignature(book);
+        const searchIndexState = ensureSearchIndexForContent(book, content, signature);
+        if (searchIndexState.changed) saveData();
+
+        resolve({
+          ...content,
+          searchIndex: summarizeSearchIndex(searchIndexState.index),
+          searchIndexCached: searchIndexState.cached
+        });
       });
       epub.on('error', () => resolve({ chapters: [], toc: [], chapterIds: [], rawChapters: [] }));
       epub.parse();
@@ -3115,13 +3332,24 @@ async function readBookContent(id) {
     try {
       const result = await parser.getText();
       const pdfData = buffer.toString('base64');
-      return {
+      const pdfPages = Array.isArray(result.pages)
+        ? result.pages.map(page => ({ pageNum: Number(page?.num || 0) || 1, text: page?.text || '' }))
+        : [];
+      const content = {
         chapters: [],
         toc: [],
         chapterIds: [],
         rawChapters: [result.text],
         pdfData,
-        pageCount: result.numpages || 1
+        pageCount: result.total || result.numpages || 1
+      };
+      const signature = getBookFileSignature(book);
+      const searchIndexState = ensureSearchIndexForContent(book, content, signature, { pdfPages });
+      if (searchIndexState.changed) saveData();
+      return {
+        ...content,
+        searchIndex: summarizeSearchIndex(searchIndexState.index),
+        searchIndexCached: searchIndexState.cached
       };
     } finally {
       try { await parser.destroy(); } catch (e) {}
@@ -3129,11 +3357,51 @@ async function readBookContent(id) {
   } else if (book.format === 'txt') {
     const text = readTextFileBestEffort(book.path);
     const fallbackTitle = book.title || path.basename(book.path || '', path.extname(book.path || ''));
-    return buildTxtContentWithToc(text, fallbackTitle);
+    const normalizedText = String(text || '').replace(/\r\n?/g, '\n');
+    const lines = normalizedText.split('\n');
+    const signature = getBookFileSignature(book);
+    let dataChanged = false;
+
+    if (signature?.fingerprint && !book.fileFingerprint) {
+      book.fileFingerprint = signature.fingerprint;
+      dataChanged = true;
+    }
+
+    let plan = getReusableTxtTocCache(book, signature, lines.length);
+    const usedCachedPlan = !!plan;
+    if (!plan) {
+      plan = buildTxtTocPlanFromLines(lines, fallbackTitle);
+      book.generatedToc = buildTxtGeneratedTocCache(plan, signature);
+      dataChanged = true;
+    }
+
+    const content = buildTxtContentFromPlan(normalizedText, fallbackTitle, plan);
+    const searchIndexState = ensureSearchIndexForContent(book, content, signature);
+    dataChanged = dataChanged || searchIndexState.changed;
+    if (dataChanged) saveData();
+    return {
+      ...content,
+      generatedToc: {
+        type: 'txt',
+        source: plan.source || 'generated',
+        cached: usedCachedPlan,
+        markerCount: Math.max(0, Number(plan.markerCount || 0))
+      },
+      searchIndex: summarizeSearchIndex(searchIndexState.index),
+      searchIndexCached: searchIndexState.cached
+    };
   } else if (book.format === 'md') {
     const markdown = readTextFileBestEffort(book.path);
     const fallbackTitle = book.title || path.basename(book.path || '', path.extname(book.path || ''));
-    return buildMarkdownContentWithToc(markdown, fallbackTitle, book.path || '');
+    const content = buildMarkdownContentWithToc(markdown, fallbackTitle, book.path || '');
+    const signature = getBookFileSignature(book);
+    const searchIndexState = ensureSearchIndexForContent(book, content, signature);
+    if (searchIndexState.changed) saveData();
+    return {
+      ...content,
+      searchIndex: summarizeSearchIndex(searchIndexState.index),
+      searchIndexCached: searchIndexState.cached
+    };
   }
   return { chapters: [], toc: [], chapterIds: [], rawChapters: [] };
 }
@@ -3465,8 +3733,8 @@ ipcMain.handle('regenerate-cover', async (_, bookId) => {
   return getCoverUrl(bookId);
 });
 ipcMain.handle('get-libraries', () => appData.libraries);
-ipcMain.handle('get-books', () => Object.values(appData.books));
-ipcMain.handle('get-book', (_, id) => appData.books[id]);
+ipcMain.handle('get-books', () => Object.values(appData.books).map(getBookForRenderer));
+ipcMain.handle('get-book', (_, id) => getBookForRenderer(appData.books[id]));
 ipcMain.handle('read-book', (_, id) => readBookContent(id));
 ipcMain.handle('delete-book', (_, id, deleteFile) => deleteBook(id, deleteFile));
 ipcMain.handle('search-books', (_, query) => searchBooks(query));
@@ -3557,7 +3825,7 @@ ipcMain.handle('get-library', () => appData.libraries.map(l => l.structure));
 ipcMain.handle('get-state', () => ({
   libraries: appData.libraries,
   libraryBookMap: appData.libraryBookMap || {},
-  books: Object.values(appData.books),
+  books: Object.values(appData.books).map(getBookForRenderer),
   settings: appData.settings,
   stats: appData.stats,
   analytics: appData.analytics
@@ -3565,18 +3833,13 @@ ipcMain.handle('get-state', () => ({
 ipcMain.handle('search-in-book', async (_, bookId, query) => {
   const book = appData.books[bookId];
   if (!book) return [];
-  const content = await readBookContent(bookId);
-  const results = [];
-  const q = query.toLowerCase();
-  content.rawChapters.forEach((text, chapterIndex) => {
-    const lines = text.split('\n');
-    lines.forEach((line, lineIndex) => {
-      if (line.toLowerCase().includes(q)) {
-        results.push({ chapterIndex, lineIndex, text: line.trim().slice(0, 200), chapterId: content.chapterIds[chapterIndex] });
-      }
-    });
-  });
-  return results.slice(0, 2000);
+  const signature = getBookFileSignature(book);
+  let index = getReusableBookSearchIndex(book, signature);
+  if (!index) {
+    await readBookContent(bookId);
+    index = getReusableBookSearchIndex(book, signature) || sanitizeSearchIndex(book.searchIndex);
+  }
+  return searchPersistedIndex(index, query, { limit: 1000 });
 });
 ipcMain.handle('export-data', async (_, filePath) => exportData(filePath));
 ipcMain.handle('import-data', async (_, filePath) => importData(filePath));

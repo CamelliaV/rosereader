@@ -600,7 +600,7 @@
     }
     .markdown-view-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
     .markdown-view-btn .mode-label { line-height: 1; }
-    .reader-content { flex: 1; overflow-y: auto; width: 100%; padding: 0; line-height: 1.8; min-height: 0; font-feature-settings: "kern" 1, "liga" 1; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+    .reader-content { flex: 1; overflow-y: auto; width: 100%; padding: 0; line-height: 1.8; min-height: 0; font-feature-settings: "kern" 1, "liga" 1; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; --reader-muted-color: color-mix(in srgb, currentColor 58%, transparent); --reader-accent-color: var(--primary); --reader-search-highlight-bg: #fef08a; --reader-search-highlight-current: #fb923c; --reader-search-highlight-current-text: #1a1a1a; }
     .reader-content { scroll-behavior: auto; }
     .reader-scroll-body { max-width: 100%; margin: 0; padding: var(--reader-margin, 48px); padding-top: 32px; }
 		    .reader-content:not(.pdf-mode) .reader-scroll-body { }
@@ -706,9 +706,9 @@
       background: color-mix(in srgb, #dbe8a4 22%, transparent);
     }
     .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-quote {
-      color: color-mix(in srgb, #7f5a37 80%, var(--text) 20%);
-      border-left: 2px solid color-mix(in srgb, #d0a96a 52%, transparent);
-      background: color-mix(in srgb, #ecd9b4 24%, transparent);
+      color: color-mix(in srgb, var(--reader-muted-color, #7f5a37) 80%, var(--text) 20%);
+      border-left: 2px solid color-mix(in srgb, var(--reader-accent-color, #d0a96a) 52%, transparent);
+      background: color-mix(in srgb, var(--reader-search-highlight-bg, #ecd9b4) 70%, transparent);
     }
     .chapter.markdown-chapter.markdown-raw-chapter .md-raw-line.is-link {
       color: color-mix(in srgb, #2a7ea3 78%, var(--text) 22%);
@@ -847,8 +847,8 @@
     .chapter.markdown-chapter blockquote {
       margin: 1.3em 0;
       padding: 0.9em 1.15em;
-      border-left: 4px solid color-mix(in srgb, var(--primary) 48%, transparent);
-      background: color-mix(in srgb, var(--primary-light) 22%, transparent);
+      border-left: 4px solid color-mix(in srgb, var(--reader-accent-color, var(--primary)) 48%, transparent);
+      background: color-mix(in srgb, var(--reader-search-highlight-bg, var(--primary-light)) 70%, transparent);
       border-radius: 10px;
       color: color-mix(in srgb, var(--text) 88%, transparent);
     }
@@ -1393,17 +1393,17 @@
 			      color: inherit;
 			      padding: 1px 4px;
 			      border-radius: 6px;
-			      background: linear-gradient(130deg, color-mix(in srgb, var(--primary) 28%, transparent), color-mix(in srgb, var(--primary-light) 22%, transparent));
-			      box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 18%, transparent);
-			      border-bottom: 2px solid color-mix(in srgb, var(--primary) 50%, transparent);
+			      background: linear-gradient(130deg, var(--reader-search-highlight-bg, color-mix(in srgb, var(--primary) 28%, transparent)), color-mix(in srgb, var(--reader-accent-color, var(--primary-light)) 18%, transparent));
+			      box-shadow: 0 4px 12px color-mix(in srgb, var(--reader-accent-color, var(--primary)) 18%, transparent);
+			      border-bottom: 2px solid color-mix(in srgb, var(--reader-accent-color, var(--primary)) 50%, transparent);
 			      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 			    }
 			    .search-highlight.current {
 			      z-index: 10;
-			      background: color-mix(in srgb, var(--primary) 70%, transparent);
-			      color: #0a0a0a;
-			      border-bottom-color: color-mix(in srgb, var(--primary-dark) 85%, #0a0a0a 15%);
-			      box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 35%, transparent), 0 0 0 1px color-mix(in srgb, #000 12%, transparent);
+			      background: var(--reader-search-highlight-current, color-mix(in srgb, var(--primary) 70%, transparent));
+			      color: var(--reader-search-highlight-current-text, #0a0a0a);
+			      border-bottom-color: color-mix(in srgb, var(--reader-accent-color, var(--primary-dark)) 85%, #0a0a0a 15%);
+			      box-shadow: 0 6px 20px color-mix(in srgb, var(--reader-accent-color, var(--primary)) 35%, transparent), 0 0 0 1px color-mix(in srgb, #000 12%, transparent);
 			      animation: search-pulse 1.3s ease-out;
 			    }
 			    /* Search highlights inside user highlights - use user's color */
@@ -1420,9 +1420,9 @@
 			    .search-highlight[data-hl-color="orange"] { background: linear-gradient(120deg, rgba(255, 152, 0, 0.5), rgba(255, 236, 204, 0.85)); border-bottom-color: #f57c00; }
 			    .search-highlight[data-hl-color="orange"].current { background: #f57c00; }
 			    @keyframes search-pulse {
-			      0% { transform: translateY(0) scale(1); box-shadow: 0 12px 30px color-mix(in srgb, var(--primary) 40%, transparent), 0 0 0 0 color-mix(in srgb, var(--primary) 55%, transparent); }
-			      55% { transform: translateY(-1px) scale(1.02); box-shadow: 0 18px 40px color-mix(in srgb, var(--primary) 38%, transparent), 0 0 0 10px color-mix(in srgb, var(--primary) 10%, transparent); }
-			      100% { transform: translateY(0) scale(1); box-shadow: 0 6px 14px color-mix(in srgb, var(--primary) 18%, transparent), 0 0 0 0 color-mix(in srgb, var(--primary) 0%, transparent); }
+			      0% { transform: translateY(0) scale(1); box-shadow: 0 12px 30px color-mix(in srgb, var(--reader-accent-color, var(--primary)) 40%, transparent), 0 0 0 0 color-mix(in srgb, var(--reader-accent-color, var(--primary)) 55%, transparent); }
+			      55% { transform: translateY(-1px) scale(1.02); box-shadow: 0 18px 40px color-mix(in srgb, var(--reader-accent-color, var(--primary)) 38%, transparent), 0 0 0 10px color-mix(in srgb, var(--reader-accent-color, var(--primary)) 10%, transparent); }
+			      100% { transform: translateY(0) scale(1); box-shadow: 0 6px 14px color-mix(in srgb, var(--reader-accent-color, var(--primary)) 18%, transparent), 0 0 0 0 color-mix(in srgb, var(--reader-accent-color, var(--primary)) 0%, transparent); }
 			    }
 
 
@@ -1457,6 +1457,8 @@
     .theme-buttons button { flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-card); cursor: pointer; font-weight: 500; transition: var(--transition); }
     .theme-buttons button:hover { border-color: var(--primary-light); }
     .theme-buttons button.active { border-color: var(--primary); background: var(--primary-light); }
+    .reader-theme-presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .reader-theme-btn.active { border-color: var(--primary) !important; box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent), 0 8px 18px color-mix(in srgb, var(--primary) 18%, transparent); transform: translateY(-1px); }
     .close-btn { width: 100%; padding: 14px; margin-top: 20px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: white; cursor: pointer; font-weight: 500; font-size: 0.95rem; transition: var(--transition); }
     .close-btn:hover { background: var(--primary-dark); }
     .btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
@@ -1482,8 +1484,8 @@
     .lib-modal .btn-row button { flex: 1; }
 
     /* Search results highlight */
-    .search-highlight { background: #fef08a; padding: 2px 0; border-radius: 2px; }
-    .search-highlight.current { background: #fb923c; }
+    .search-highlight { background: var(--reader-search-highlight-bg, #fef08a); padding: 2px 0; border-radius: 2px; }
+    .search-highlight.current { background: var(--reader-search-highlight-current, #fb923c); color: var(--reader-search-highlight-current-text, inherit); }
 
 	    /* Recent books section */
 	    .recent-section { margin-bottom: 32px; width: 100%; }
@@ -1863,13 +1865,13 @@
 	    .pdf-page .pdf-search-layer .pdf-search-mark {
 	      position: absolute;
 	      border-radius: 4px;
-	      background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #b8860b) 60%, transparent), color-mix(in srgb, var(--accent, #b8860b) 30%, transparent));
-	      box-shadow: 0 4px 12px color-mix(in srgb, var(--accent, #b8860b) 28%, transparent), 0 0 0 1px color-mix(in srgb, var(--accent, #b8860b) 40%, transparent);
+	      background: linear-gradient(135deg, var(--reader-search-highlight-bg, color-mix(in srgb, var(--accent, #b8860b) 60%, transparent)), color-mix(in srgb, var(--reader-accent-color, var(--accent, #b8860b)) 30%, transparent));
+	      box-shadow: 0 4px 12px color-mix(in srgb, var(--reader-accent-color, var(--accent, #b8860b)) 28%, transparent), 0 0 0 1px color-mix(in srgb, var(--reader-accent-color, var(--accent, #b8860b)) 40%, transparent);
 	      transition: box-shadow 0.2s ease, transform 0.2s ease;
 	    }
 	    .pdf-page .pdf-search-layer .pdf-search-mark.current {
-	      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #b8860b) 95%, transparent), 0 10px 24px color-mix(in srgb, var(--accent, #b8860b) 60%, transparent);
-	      background: color-mix(in srgb, var(--accent, #b8860b) 85%, transparent);
+	      box-shadow: 0 0 0 2px color-mix(in srgb, var(--reader-accent-color, var(--accent, #b8860b)) 95%, transparent), 0 10px 24px color-mix(in srgb, var(--reader-accent-color, var(--accent, #b8860b)) 60%, transparent);
+	      background: var(--reader-search-highlight-current, color-mix(in srgb, var(--accent, #b8860b) 85%, transparent));
 	      animation: search-pulse 1.1s ease-out;
 	      transform: translateY(-1px);
 	    }
@@ -1880,12 +1882,12 @@
 	      transform-origin: 0% 0%;
 	    }
 	    .pdf-page .textLayer > span::selection {
-	      background: color-mix(in srgb, var(--accent, #b8860b) 40%, transparent);
+	      background: color-mix(in srgb, var(--reader-accent-color, var(--accent, #b8860b)) 40%, transparent);
 	    }
 	    .pdf-page .textLayer > span.search-highlight-span.current {
-	      outline: 2px solid color-mix(in srgb, var(--accent, #b8860b) 75%, transparent);
+	      outline: 2px solid color-mix(in srgb, var(--reader-accent-color, var(--accent, #b8860b)) 75%, transparent);
 	      outline-offset: 1px;
-	      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #b8860b) 22%, transparent);
+	      box-shadow: 0 0 0 3px color-mix(in srgb, var(--reader-accent-color, var(--accent, #b8860b)) 22%, transparent);
 	    }
 	    .pdf-page .textLayer .highlight {
 	      border-radius: 3px;
@@ -2372,21 +2374,22 @@
 	      </div>
       <div class="setting-row">
         <label id="label-reader-theme">Reader Theme</label>
-        <div class="reader-theme-presets" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;">
-          <button id="btn-reader-theme-warm" class="reader-theme-btn" data-bg="#f8f1e3" data-text="#4f321c" onclick="setReaderTheme('#f8f1e3','#4f321c')" style="background:#f8f1e3;color:#4f321c;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Warm</button>
-          <button id="btn-reader-theme-cream" class="reader-theme-btn" data-bg="#fdfcfa" data-text="#37352f" onclick="setReaderTheme('#fdfcfa','#37352f')" style="background:#fdfcfa;color:#37352f;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Cream</button>
-          <button id="btn-reader-theme-sepia" class="reader-theme-btn" data-bg="#f8f5f0" data-text="#4a4540" onclick="setReaderTheme('#f8f5f0','#4a4540')" style="background:#f8f5f0;color:#4a4540;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Sepia</button>
-          <button id="btn-reader-theme-paper" class="reader-theme-btn" data-bg="#e8e4dc" data-text="#3d3a36" onclick="setReaderTheme('#e8e4dc','#3d3a36')" style="background:#e8e4dc;color:#3d3a36;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Paper</button>
-          <button id="btn-reader-theme-night" class="reader-theme-btn" data-bg="#1e1e1e" data-text="#e0e0e0" onclick="setReaderTheme('#1e1e1e','#e0e0e0')" style="background:#1e1e1e;color:#e0e0e0;border:2px solid var(--border);border-radius:10px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Night</button>
+        <div class="reader-theme-presets">
+          <button id="btn-reader-theme-archive" class="reader-theme-btn" data-theme="archive-paper" data-bg="#f3eadb" data-text="#4a2f20" onclick="setReaderTheme('archive-paper','#f3eadb','#4a2f20')" style="background:#f3eadb;color:#4a2f20;border:2px solid var(--border);border-radius:8px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Archive</button>
+          <button id="btn-reader-theme-warm" class="reader-theme-btn" data-theme="warm-paper" data-bg="#f8f1e3" data-text="#4f321c" onclick="setReaderTheme('warm-paper','#f8f1e3','#4f321c')" style="background:#f8f1e3;color:#4f321c;border:2px solid var(--border);border-radius:8px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Warm</button>
+          <button id="btn-reader-theme-cream" class="reader-theme-btn" data-theme="cream-paper" data-bg="#fdfcfa" data-text="#37352f" onclick="setReaderTheme('cream-paper','#fdfcfa','#37352f')" style="background:#fdfcfa;color:#37352f;border:2px solid var(--border);border-radius:8px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Cream</button>
+          <button id="btn-reader-theme-sepia" class="reader-theme-btn" data-theme="soft-sepia" data-bg="#f8f5f0" data-text="#4a4540" onclick="setReaderTheme('soft-sepia','#f8f5f0','#4a4540')" style="background:#f8f5f0;color:#4a4540;border:2px solid var(--border);border-radius:8px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Sepia</button>
+          <button id="btn-reader-theme-paper" class="reader-theme-btn" data-theme="gray-paper" data-bg="#e8e4dc" data-text="#3d3a36" onclick="setReaderTheme('gray-paper','#e8e4dc','#3d3a36')" style="background:#e8e4dc;color:#3d3a36;border:2px solid var(--border);border-radius:8px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Paper</button>
+          <button id="btn-reader-theme-night" class="reader-theme-btn" data-theme="night-paper" data-bg="#1e1e1e" data-text="#e0e0e0" onclick="setReaderTheme('night-paper','#1e1e1e','#e0e0e0')" style="background:#1e1e1e;color:#e0e0e0;border:2px solid var(--border);border-radius:8px;padding:10px 8px;font-weight:600;font-size:0.8rem;cursor:pointer;transition:all 0.15s ease;">Night</button>
         </div>
       </div>
       <div class="setting-row">
         <label id="label-background-color">Background Color</label>
-        <input type="color" id="bg-color" value="#fdfcfa" style="width:100%;height:38px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);" oninput="updateSetting('bgColor', this.value)">
+        <input type="color" id="bg-color" value="#f3eadb" style="width:100%;height:38px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);" oninput="updateSetting('bgColor', this.value)">
       </div>
       <div class="setting-row">
         <label id="label-text-color">Text Color</label>
-        <input type="color" id="text-color" value="#37352f" style="width:100%;height:38px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);" oninput="updateSetting('textColor', this.value)">
+        <input type="color" id="text-color" value="#4a2f20" style="width:100%;height:38px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);" oninput="updateSetting('textColor', this.value)">
       </div>
       <div class="setting-row">
         <label id="label-app-bg-image">App Background Image</label>
@@ -7493,6 +7496,12 @@
       rc.style.padding = settings.margin + 'px';
       rc.style.setProperty('background-color', settings.bgColor, 'important');
       rc.style.setProperty('color', settings.textColor, 'important');
+      const isArchivePaper = settings.theme === 'archive-paper';
+      rc.style.setProperty('--reader-muted-color', isArchivePaper ? '#9f8975' : 'color-mix(in srgb, currentColor 58%, transparent)');
+      rc.style.setProperty('--reader-accent-color', isArchivePaper ? '#b87518' : 'var(--primary)');
+      rc.style.setProperty('--reader-search-highlight-bg', isArchivePaper ? 'rgba(206, 152, 66, .28)' : '#fef08a');
+      rc.style.setProperty('--reader-search-highlight-current', isArchivePaper ? '#b87518' : '#fb923c');
+      rc.style.setProperty('--reader-search-highlight-current-text', isArchivePaper ? '#2a170d' : '#1a1a1a');
       if (currentBook && revealReaderUi) showReaderUiTemporarily();
 
       const fontModeEl = document.getElementById('font-mode');
@@ -7510,8 +7519,8 @@
       document.getElementById('margin-val').textContent = settings.margin;
       const bgEl = document.getElementById('bg-color');
       const textEl = document.getElementById('text-color');
-      if (bgEl) bgEl.value = settings.bgColor || '#fdfcfa';
-      if (textEl) textEl.value = settings.textColor || '#37352f';
+      if (bgEl) bgEl.value = settings.bgColor || '#f3eadb';
+      if (textEl) textEl.value = settings.textColor || '#4a2f20';
       const pdfZoom = document.getElementById('pdf-zoom');
       const pdfZoomVal = document.getElementById('pdf-zoom-val');
       if (pdfZoom) pdfZoom.value = String(settings.pdfZoom || 120);
@@ -7569,6 +7578,13 @@
 	      document.querySelectorAll('.theme-buttons button[data-theme]').forEach((btn) => {
 	        btn.classList.toggle('active', btn.dataset.theme === settings.theme);
 	      });
+	      const normalizeReaderThemeColor = (value) => String(value || '').trim().toLowerCase();
+	      document.querySelectorAll('.reader-theme-btn').forEach((btn) => {
+	        const themeMatches = btn.dataset.theme === settings.theme;
+	        const colorMatches = normalizeReaderThemeColor(btn.dataset.bg) === normalizeReaderThemeColor(settings.bgColor)
+	          && normalizeReaderThemeColor(btn.dataset.text) === normalizeReaderThemeColor(settings.textColor);
+	        btn.classList.toggle('active', themeMatches || colorMatches);
+	      });
 
       if (currentBook?.format === 'pdf') {
         // Re-render PDF pages with new theme colors
@@ -7580,6 +7596,7 @@
 
 		    function updateSetting(key, val) {
 		      settings[key] = val;
+		      if (key === 'bgColor' || key === 'textColor') settings.theme = 'custom-reader';
 		      ipcRenderer.invoke('update-settings', settings);
 		      applySettings();
 		      applyAppTheme();
@@ -7696,7 +7713,21 @@
       applyAppTheme();
     }
 
-    function setReaderTheme(bg, text) {
+    function setReaderTheme(themeOrBg, bgOrText, maybeText) {
+      const hasExplicitTheme = typeof maybeText === 'string';
+      const bg = hasExplicitTheme ? bgOrText : themeOrBg;
+      const text = hasExplicitTheme ? maybeText : bgOrText;
+      let theme = hasExplicitTheme ? themeOrBg : '';
+      if (!theme) {
+        const normalizedBg = String(bg || '').trim().toLowerCase();
+        const normalizedText = String(text || '').trim().toLowerCase();
+        const matched = [...document.querySelectorAll('.reader-theme-btn')].find((btn) => (
+          String(btn.dataset.bg || '').trim().toLowerCase() === normalizedBg
+          && String(btn.dataset.text || '').trim().toLowerCase() === normalizedText
+        ));
+        theme = matched?.dataset?.theme || 'custom-reader';
+      }
+      settings.theme = theme;
       settings.bgColor = bg;
       settings.textColor = text;
       ipcRenderer.invoke('update-settings', settings);
@@ -8439,13 +8470,8 @@
 		      const pageNum = Number(pageEl.dataset.pageNum) || 1;
 		      const matches = [];
 		      (bookSearchState.matches || []).forEach((m, idx) => {
-		        if (m?.pageNum === pageNum) matches.push({ m, idx });
+		        if (Number(m?.pageNum || 0) === pageNum) matches.push({ m, idx });
 		      });
-		      if (!matches.length) {
-		        const existingLayer = pageContainer.querySelector('.pdf-search-layer');
-		        if (existingLayer) existingLayer.innerHTML = '';
-		        return;
-		      }
 
 		      let searchLayer = pageContainer.querySelector('.pdf-search-layer');
 		      if (!searchLayer) {
@@ -8454,10 +8480,10 @@
 		        pageContainer.appendChild(searchLayer);
 		      }
 		      searchLayer.innerHTML = '';
+		      if (!matches.length) return;
 
 		      const pageRect = pageContainer.getBoundingClientRect();
-		      const spans = textLayer.querySelectorAll('span');
-
+		      const spans = [...textLayer.querySelectorAll('span')];
 		      const colorBgs = {
 		        yellow: 'rgba(255, 235, 59, 0.55)',
 		        green: 'rgba(0, 230, 118, 0.5)',
@@ -8466,7 +8492,6 @@
 		        purple: 'rgba(224, 64, 251, 0.45)',
 		        orange: 'rgba(255, 145, 0, 0.5)'
 		      };
-
 		      const pageHighlights = (currentHighlights || []).filter(h => h.pageNum === pageNum && Array.isArray(h.rects) && h.rects.length);
 		      const pageItems = pdfPageTextItems.get(pageNum) || [];
 		      const viewport = pdfPageViewports.get(pageNum);
@@ -8487,73 +8512,97 @@
 		        return null;
 		      };
 
-		      for (const { m, idx } of matches) {
+		      const addMark = (rect, matchIndex) => {
+		        if (!rect || !rect.width || !rect.height) return false;
+		        const left = rect.left - pageRect.left;
+		        const top = rect.top - pageRect.top;
+		        const right = rect.right - pageRect.left;
+		        const bottom = rect.bottom - pageRect.top;
+		        if (right <= 0 || bottom <= 0 || left >= pageRect.width || top >= pageRect.height) return false;
+
+		        const mark = document.createElement('div');
+		        mark.className = 'pdf-search-mark';
+		        mark.dataset.matchIndex = matchIndex;
+		        if (matchIndex === currentIndex) mark.classList.add('current');
+		        const colorName = findColorForRect(left, top, right, bottom);
+		        mark.style.background = colorBgs[colorName] || 'color-mix(in srgb, var(--accent, #b8860b) 55%, transparent)';
+		        mark.style.left = `${(left / pageRect.width) * 100}%`;
+		        mark.style.top = `${(top / pageRect.height) * 100}%`;
+		        mark.style.width = `${((right - left) / pageRect.width) * 100}%`;
+		        mark.style.height = `${((bottom - top) / pageRect.height) * 100}%`;
+		        searchLayer.appendChild(mark);
+		        return true;
+		      };
+
+		      const addRangeMarks = (span, start, end, matchIndex) => {
+		        if (!span?.firstChild) return false;
+		        const range = document.createRange();
+		        try {
+		          range.setStart(span.firstChild, start);
+		          range.setEnd(span.firstChild, end);
+		          const rects = Array.from(range.getClientRects ? range.getClientRects() : []);
+		          let marked = false;
+		          if (rects.length) rects.forEach(rect => { marked = addMark(rect, matchIndex) || marked; });
+		          else marked = addMark(range.getBoundingClientRect(), matchIndex);
+		          return marked;
+		        } catch (e) {
+		          return false;
+		        }
+		      };
+
+		      const markPdfItemMatch = (m, matchIndex) => {
+		        if (typeof m.itemIndex !== 'number') return false;
 		        const span = spans[m.itemIndex];
 		        const item = pageItems[m.itemIndex];
 		        const str = item?.str || span?.textContent || '';
-		        if (!span || !span.firstChild || !str) continue;
-
-		        const charStart = Math.max(0, Math.min(str.length, m.charIndex || 0));
-		        const charEnd = Math.max(charStart + 1, Math.min(str.length, (m.charIndex || 0) + (m.charLength || q.length)));
-
-		        const addMark = (rect) => {
-		          if (!rect || !rect.width || !rect.height) return;
-		          const left = rect.left - pageRect.left;
-		          const top = rect.top - pageRect.top;
-		          const right = rect.right - pageRect.left;
-		          const bottom = rect.bottom - pageRect.top;
-		          if (right <= 0 || bottom <= 0 || left >= pageRect.width || top >= pageRect.height) return;
-
-		          const mark = document.createElement('div');
-		          mark.className = 'pdf-search-mark';
-		          mark.dataset.matchIndex = idx;
-		          if (idx === currentIndex) mark.classList.add('current');
-
-		          const colorName = findColorForRect(left, top, right, bottom);
-		          const bg = colorBgs[colorName] || 'color-mix(in srgb, var(--accent, #b8860b) 55%, transparent)';
-		          mark.style.background = bg;
-		          mark.style.left = `${(left / pageRect.width) * 100}%`;
-		          mark.style.top = `${(top / pageRect.height) * 100}%`;
-		          mark.style.width = `${((right - left) / pageRect.width) * 100}%`;
-		          mark.style.height = `${((bottom - top) / pageRect.height) * 100}%`;
-
-		          searchLayer.appendChild(mark);
-		        };
-
+		        if (!span || !str) return false;
+		        const charStart = Math.max(0, Math.min(str.length, Number(m.charIndex || 0)));
+		        const charEnd = Math.max(charStart + 1, Math.min(str.length, charStart + Number(m.charLength || q.length)));
 		        if (viewport && item) {
 		          try {
 		            const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
 		            const fontHeight = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
 		            const totalWidth = (item.width || 0) * (settings.pdfZoom || 120) / 100 || (str.length * fontHeight * 0.5);
 		            const denom = str.length || 1;
-		            const startX = totalWidth * (charStart / denom);
-		            const endX = totalWidth * (charEnd / denom);
-		            const left = tx[4] + startX;
-		            const right = tx[4] + endX;
+		            const left = tx[4] + (totalWidth * (charStart / denom));
+		            const right = tx[4] + (totalWidth * (charEnd / denom));
 		            const top = tx[5] - fontHeight;
 		            const bottom = top + fontHeight;
-		            addMark({
+		            return addMark({
 		              left: pageRect.left + left,
 		              right: pageRect.left + right,
 		              top: pageRect.top + top,
 		              bottom: pageRect.top + bottom,
 		              width: right - left,
 		              height: bottom - top
-		            });
-		            continue;
+		            }, matchIndex);
 		          } catch (e) {}
 		        }
+		        return addRangeMarks(span, charStart, charEnd, matchIndex);
+		      };
 
-		        // Fallback to DOM range measurement
-		        const textNode = span.firstChild;
-		        const range = document.createRange();
-		        try {
-		          range.setStart(textNode, charStart);
-		          range.setEnd(textNode, charEnd);
-		          const rects = Array.from(range.getClientRects ? range.getClientRects() : []);
-		          if (rects.length) rects.forEach(addMark);
-		          else addMark(range.getBoundingClientRect());
-		        } catch (e) {}
+		      const markPageOccurrence = (targetOccurrence, matchIndex) => {
+		        let occurrence = 0;
+		        for (const span of spans) {
+		          const raw = span.textContent || '';
+		          const lower = raw.toLowerCase();
+		          let from = 0;
+		          while (from < lower.length) {
+		            const idx = lower.indexOf(q, from);
+		            if (idx === -1) break;
+		            if (occurrence === targetOccurrence) {
+		              return addRangeMarks(span, idx, idx + q.length, matchIndex);
+		            }
+		            occurrence += 1;
+		            from = idx + Math.max(1, q.length);
+		          }
+		        }
+		        return false;
+		      };
+
+		      for (const { m, idx } of matches) {
+		        markPdfItemMatch(m, idx)
+		          || markPageOccurrence(Math.max(0, Number(m.occurrenceInPage || 0)), idx);
 		      }
 		    }
 
@@ -8712,187 +8761,18 @@
     }
 
 	    async function highlightMatches(query, signal) {
-	      const q = query.toLowerCase();
-	      const maxMatches = 5000;
-	      const matches = [];
-
-	      // Handle PDF search
-	      if (currentBook?.format === 'pdf') {
-	        if (!pdfDoc || !pdfjsLib) return [];
-	        const totalPages = pdfDoc.numPages || 1;
-
-	        const getPdfItemsContext = (items, i, charsBefore = 60, charsAfter = 60) => {
-	          const center = String(items?.[i]?.str || '');
-	          let before = '';
-	          let after = '';
-	          for (let j = i - 1; j >= 0 && before.length < charsBefore; j--) {
-	            before = String(items?.[j]?.str || '') + before;
-	          }
-	          for (let j = i + 1; j < (items?.length || 0) && after.length < charsAfter; j++) {
-	            after += String(items?.[j]?.str || '');
-	          }
-	          return before.slice(-charsBefore) + center + after.slice(0, charsAfter);
-	        };
-
-	        let yieldCounter = 0;
-	        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-	          if (signal?.aborted) return [];
-	          if (++yieldCounter % 2 === 0) {
-	            await new Promise(r => setTimeout(r, 0));
-	            if (signal?.aborted) return [];
-	          }
-
-	          const pageHighlights = (currentHighlights || []).filter(h => h.pageNum === pageNum && Array.isArray(h.rects) && h.rects.length);
-	          if (bookSearchState.highlightsOnly && !pageHighlights.length) continue;
-
-	          const pageData = await getPdfPageData(pageNum);
-	          if (!pageData) continue;
-	          const { items, viewport } = pageData;
-	          if (!items || !viewport) continue;
-
-	          const findHlColorForRange = (startX, endX, top, height) => {
-	            const cx = (startX + endX) / 2;
-	            const cy = top + (height / 2);
-	            for (const h of pageHighlights) {
-	              for (const r of (h.rects || [])) {
-	                const x0 = r.x * viewport.width;
-	                const y0 = r.y * viewport.height;
-	                const x1 = (r.x + r.w) * viewport.width;
-	                const y1 = (r.y + r.h) * viewport.height;
-	                if (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1) return h.color || null;
-	              }
-	            }
-	            return null;
-	          };
-	          for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-	            const s = String(items[itemIndex]?.str || '');
-	            if (!s) continue;
-	            const lower = s.toLowerCase();
-	            let idx = 0;
-	            while ((idx = lower.indexOf(q, idx)) !== -1) {
-	              const ctx = getPdfItemsContext(items, itemIndex, 60, 60);
-	              const snippet = getSnippetAroundMatch(ctx, query, 30);
-
-	              let posInPage = 0.5;
-	              try {
-	                const tx = pdfjsLib.Util.transform(viewport.transform, items[itemIndex].transform);
-	                const fontHeight = Math.sqrt((tx[2] * tx[2]) + (tx[3] * tx[3]));
-	                const topPx = (tx[5] - fontHeight);
-	                if (viewport.height) posInPage = topPx / viewport.height;
-	              } catch (e) {}
-	              posInPage = Math.max(0, Math.min(1, posInPage));
-	              const pos = ((pageNum - 1) + posInPage) / totalPages;
-
-	              const hlColor = findHlColorForRange(startX, endX, topPx, fontHeight);
-	              const isHighlight = !!hlColor;
-
-	              matches.push({
-	                pageNum,
-	                itemIndex,
-	                charIndex: idx,
-	                charLength: query.length,
-	                snippet,
-	                pos,
-	                hlColor,
-	                isHighlight
-	              });
-	              if (bookSearchState.highlightsOnly && !isHighlight) { idx += q.length; continue; }
-	              if (matches.length >= maxMatches) break;
-	              idx += q.length;
-	            }
-	            if (matches.length >= maxMatches) break;
-	          }
-
-	          if (matches.length >= maxMatches) break;
-	        }
-
-	        return matches;
-	      }
-
-	      // Handle EPUB search (existing code)
-	      const chapters = [...els.readerContent.querySelectorAll('.chapter')];
-	      let yieldCounter = 0;
-
-      for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex++) {
-        if (signal?.aborted) { clearHighlights(); return []; }
-
-	        const root = chapters[chapterIndex];
-	        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-	          acceptNode(node) {
-	            if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
-	            if (node.parentNode?.classList?.contains('search-highlight')) return NodeFilter.FILTER_REJECT;
-	            return NodeFilter.FILTER_ACCEPT;
-          }
-        });
-
-        const textNodes = [];
-        let n;
-        while ((n = walker.nextNode())) textNodes.push(n);
-
-        for (const originalNode of textNodes) {
-          if (++yieldCounter % 100 === 0) {
-            await new Promise(r => setTimeout(r, 0));
-            if (signal?.aborted) { clearHighlights(); return []; }
-          }
-
-          let node = originalNode;
-          while (matches.length < maxMatches) {
-            const text = node.nodeValue || '';
-            const idx = text.toLowerCase().indexOf(q);
-            if (idx === -1) break;
-
-            const matchText = text.slice(idx, idx + query.length);
-
-            // Get context - first from current node, then adjacent nodes if needed
-            let beforeText = text.slice(Math.max(0, idx - 50), idx);
-            let afterText = text.slice(idx + query.length, idx + query.length + 50);
-
-            if (beforeText.length < 30 || afterText.length < 30) {
-              const adj = getAdjacentText(node, 50 - beforeText.length, 50 - afterText.length);
-              beforeText = adj.before + beforeText;
-              afterText = afterText + adj.after;
-            }
-
-	            const rawContext = (beforeText || '') + matchText + (afterText || '');
-	            const snippet = getSnippetAroundMatch(rawContext, query, 30);
-
-	            const before = text.slice(0, idx);
-	            const hit = text.slice(idx, idx + query.length);
-	            const after = text.slice(idx + query.length);
-
-            const beforeNode = before ? document.createTextNode(before) : null;
-            const hitSpan = document.createElement('span');
-            hitSpan.className = 'search-highlight';
-
-            const userHl = node.parentNode?.closest?.('mark.hl[data-color]');
-            const hlColor = userHl?.dataset?.color || null;
-            if (hlColor) hitSpan.dataset.hlColor = hlColor;
-
-            hitSpan.textContent = hit;
-            const afterNode = after ? document.createTextNode(after) : null;
-
-            const parent = node.parentNode;
-            if (!parent) break;
-            if (beforeNode) parent.insertBefore(beforeNode, node);
-            parent.insertBefore(hitSpan, node);
-            if (afterNode) parent.insertBefore(afterNode, node);
-            parent.removeChild(node);
-
-	            const isHighlight = !!hlColor;
-	            if (bookSearchState.highlightsOnly && !isHighlight) { if (!afterNode) break; node = afterNode; continue; }
-
-	            matches.push({ chapterIndex, el: hitSpan, snippet, hlColor, isHighlight });
-
-            if (!afterNode) break;
-            node = afterNode;
-          }
-
-          if (matches.length >= maxMatches) break;
-        }
-        if (matches.length >= maxMatches) break;
-      }
-
-	      return matches;
+	      if (!currentBook?.id) return [];
+	      const q = String(query || '').trim();
+	      if (!q) return [];
+	      if (signal?.aborted) return [];
+	      const results = await ipcRenderer.invoke('search-in-book', currentBook.id, q);
+	      if (signal?.aborted) return [];
+	      return (Array.isArray(results) ? results : []).map((match, i) => ({
+	        ...match,
+	        snippet: match?.snippet || `Match ${i + 1}`,
+	        hlColor: match?.hlColor || null,
+	        isHighlight: !!match?.isHighlight
+	      }));
 	    }
 
 	    function computeScrollTopForElementInContainer(container, el, block = 'center') {
@@ -8945,17 +8825,65 @@
 	      return targetTop;
 	    }
 
+	    function applyTextSearchHighlightsOnChapter(chapterEl, query, activeOccurrence = 0) {
+	      const q = String(query || '').trim().toLowerCase();
+	      if (!chapterEl || !q) return null;
+
+	      const walker = document.createTreeWalker(chapterEl, NodeFilter.SHOW_TEXT, {
+	        acceptNode(node) {
+	          if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
+	          if (node.parentNode?.classList?.contains('search-highlight')) return NodeFilter.FILTER_REJECT;
+	          return NodeFilter.FILTER_ACCEPT;
+	        }
+	      });
+
+	      const textNodes = [];
+	      let n;
+	      while ((n = walker.nextNode())) textNodes.push(n);
+
+	      let occurrence = 0;
+	      let activeEl = null;
+	      for (const originalNode of textNodes) {
+	        let node = originalNode;
+	        while (node?.nodeValue) {
+	          const text = node.nodeValue || '';
+	          const idx = text.toLowerCase().indexOf(q);
+	          if (idx === -1) break;
+
+	          const before = text.slice(0, idx);
+	          const hit = text.slice(idx, idx + q.length);
+	          const after = text.slice(idx + q.length);
+	          const beforeNode = before ? document.createTextNode(before) : null;
+	          const hitSpan = document.createElement('span');
+	          hitSpan.className = 'search-highlight';
+	          hitSpan.textContent = hit;
+	          if (occurrence === activeOccurrence) {
+	            hitSpan.classList.add('current');
+	            activeEl = hitSpan;
+	          }
+	          const afterNode = after ? document.createTextNode(after) : null;
+	          const parent = node.parentNode;
+	          if (!parent) break;
+	          if (beforeNode) parent.insertBefore(beforeNode, node);
+	          parent.insertBefore(hitSpan, node);
+	          if (afterNode) parent.insertBefore(afterNode, node);
+	          parent.removeChild(node);
+
+	          occurrence += 1;
+	          if (!afterNode) break;
+	          node = afterNode;
+	        }
+	      }
+
+	      return activeEl || chapterEl.querySelector('.search-highlight');
+	    }
+
 		    function gotoSearchIndex(index) {
 		      if (!bookSearchState.matches.length) return;
 		      const nextIndex = (index + bookSearchState.matches.length) % bookSearchState.matches.length;
 		      bookSearchState.currentIndex = nextIndex;
-		      bookSearchState.matches.forEach((m, i) => {
-		        const el = m?.el || m?.element;
-		        if (!el) return;
-		        el.classList.toggle('current', i === nextIndex);
-		      });
 		      const match = bookSearchState.matches[nextIndex];
-		      const matchEl = match?.el || match?.element;
+		      clearHighlights();
 
 		      if (currentBook?.format === 'pdf') {
 		        const token = (gotoSearchIndex._pdfToken || 0) + 1;
@@ -8966,17 +8894,17 @@
 		        return;
 		      }
 
-		      if (matchEl && matchEl.isConnected) {
-		        const chapter = matchEl.closest('.chapter');
-		        if (chapter) {
-		          chapter.style.contentVisibility = 'visible';
-		          void chapter.offsetHeight;
-		        }
+		      const chapterIndex = Math.max(0, Number(match?.chapterIndex || 0));
+		      const chapter = document.getElementById(`chapter-${chapterIndex}`);
+		      if (chapter) {
+		        chapter.style.contentVisibility = 'visible';
+		        void chapter.offsetHeight;
+		        const occurrence = Math.max(0, Number(match?.occurrenceInChapter || 0));
+		        const matchEl = applyTextSearchHighlightsOnChapter(chapter, bookSearchState.query, occurrence) || chapter;
 		        const token = (scrollContainerToElementStable._token || 0) + 1;
 		        scrollContainerToElementStable._token = token;
 		        scrollContainerToElementStable(els.readerContent, matchEl, { behavior: 'smooth', block: 'center', token });
-
-		        if (chapter) setTimeout(() => { if (scrollContainerToElementStable._token === token) chapter.style.contentVisibility = ''; }, 1200);
+		        setTimeout(() => { if (scrollContainerToElementStable._token === token) chapter.style.contentVisibility = ''; }, 1200);
 		      }
 
 		      els.searchPosition.textContent = `${nextIndex + 1}/${bookSearchState.matches.length}`;
@@ -9157,28 +9085,6 @@
 		      showBookSearchResults();
 		      const shown = total;
 		      const hlColors = { yellow: '#ffc107', green: '#388e3c', blue: '#1976d2', pink: '#e91e63', purple: '#9c27b0', orange: '#ff5722' };
-		      const listHtml = bookSearchState.matches.map((m, i) => {
-		        const s = snippetHtml(m.snippet || `Match ${i + 1}`, query);
-		        const chapterLabel = (currentBook?.format === 'pdf')
-		          ? `Page ${Number(m.pageNum) || 1}`
-		          : `Chapter ${Number(m.chapterIndex) + 1}`;
-		        const colorDot = m.hlColor && hlColors[m.hlColor] ? `<span style="width:8px;height:8px;border-radius:50%;background:${hlColors[m.hlColor]};flex-shrink:0;margin-left:auto;"></span>` : '';
-		        const meta = m.isHighlight ? `<span style="padding:2px 6px;border-radius:12px;background:color-mix(in srgb, ${hlColors[m.hlColor] || 'var(--primary)'} 20%, transparent);color:var(--text-secondary);font-size:0.72rem;">Highlight</span>` : '';
-		        return `
-		          <button type="button" class="search-result-item" onclick="gotoSearchIndex(${i})">
-		            <div class="result-chapter" style="display:flex;align-items:center;gap:6px;">${escapeHtml(chapterLabel)}${colorDot}${meta}</div>
-		            <div class="result-text">${s}</div>
-		          </button>
-		        `;
-		      }).join('');
-
-		      els.searchResultsPanel.innerHTML = `
-		        <div class="search-results-header">
-		          <span>${shown} matches</span>
-		          <span class="search-meta">↑↓ to jump</span>
-		        </div>
-		        <div class="search-results-body">${listHtml}</div>
-		      `;
 
       // Show codemap on right side
       const codemap = document.getElementById('search-codemap');
@@ -9205,14 +9111,20 @@
 	        const colorDot = m.hlColor && hlColors[m.hlColor] ? `<span style="width:8px;height:8px;border-radius:50%;background:${hlColors[m.hlColor]};flex-shrink:0;margin-left:auto;"></span>` : '';
 	        const meta = m.isHighlight ? `<span style="padding:2px 6px;border-radius:12px;background:color-mix(in srgb, ${hlColors[m.hlColor] || 'var(--primary)'} 20%, transparent);color:var(--text-secondary);font-size:0.72rem;">Highlight</span>` : '';
 	        return `
-	          <button type="button" class="search-result-item" onclick="gotoSearchIndex(${origIdx})">
+	          <button type="button" class="search-result-item" data-search-index="${origIdx}">
 	            <div class="result-chapter" style="display:flex;align-items:center;gap:6px;">${escapeHtml(chapterLabel)}${colorDot}${meta}</div>
 	            <div class="result-text">${s}</div>
 	          </button>
 	        `;
 	      }).join('');
 
-      els.searchResultsPanel.querySelector('.search-results-body').innerHTML = sortedListHtml;
+      els.searchResultsPanel.innerHTML = `
+        <div class="search-results-header">
+          <span>${shown} matches</span>
+          <span class="search-meta">↑↓ to jump</span>
+        </div>
+        <div class="search-results-body">${sortedListHtml}</div>
+      `;
 
       renderSearchCodemap();
 
@@ -9236,7 +9148,7 @@
 	      hideBookSearchResults();
 	      const codemap = document.getElementById('search-codemap');
 	      if (codemap) codemap.classList.remove('visible');
-	      bookSearchState = { query: '', matches: [], currentIndex: -1 };
+	      bookSearchState = { query: '', matches: [], currentIndex: -1, highlightsOnly: false };
 	      clearHighlights();
 	      updateBookSearchUiState();
 	    }
