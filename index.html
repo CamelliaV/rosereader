@@ -4568,6 +4568,16 @@
       return scope === 'regional';
     }
 
+    function normalizeTxtViewMode(mode) {
+      return String(mode || '').toLowerCase() === 'raw' ? 'raw' : 'reflow';
+    }
+
+    function isTxtRawMode() {
+      const mode = normalizeTxtViewMode(settings.txtViewMode);
+      if (settings.txtViewMode !== mode) settings.txtViewMode = mode;
+      return mode === 'raw';
+    }
+
     function getReaderScrollRatio() {
       if (!els.readerContent) return 0;
       const maxScroll = Math.max(0, (els.readerContent.scrollHeight || 0) - (els.readerContent.clientHeight || 0));
@@ -4791,12 +4801,26 @@
     }
 
     function buildRenderedBookBodyHtml(payload, heroHtml) {
-      const chapterClass = currentBook?.format === 'md' ? 'chapter markdown-chapter' : 'chapter';
+      const chapterClass = currentBook?.format === 'md'
+        ? 'chapter markdown-chapter'
+        : (currentBook?.format === 'txt' ? 'chapter txt-chapter' : 'chapter');
       const chapters = Array.isArray(payload?.chapters) ? payload.chapters : [];
       return String(heroHtml || '') + chapters.map((chapterHtml, index) => {
         const href = chapterIds[index] || '';
         return `<div class="${chapterClass}" id="chapter-${index}" data-href="${escapeHtml(href)}">${chapterHtml || ''}</div>`;
       }).join('');
+    }
+
+    function buildRawTxtBookBodyHtml(payload, heroHtml) {
+      const rawChapters = Array.isArray(payload?.rawChapters) ? payload.rawChapters : [];
+      const rendered = Array.isArray(payload?.chapters) ? payload.chapters : [];
+      const count = Math.max(rawChapters.length, rendered.length, chapterIds.length, 1);
+      const body = Array.from({ length: count }, (_, index) => {
+        const raw = rawChapters[index] ?? '';
+        const href = chapterIds[index] || `txt-chapter-${index + 1}`;
+        return `<div class="chapter txt-chapter" id="chapter-${index}" data-href="${escapeHtml(href)}"><pre class="txt-raw">${escapeHtml(raw)}</pre></div>`;
+      }).join('');
+      return String(heroHtml || '') + body;
     }
 
     function buildRawMarkdownBookBodyHtml(payload, heroHtml) {
@@ -4856,9 +4880,12 @@
       const applyAnnotations = opts.applyAnnotations === true;
       const ratio = preserveScroll ? getReaderScrollRatio() : 0;
       const useRawMarkdown = currentBook.format === 'md' && isRawMarkdownMode();
+      const useRawTxt = currentBook.format === 'txt' && isTxtRawMode();
       const bodyHtml = useRawMarkdown
         ? buildRawMarkdownBookBodyHtml(currentBookRenderPayload, currentBookHeroHtml)
-        : buildRenderedBookBodyHtml(currentBookRenderPayload, currentBookHeroHtml);
+        : useRawTxt
+          ? buildRawTxtBookBodyHtml(currentBookRenderPayload, currentBookHeroHtml)
+          : buildRenderedBookBodyHtml(currentBookRenderPayload, currentBookHeroHtml);
 
       els.readerContent.innerHTML = `<div class="reader-scroll-body">${bodyHtml}</div>`;
       bindReaderAnchorLinks();
