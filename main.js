@@ -13,6 +13,7 @@ const {
   searchPersistedIndex,
   summarizeSearchIndex
 } = require('./search-index');
+const { renderTxtChapterHtml } = require('./txt-reflow');
 
 // Set app name and WM class for Wayland/Linux icon support
 app.name = 'RoseReader';
@@ -69,6 +70,7 @@ const defaultSettings = {
   tocWidth: 300,
   fitReaderWidth: true,
   markdownViewMode: 'rendered',
+  txtViewMode: 'reflow', // 'reflow' | 'raw'
   markdownRawScope: 'full',
   readerTopBarVisible: true,
   selectionPopupEnabled: true,
@@ -802,7 +804,7 @@ function buildTxtContentFromPlan(text, fallbackTitle = 'Text', plan = null) {
   const safeFallbackTitle = String(fallbackTitle || '').trim() || 'Text';
 
   const buildSingle = (title) => ({
-    chapters: [`<pre style="white-space:pre-wrap">${escapeHtmlText(normalizedText)}</pre>`],
+    chapters: [`<article class="txt-article">${renderTxtChapterHtml(normalizedText, { title: title || safeFallbackTitle })}</article>`],
     toc: [{ title: title || safeFallbackTitle, href: 'txt-chapter-1', chapterIndex: 0, level: 0 }],
     chapterIds: ['txt-chapter-1'],
     rawChapters: [normalizedText]
@@ -826,7 +828,7 @@ function buildTxtContentFromPlan(text, fallbackTitle = 'Text', plan = null) {
     const chapterId = `txt-chapter-${chapterIndex + 1}`;
     const title = boundaries[i].title || `Chapter ${chapterIndex + 1}`;
 
-    chapters.push(`<pre style="white-space:pre-wrap">${escapeHtmlText(chunk)}</pre>`);
+    chapters.push(`<article class="txt-article">${renderTxtChapterHtml(chunk, { title })}</article>`);
     toc.push({ title, href: chapterId, chapterIndex, level: Math.max(0, Number(boundaries[i].level || 0)) });
     chapterIds.push(chapterId);
     rawChapters.push(chunk);
