@@ -9,3 +9,5 @@ src/
 skills-lock.json
 tests/
 docs/
+.claude
+.superpowers/
