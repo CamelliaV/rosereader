@@ -1,7 +1,7 @@
 # Maintainer: CamelliaV <cameliascript@gmail.com>
 pkgname=rosereader
 pkgver=1.1.0
-pkgrel=1
+pkgrel=2
 pkgdesc="E-book reader with infinite scroll, supporting EPUB, PDF, TXT, and Markdown"
 arch=('x86_64')
 url="https://github.com/CamelliaV/rosereader"
@@ -20,6 +20,7 @@ package() {
     install -Dm644 index.html "$appdir/index.html"
     install -Dm644 main.js "$appdir/main.js"
     install -Dm644 search-index.js "$appdir/search-index.js"
+    install -Dm644 txt-reflow.js "$appdir/txt-reflow.js"
     install -Dm644 package.json "$appdir/package.json"
     install -Dm644 package-lock.json "$appdir/package-lock.json"
     install -Dm644 icon.svg "$appdir/icon.svg"
