@@ -3825,6 +3825,10 @@
 	        , showReaderTopBar: 'Show reader top bar'
 	        , markdownModeRendered: 'Rendered'
 	        , markdownModeRaw: 'Raw'
+	        , txtModeReflow: 'Reflow'
+	        , txtModeRaw: 'Raw'
+	        , txtToggleShowRaw: 'Show original line breaks'
+	        , txtToggleShowReflow: 'Show reflowed text'
 	        , markdownModeRawRegional: 'Raw · Section'
 	        , markdownToggleShowRaw: 'Show raw Markdown'
 	        , markdownToggleShowRendered: 'Show rendered Markdown'
@@ -4106,6 +4110,10 @@
 	        , showReaderTopBar: '显示阅读页顶栏'
 	        , markdownModeRendered: '排版'
 	        , markdownModeRaw: '源码'
+	        , txtModeReflow: '重排'
+	        , txtModeRaw: '原样'
+	        , txtToggleShowRaw: '显示原始换行'
+	        , txtToggleShowReflow: '显示重排正文'
 	        , markdownModeRawRegional: '源码 · 区域'
 	        , markdownToggleShowRaw: '显示 Markdown 源码'
 	        , markdownToggleShowRendered: '显示排版预览'
@@ -4902,13 +4910,26 @@
     function updateMarkdownViewToggleUi() {
       const button = els.markdownViewToggle;
       if (!button) return;
-      const visible = !!currentBook && currentBook.format === 'md';
+      const fmt = currentBook?.format;
+      const isMd = !!currentBook && fmt === 'md';
+      const isTxt = !!currentBook && fmt === 'txt';
+      const visible = isMd || isTxt;
       button.classList.toggle('hidden', !visible);
       if (!visible) {
         button.classList.remove('active');
         if (els.markdownViewToggleLabel) {
           els.markdownViewToggleLabel.textContent = t('markdownModeRendered');
         }
+        return;
+      }
+
+      if (isTxt) {
+        const rawTxt = isTxtRawMode();
+        const txtTitle = rawTxt ? t('txtToggleShowReflow') : t('txtToggleShowRaw');
+        if (els.markdownViewToggleLabel) els.markdownViewToggleLabel.textContent = rawTxt ? t('txtModeRaw') : t('txtModeReflow');
+        button.title = txtTitle;
+        button.setAttribute('aria-label', txtTitle);
+        button.classList.toggle('active', rawTxt);
         return;
       }
 
@@ -4948,7 +4969,16 @@
     }
 
     function toggleMarkdownViewMode(event) {
-      if (!currentBook || currentBook.format !== 'md' || !currentBookRenderPayload) return;
+      if (!currentBook || !currentBookRenderPayload) return;
+      if (currentBook.format === 'txt') {
+        const nextTxtMode = isTxtRawMode() ? 'reflow' : 'raw';
+        settings.txtViewMode = nextTxtMode;
+        state.settings.txtViewMode = nextTxtMode;
+        renderCurrentBookBody({ preserveScroll: true, applyAnnotations: true });
+        ipcRenderer.invoke('update-settings', settings).catch(() => {});
+        return;
+      }
+      if (currentBook.format !== 'md') return;
       if (event?.shiftKey) {
         toggleMarkdownRawScope({ forceRaw: true });
         return;
@@ -6434,9 +6464,9 @@
 	          els.bookSearch?.focus();
 	          els.bookSearch?.select();
 	        }
-	        if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'm' && currentBook?.format === 'md') {
+	        if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'm' && (currentBook?.format === 'md' || currentBook?.format === 'txt')) {
 	          e.preventDefault();
-	          if (e.shiftKey) {
+	          if (e.shiftKey && currentBook?.format === 'md') {
 	            toggleMarkdownRawScope({ forceRaw: true });
 	          } else {
 	            toggleMarkdownViewMode();
