@@ -1,4 +1,6 @@
-const SEARCH_INDEX_VERSION = 1;
+const SEARCH_INDEX_VERSION = 2;
+const DEFAULT_EXTRACTOR_VERSION = 1;
+const DEFAULT_NORMALIZER_VERSION = 1;
 const DEFAULT_SEARCH_LIMIT = 1000;
 const MAX_SEARCH_LIMIT = 5000;
 
@@ -68,16 +70,39 @@ function textForChapter(format, renderedChapter, rawChapter) {
   return normalizePlainText(rawChapter);
 }
 
-function cloneSignature(signature) {
-  if (!signature || typeof signature !== 'object') return null;
+function normalizeIdentityVersion(value, fallback) {
+  const n = Math.floor(Number(value));
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+function cloneSourceIdentity(identity) {
+  if (!identity || typeof identity !== 'object') return null;
+  const sourceContentHash = String(
+    identity.sourceContentHash
+      || identity.contentHash
+      || identity.fileContentHash
+      || ''
+  ).trim();
+  if (!sourceContentHash) return null;
+
   return {
-    sizeBytes: Number(signature.sizeBytes || 0),
-    modifiedAt: Number(signature.modifiedAt || 0),
-    fingerprint: signature.fingerprint || null
+    sourceContentHash,
+    extractorVersion: normalizeIdentityVersion(identity.extractorVersion, DEFAULT_EXTRACTOR_VERSION),
+    normalizerVersion: normalizeIdentityVersion(identity.normalizerVersion, DEFAULT_NORMALIZER_VERSION)
   };
 }
 
+function isSameSourceIdentity(left, right) {
+  const safeLeft = cloneSourceIdentity(left);
+  const safeRight = cloneSourceIdentity(right);
+  if (!safeLeft || !safeRight) return false;
+  return safeLeft.sourceContentHash === safeRight.sourceContentHash
+    && safeLeft.extractorVersion === safeRight.extractorVersion
+    && safeLeft.normalizerVersion === safeRight.normalizerVersion;
+}
+
 function isSameSignature(left, right) {
+  if (isSameSourceIdentity(left, right)) return true;
   if (!left || !right) return false;
   const leftSize = Number(left.sizeBytes);
   const rightSize = Number(right.sizeBytes);
@@ -102,6 +127,37 @@ function titleForChapter(toc, chapterIndex, fallback) {
   return title || fallback || `Chapter ${chapterIndex + 1}`;
 }
 
+function buildTocPathByChapter(toc) {
+  const map = new Map();
+  if (!Array.isArray(toc) || !toc.length) return map;
+
+  const stack = [];
+  for (const entry of toc) {
+    if (!entry || typeof entry !== 'object') continue;
+    const title = String(entry.title || '').trim();
+    if (!title) continue;
+    const level = Math.max(0, Math.min(10, Math.floor(Number(entry.level || 0))));
+    while (stack.length > level) stack.pop();
+    stack[level] = title;
+    stack.length = level + 1;
+
+    const chapterIndex = Math.floor(Number(entry.chapterIndex));
+    if (!Number.isFinite(chapterIndex) || chapterIndex < 0) continue;
+    if (!map.has(chapterIndex)) map.set(chapterIndex, stack.slice());
+  }
+
+  return map;
+}
+
+function sanitizeNavPath(navPath, fallbackTitle = '') {
+  const items = Array.isArray(navPath)
+    ? navPath.map(item => String(item || '').trim()).filter(Boolean)
+    : [];
+  if (items.length) return items.slice(0, 8);
+  const title = String(fallbackTitle || '').trim();
+  return title ? [title] : [];
+}
+
 function sanitizeSection(section, fallbackKind = 'chapter') {
   if (!section || typeof section !== 'object') return null;
   const text = normalizePlainText(section.text || '');
@@ -117,11 +173,13 @@ function sanitizeSection(section, fallbackKind = 'chapter') {
     const pageNum = Math.max(1, Math.floor(Number(section.pageNum || 1)));
     out.pageNum = pageNum;
     out.title = String(section.title || `Page ${pageNum}`).trim();
+    out.navPath = sanitizeNavPath(section.navPath, out.title);
   } else {
     const chapterIndex = Math.max(0, Math.floor(Number(section.chapterIndex || 0)));
     out.chapterIndex = chapterIndex;
     out.title = String(section.title || `Chapter ${chapterIndex + 1}`).trim();
     out.href = String(section.href || '').trim();
+    out.navPath = sanitizeNavPath(section.navPath, out.title);
   }
 
   return out;
@@ -146,7 +204,7 @@ function sanitizeSearchIndex(index) {
     version: SEARCH_INDEX_VERSION,
     source: index.source || 'reader-content',
     generatedAt: Number(index.generatedAt || Date.now()),
-    signature: cloneSignature(index.signature),
+    sourceIdentity: cloneSourceIdentity(index.sourceIdentity || index.signature),
     sectionCount: sections.length,
     totalChars,
     sections
@@ -155,6 +213,7 @@ function sanitizeSearchIndex(index) {
 
 function buildSearchIndexFromContent({
   format,
+  sourceIdentity = null,
   signature = null,
   toc = [],
   chapterIds = [],
@@ -164,6 +223,7 @@ function buildSearchIndexFromContent({
 } = {}) {
   const type = String(format || '').trim().toLowerCase();
   const sections = [];
+  const safeSourceIdentity = cloneSourceIdentity(sourceIdentity || signature);
 
   if (type === 'pdf') {
     const pages = Array.isArray(pdfPages) && pdfPages.length
@@ -173,9 +233,17 @@ function buildSearchIndexFromContent({
       const pageNum = Math.max(1, Math.floor(Number(page?.pageNum || page?.num || sections.length + 1)));
       const text = normalizePlainText(page?.text || '');
       if (!text) continue;
-      sections.push({ kind: 'page', pageNum, title: `Page ${pageNum}`, text });
+      const title = String(page?.title || `Page ${pageNum}`).trim();
+      sections.push({
+        kind: 'page',
+        pageNum,
+        title,
+        navPath: sanitizeNavPath(page?.navPath, title),
+        text
+      });
     }
   } else {
+    const tocPathByChapter = buildTocPathByChapter(toc);
     const count = Math.max(
       Array.isArray(rawChapters) ? rawChapters.length : 0,
       Array.isArray(chapters) ? chapters.length : 0,
@@ -184,11 +252,13 @@ function buildSearchIndexFromContent({
     for (let chapterIndex = 0; chapterIndex < count; chapterIndex += 1) {
       const text = textForChapter(type, chapters?.[chapterIndex], rawChapters?.[chapterIndex]);
       if (!text) continue;
+      const title = titleForChapter(toc, chapterIndex);
       sections.push({
         kind: 'chapter',
         chapterIndex,
-        title: titleForChapter(toc, chapterIndex),
+        title,
         href: String(chapterIds?.[chapterIndex] || '').trim(),
+        navPath: sanitizeNavPath(tocPathByChapter.get(chapterIndex), title),
         text
       });
     }
@@ -199,7 +269,7 @@ function buildSearchIndexFromContent({
     version: SEARCH_INDEX_VERSION,
     source: 'reader-content',
     generatedAt: Date.now(),
-    signature,
+    sourceIdentity: safeSourceIdentity,
     sections
   });
 }
@@ -209,7 +279,7 @@ function isReusableSearchIndex(index, format, signature) {
   if (Number(index.version || 0) !== SEARCH_INDEX_VERSION) return false;
   if (!Array.isArray(index.sections) || !index.sections.length) return false;
   if (String(index.type || '').trim().toLowerCase() !== String(format || '').trim().toLowerCase()) return false;
-  return isSameSignature(index.signature, signature);
+  return isSameSourceIdentity(index.sourceIdentity || index.signature, signature);
 }
 
 function normalizeQuery(query) {
@@ -224,6 +294,21 @@ function makeSnippet(text, index, length, context = 48) {
   if (start > 0) snippet = `...${snippet}`;
   if (end < raw.length) snippet = `${snippet}...`;
   return snippet;
+}
+
+function cleanContextText(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function makeContext(text, index, length, context = 72) {
+  const raw = String(text || '');
+  const beforeStart = Math.max(0, index - context);
+  const afterEnd = Math.min(raw.length, index + length + context);
+  let contextBefore = cleanContextText(raw.slice(beforeStart, index));
+  let contextAfter = cleanContextText(raw.slice(index + length, afterEnd));
+  if (beforeStart > 0 && contextBefore) contextBefore = `...${contextBefore}`;
+  if (afterEnd < raw.length && contextAfter) contextAfter = `${contextAfter}...`;
+  return { contextBefore, contextAfter };
 }
 
 function normalizeLimit(limit) {
@@ -263,13 +348,20 @@ function searchPersistedIndex(index, query, options = {}) {
       if (idx === -1) break;
       const posInSection = text.length ? (idx / text.length) : 0;
       const kind = section.kind === 'page' ? 'page' : 'chapter';
+      const matchText = text.slice(idx, idx + q.length);
+      const sectionTitle = String(section.title || '').trim();
+      const navPath = sanitizeNavPath(section.navPath, sectionTitle);
       const base = {
         type: safe.type,
         sectionIndex,
         kind,
-        title: section.title || '',
+        title: sectionTitle,
+        sectionTitle,
+        navPath,
         charIndex: idx,
         charLength: q.length,
+        matchText,
+        ...makeContext(text, idx, q.length),
         snippet: makeSnippet(text, idx, q.length),
         pos: Math.max(0, Math.min(1, (sectionIndex + posInSection) / sectionCount))
       };

@@ -1229,47 +1229,85 @@
 			      box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 18%, transparent);
 			    }
 
-		    /* Search Results Dropdown - Modern Aesthetic Design */
-		    .search-results-panel {
-		      position: fixed;
-		      top: 70px;
-		      right: 60px;
-		      width: 320px;
-		      max-height: min(380px, 50vh);
-		      background: var(--bg-card);
-		      border: 1px solid var(--border);
-		      border-radius: 14px;
-		      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+		    /* In-book search sidebar */
+		    .search-sidebar {
+		      position: absolute;
+		      left: 0;
+		      top: 0;
+		      bottom: 0;
+		      z-index: 56;
+		      width: min(max(var(--toc-width, 340px), 320px), 460px);
+		      min-width: 280px;
+		      max-width: min(460px, calc(100vw - 40px));
+		      background: var(--glass-strong);
+		      border-right: 1px solid var(--hairline);
+		      box-shadow: 4px 0 24px rgba(0,0,0,0.12);
+		      backdrop-filter: blur(18px) saturate(160%);
 		      overflow: hidden;
-		      z-index: 1000;
 		      display: flex;
 		      flex-direction: column;
+		      transform: translateX(0);
+		      opacity: 1;
+		      transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 		    }
-		    .search-results-panel.hidden { display: none; }
-		    :root[data-app-theme="dark"] .search-results-panel,
-		    :root[data-app-theme="silk"] .search-results-panel {
-		      background: #1c1c22;
+		    .search-sidebar.hidden { display: none; }
+		    .reader-wrapper.reader-search-open > .search-sidebar {
+		      position: relative;
+		      left: auto;
+		      top: auto;
+		      bottom: auto;
+		      z-index: 58;
+		      flex: 0 0 min(max(var(--toc-width, 340px), 320px), 460px);
+		      width: min(max(var(--toc-width, 340px), 320px), 460px);
+		      max-width: min(460px, 42vw);
+		      min-width: 300px;
+		      height: 100%;
+		      transform: none;
+		      box-shadow: 8px 0 26px rgba(0,0,0,0.08);
+		    }
+		    .reader-wrapper.reader-search-open > .reader-content {
+		      min-width: 0;
+		      width: auto;
+		    }
+		    @media (max-width: 860px) {
+		      .reader-wrapper.reader-search-open > .search-sidebar {
+		        position: absolute;
+		        left: 0;
+		        top: 0;
+		        bottom: 0;
+		        flex: none;
+		        width: min(360px, calc(100vw - 36px));
+		        max-width: calc(100vw - 36px);
+		        min-width: 280px;
+		        height: auto;
+		        box-shadow: 4px 0 24px rgba(0,0,0,0.16);
+		      }
+		    }
+		    :root[data-app-theme="dark"] .search-sidebar,
+		    :root[data-app-theme="silk"] .search-sidebar {
 		      border-color: rgba(255,255,255,0.08);
-		      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+		      box-shadow: 4px 0 30px rgba(0,0,0,0.32);
 		    }
 
 		    .search-results-header {
-		      padding: 12px 16px;
-		      border-bottom: 1px solid var(--border);
+		      padding: 14px 16px;
+		      border-bottom: 1px solid var(--hairline);
 		      display: flex;
 		      align-items: center;
 		      justify-content: space-between;
+		      gap: 10px;
 		      flex-shrink: 0;
-		      background: linear-gradient(to bottom, var(--bg-card), color-mix(in srgb, var(--bg) 30%, var(--bg-card) 70%));
+		      background: color-mix(in srgb, var(--bg-card) 56%, transparent);
 		    }
 		    :root[data-app-theme="dark"] .search-results-header,
 		    :root[data-app-theme="silk"] .search-results-header {
-		      background: linear-gradient(to bottom, #1c1c22, #18181c);
 		      border-color: rgba(255,255,255,0.06);
 		    }
 		    .search-results-header span:first-child {
-		      font-size: 0.8rem;
-		      font-weight: 600;
+		      font-size: 0.82rem;
+		      font-weight: 760;
+		      letter-spacing: 0.08em;
+		      text-transform: uppercase;
 		      color: var(--text);
 		    }
 		    .search-results-header .search-meta {
@@ -1277,118 +1315,200 @@
 		      color: var(--text-secondary);
 		      opacity: 0.7;
 		    }
+		    .search-sidebar-close {
+		      width: 28px;
+		      height: 28px;
+		      border: none;
+		      border-radius: 6px;
+		      background: transparent;
+		      color: var(--text-secondary);
+		      display: inline-flex;
+		      align-items: center;
+		      justify-content: center;
+		      cursor: pointer;
+		    }
+		    .search-sidebar-close:hover { background: var(--bg-hover); color: var(--text); }
+		    .search-sidebar-close svg { width: 15px; height: 15px; }
 
 		    .search-results-body {
 		      flex: 1;
 		      overflow-y: auto;
-		      padding: 8px;
+		      padding: 8px 10px 14px;
 		    }
 
 		    .search-result-item {
-		      padding: 12px 14px;
-		      border-radius: 10px;
+		      padding: 12px 10px 13px;
+		      border-radius: 8px;
 		      cursor: pointer;
 		      transition: all 0.12s ease;
 		      width: 100%;
 		      text-align: left;
 		      background: transparent;
-		      border: none;
+		      border: 1px solid transparent;
 		      color: inherit;
 		      display: flex;
 		      flex-direction: column;
-		      gap: 6px;
-		      margin-bottom: 4px;
+		      gap: 7px;
+		      margin-bottom: 6px;
 		    }
 		    .search-result-item:last-child { margin-bottom: 0; }
 		    .search-result-item:hover {
 		      background: color-mix(in srgb, var(--primary) 8%, transparent);
 		    }
 		    .search-result-item.active-item {
-		      background: var(--primary);
-		      color: white;
-		      transform: scale(1.01);
+		      background: color-mix(in srgb, var(--primary-light) 82%, transparent);
+		      border-color: color-mix(in srgb, var(--primary) 28%, var(--hairline) 72%);
+		      color: var(--text);
 		    }
 
-		    .search-result-item .result-chapter {
+		    .search-result-item .result-location {
+		      display: flex;
+		      align-items: center;
+		      justify-content: space-between;
+		      gap: 8px;
+		      min-width: 0;
+		    }
+		    .search-result-item .result-chapter,
+		    .search-result-item .result-page {
 		      font-size: 0.68rem;
 		      text-transform: uppercase;
 		      letter-spacing: 0.04em;
 		      color: var(--primary);
 		      font-weight: 700;
 		      opacity: 0.9;
+		      min-width: 0;
 		    }
-		    .search-result-item.active-item .result-chapter {
-		      color: rgba(255,255,255,0.8);
+		    .search-result-item .result-chapter { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		    .search-result-item .result-page { flex-shrink: 0; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 6px; }
+		    .search-result-item .result-path {
+		      font-size: 0.74rem;
+		      line-height: 1.35;
+		      color: var(--text-secondary);
+		      overflow: hidden;
+		      text-overflow: ellipsis;
+		      white-space: nowrap;
 		    }
 
 		    .search-result-item .result-text {
-		      font-size: 0.88rem;
-		      line-height: 1.5;
+		      font-size: 0.86rem;
+		      line-height: 1.55;
 		      color: var(--text);
-		      display: -webkit-box;
-		      -webkit-line-clamp: 2;
-		      -webkit-box-orient: vertical;
-		      overflow: hidden;
+		      overflow-wrap: anywhere;
 		    }
-		    .search-result-item.active-item .result-text { color: white; }
 
 		    .search-result-item .result-text mark {
 		      background: color-mix(in srgb, var(--primary) 25%, transparent);
 		      color: var(--primary);
-		      font-weight: 600;
+		      font-weight: 720;
 		      padding: 1px 3px;
 		      border-radius: 3px;
-		    }
-		    .search-result-item.active-item .result-text mark {
-		      background: rgba(255,255,255,0.25);
-		      color: white;
 		    }
 
 		    /* Codemap - Fixed right side of reader */
 		    .search-codemap {
 		      position: fixed;
-		      top: 70px;
+		      top: 76px;
 		      right: 12px;
-		      bottom: 20px;
-		      width: 32px;
+		      bottom: 22px;
+		      width: 46px;
 		      z-index: 500;
 		      display: none;
 		      flex-direction: column;
 		      align-items: center;
-		      padding: 8px 0;
+		      padding: 8px 4px;
+		      pointer-events: none;
 		    }
 		    .search-codemap.visible { display: flex; }
 		    .codemap-track {
 		      flex: 1;
-		      width: 100%;
+		      width: 28px;
 		      position: relative;
-		      background: color-mix(in srgb, var(--border) 30%, transparent);
-		      border-radius: 4px;
+		      background: color-mix(in srgb, var(--border) 28%, transparent);
+		      border: 1px solid color-mix(in srgb, var(--hairline) 88%, transparent);
+		      border-radius: 999px;
+		      overflow: visible;
+		      cursor: crosshair;
+		      pointer-events: auto;
+		      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bg-card) 60%, transparent), 0 8px 18px rgba(0,0,0,0.08);
+		    }
+		    .codemap-density,
+		    .codemap-markers {
+		      position: absolute;
+		      inset: 7px 0;
+		    }
+		    .codemap-density {
+		      left: 6px;
+		      right: 6px;
+		      pointer-events: none;
+		    }
+		    .codemap-bin {
+		      position: absolute;
+		      right: 0;
+		      min-height: 2px;
+		      border-radius: 999px;
+		      background: var(--primary);
+		      opacity: var(--bin-opacity, 0.4);
+		      width: var(--bin-width, 7px);
+		      transform: translateY(-50%);
+		    }
+		    .codemap-viewport {
+		      position: absolute;
+		      left: -5px;
+		      right: -5px;
+		      top: 0;
+		      height: 16%;
+		      min-height: 24px;
+		      border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--bg-card) 55%);
+		      background: color-mix(in srgb, var(--primary-light) 58%, transparent);
+		      border-radius: 999px;
+		      box-shadow: 0 3px 12px rgba(0,0,0,0.10);
+		      pointer-events: none;
+		      transition: top 0.12s linear, height 0.12s linear;
+		    }
+		    .codemap-current-line {
+		      position: absolute;
+		      left: -8px;
+		      right: -8px;
+		      top: 0;
+		      height: 2px;
+		      border-radius: 999px;
+		      background: var(--primary);
+		      box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg-card) 90%, transparent), 0 0 12px color-mix(in srgb, var(--primary) 55%, transparent);
+		      opacity: 0;
+		      pointer-events: none;
+		      transform: translateY(-1px);
+		      transition: top 0.14s ease, opacity 0.14s ease;
+		    }
+		    .codemap-current-line.visible { opacity: 1; }
+		    .codemap-markers {
+		      pointer-events: none;
 		    }
 		    .codemap-marker {
 		      position: absolute;
 		      left: 50%;
 		      transform: translateX(-50%);
-		      width: 10px;
-		      height: 10px;
-		      border-radius: 50%;
+		      width: 16px;
+		      height: 6px;
+		      border-radius: 999px;
 		      background: var(--primary);
-		      opacity: 0.5;
-		      border: 2px solid transparent;
+		      opacity: 0.34;
+		      border: none;
 		      padding: 0;
 		      cursor: pointer;
-		      transition: all 0.15s ease;
+		      pointer-events: auto;
+		      transition: opacity 0.15s ease, transform 0.15s ease, width 0.15s ease;
 		    }
 		    .codemap-marker:hover {
-		      opacity: 0.8;
-		      transform: translateX(-50%) scale(1.3);
+		      opacity: 0.82;
+		      width: 22px;
+		      transform: translateX(-50%) scale(1.05);
 		    }
 		    .codemap-marker.current {
 		      opacity: 1;
 		      background: var(--primary);
-		      border-color: white;
-		      transform: translateX(-50%) scale(1.5);
-		      box-shadow: 0 0 8px var(--primary);
+		      width: 24px;
+		      transform: translateX(-50%);
+		      box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 60%, transparent);
 		    }
 		    .codemap-location {
 		      font-size: 0.65rem;
@@ -2343,7 +2463,6 @@
 	              </div>
 	              <kbd class="search-kbd-hint" title="Press / to search">/</kbd>
 	            </div>
-		          <div class="search-results-panel hidden" id="search-results-panel"></div>
 		        </div>
 		      <button class="icon-btn" onclick="showSettings()" title="Settings">
 		            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2363,7 +2482,7 @@
 	          <h3 id="toc-title">Table of Contents</h3>
 	          <div id="toc-list"></div>
 	        </div>
-	        <div class="toc-sidebar hidden" id="bookmarks-sidebar">
+        <div class="toc-sidebar hidden" id="bookmarks-sidebar">
 	          <div style="padding:12px 16px 6px;">
 	            <div style="display:flex;align-items:center;gap:8px;">
 	              <h3 id="bookmarks-title" style="padding:0;border:0;margin:0;flex:1;">Bookmarks & Highlights</h3>
@@ -2372,9 +2491,15 @@
 	          </div>
           <div id="bookmarks-list"></div>
         </div>
+        <div class="search-sidebar hidden" id="search-results-panel"></div>
         <div class="reader-content" id="reader-content"></div>
         <div class="search-codemap" id="search-codemap">
-          <div class="codemap-track" id="codemap-track"></div>
+          <div class="codemap-track" id="codemap-track">
+            <div class="codemap-density" id="codemap-density"></div>
+            <div class="codemap-viewport" id="codemap-viewport"></div>
+            <div class="codemap-current-line" id="codemap-current-line"></div>
+            <div class="codemap-markers" id="codemap-markers"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -2734,6 +2859,7 @@
       bookMetaContent: document.getElementById('book-meta-content'),
       contextMenu: document.getElementById('context-menu'),
 
+      readerWrapper: document.querySelector('#reader-view .reader-wrapper'),
       readerContent: document.getElementById('reader-content'),
       currentBookTitle: document.getElementById('current-book-title'),
       bookSearch: document.getElementById('book-search'),
@@ -7907,6 +8033,9 @@
     }
 
     function toggleToc() {
+      hideBookSearchResults();
+      els.bookmarksSidebar?.classList?.add('hidden');
+      els.readerView?.classList?.remove('reader-toc-hidden');
       document.getElementById('toc-sidebar').classList.toggle('hidden');
     }
 
@@ -8771,6 +8900,7 @@
       }
 
       const onScroll = () => {
+        updateCodemapViewport();
         if (readerResumeState?.applying) {
           return;
         }
@@ -8827,6 +8957,7 @@
     }
 
     function showTocPanel() {
+      if (isBookSearchResultsVisible()) return;
       els.readerView?.classList?.remove('reader-toc-hidden');
       clearTimeout(tocHideTimer);
     }
@@ -9093,10 +9224,40 @@
 
 		    function hideBookSearchResults() {
 		      els.searchResultsPanel?.classList.add('hidden');
+		      els.readerWrapper?.classList?.remove('reader-search-open');
 		    }
 
 		    function showBookSearchResults() {
+		      els.bookmarksSidebar?.classList?.add('hidden');
+		      els.tocSidebar?.classList?.add('hidden');
+		      els.readerView?.classList?.remove('reader-toc-hidden');
 		      els.searchResultsPanel?.classList.remove('hidden');
+		      els.readerWrapper?.classList?.add('reader-search-open');
+		      requestAnimationFrame(updateCodemapViewport);
+		    }
+
+		    function renderSearchSidebarHeader(title, meta = '') {
+		      const metaHtml = meta ? `<span class="search-meta">${escapeHtml(meta)}</span>` : '';
+		      return `
+		        <div class="search-results-header">
+		          <span>${escapeHtml(title)}</span>
+		          <div style="display:flex;align-items:center;gap:8px;">
+		            ${metaHtml}
+		            <button type="button" class="search-sidebar-close" onclick="hideBookSearchResults()" title="${escapeHtml(t('close'))}" aria-label="${escapeHtml(t('close'))}">
+		              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+		            </button>
+		          </div>
+		        </div>
+		      `;
+		    }
+
+		    function renderSearchSidebarMessage(title, body, meta = '') {
+		      return `
+		        ${renderSearchSidebarHeader(title, meta)}
+		        <div class="search-results-body">
+		          <div style="padding:12px 6px;color:var(--text-secondary);line-height:1.55;">${escapeHtml(body)}</div>
+		        </div>
+		      `;
 		    }
 
 		    // Get snippet centered around the keyword
@@ -9441,20 +9602,48 @@
 	    }
 
 		    function renderSearchCodemap() {
-		      const track = document.getElementById('codemap-track');
-		      if (!track) return;
+		      const density = document.getElementById('codemap-density');
+		      const markerLayer = document.getElementById('codemap-markers');
+		      if (!density || !markerLayer) return;
 		      const matches = bookSearchState.matches || [];
 		      if (!matches.length) {
-		        track.innerHTML = '';
+		        density.innerHTML = '';
+		        markerLayer.innerHTML = '';
+		        updateCodemapLocation();
 		        return;
 		      }
 		      const hlColors = { yellow: '#ffc107', green: '#388e3c', blue: '#1976d2', pink: '#e91e63', purple: '#9c27b0', orange: '#ff5722' };
-		      const markers = matches.map((m, i) => {
-		        const pos = typeof m.pos === 'number' ? m.pos : ((i + 1) / matches.length);
+		      const positions = matches.map((m, i) => {
+		        const raw = typeof m.pos === 'number' ? m.pos : ((i + 1) / matches.length);
+		        return Math.max(0, Math.min(1, raw));
+		      });
+		      const binCount = Math.max(48, Math.min(120, Math.round((document.getElementById('codemap-track')?.clientHeight || 480) / 6)));
+		      const bins = Array.from({ length: binCount }, () => 0);
+		      positions.forEach(pos => {
+		        const idx = Math.max(0, Math.min(binCount - 1, Math.floor(pos * binCount)));
+		        bins[idx] += 1;
+		      });
+		      const maxBin = Math.max(1, ...bins);
+		      density.innerHTML = bins.map((count, i) => {
+		        if (!count) return '';
+		        const pos = (i + 0.5) / binCount;
+		        const strength = count / maxBin;
+		        const width = 6 + Math.round(strength * 15);
+		        const height = Math.max(2, Math.min(12, 2 + count * 1.2));
+		        const opacity = 0.24 + strength * 0.62;
+		        return `<span class="codemap-bin" style="top:${(pos * 100).toFixed(2)}%;height:${height.toFixed(1)}px;--bin-width:${width}px;--bin-opacity:${opacity.toFixed(2)}"></span>`;
+		      }).join('');
+
+		      const shouldRenderAllMarkers = matches.length <= 240;
+		      const markerItems = shouldRenderAllMarkers
+		        ? matches.map((m, i) => ({ m, i, pos: positions[i] }))
+		        : (bookSearchState.currentIndex >= 0 && matches[bookSearchState.currentIndex]
+		          ? [{ m: matches[bookSearchState.currentIndex], i: bookSearchState.currentIndex, pos: positions[bookSearchState.currentIndex] }]
+		          : []);
+		      markerLayer.innerHTML = markerItems.map(({ m, i, pos }) => {
 		        const colorStyle = m.hlColor && hlColors[m.hlColor] ? `background:${hlColors[m.hlColor]};` : '';
 		        return `<button type="button" class="codemap-marker${i === bookSearchState.currentIndex ? ' current' : ''}" data-index="${i}" style="top:${(pos * 100).toFixed(2)}%;${colorStyle}"></button>`;
 		      }).join('');
-		      track.innerHTML = markers;
 		      updateCodemapLocation();
 		    }
 
@@ -9462,18 +9651,90 @@
 	      const track = document.getElementById('codemap-track');
 	      if (!track) return;
 	      const markers = track.querySelectorAll('.codemap-marker');
-	      const activeIndex = bookSearchState.currentIndex >= 0 ? bookSearchState.currentIndex : 0;
-	      markers.forEach((btn, i) => btn.classList.toggle('current', i === activeIndex));
+	      const activeIndex = Number(bookSearchState.currentIndex);
+	      markers.forEach((btn) => {
+	        const idx = Number(btn.dataset.index);
+	        btn.classList.toggle('current', Number.isFinite(idx) && idx === activeIndex);
+	      });
+	      const currentLine = document.getElementById('codemap-current-line');
+	      const match = activeIndex >= 0 ? bookSearchState.matches?.[activeIndex] : null;
+	      if (currentLine && match && typeof match.pos === 'number') {
+	        const pos = Math.max(0, Math.min(1, match.pos));
+	        currentLine.style.top = `${(pos * 100).toFixed(2)}%`;
+	        currentLine.classList.add('visible');
+	      } else if (currentLine) {
+	        currentLine.classList.remove('visible');
+	      }
+	      updateCodemapViewport();
+	      updateSearchResultsActiveItem();
 	    }
 
-	    function formatMatchLocation(match, idx, total) {
-	      const chapterLabel = (typeof match.chapterIndex === 'number')
-	        ? `Chapter ${match.chapterIndex + 1}`
-	        : `Match ${idx + 1}`;
-	      const pct = (typeof match.pos === 'number')
+	    function updateCodemapViewport() {
+	      const viewport = document.getElementById('codemap-viewport');
+	      const rc = els.readerContent;
+	      if (!viewport || !rc) return;
+	      const scrollHeight = Math.max(1, rc.scrollHeight || 1);
+	      const clientHeight = Math.max(1, rc.clientHeight || 1);
+	      const heightRatio = Math.max(0.04, Math.min(1, clientHeight / scrollHeight));
+	      const topRatio = Math.max(0, Math.min(1 - heightRatio, (rc.scrollTop || 0) / scrollHeight));
+	      viewport.style.top = `${(topRatio * 100).toFixed(2)}%`;
+	      viewport.style.height = `${(heightRatio * 100).toFixed(2)}%`;
+	    }
+
+	    function updateSearchResultsActiveItem() {
+	      const panel = els.searchResultsPanel;
+	      if (!panel) return;
+	      const activeIndex = Number(bookSearchState.currentIndex);
+	      panel.querySelectorAll('.search-result-item[data-search-index]').forEach((item) => {
+	        const idx = Number(item.dataset.searchIndex);
+	        const active = Number.isFinite(idx) && idx === activeIndex;
+	        item.classList.toggle('active-item', active);
+	        if (active) item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+	      });
+	    }
+
+	    function getTocNavPathByIndex(tocIndex) {
+	      if (!Array.isArray(currentToc) || tocIndex < 0 || tocIndex >= currentToc.length) return [];
+	      if (tocMetadata.length !== currentToc.length) buildTocMetadata();
+	      const indices = [];
+	      let idx = tocIndex;
+	      while (idx >= 0 && idx < currentToc.length) {
+	        indices.unshift(idx);
+	        idx = tocMetadata[idx]?.parentIndex ?? -1;
+	      }
+	      return indices
+	        .map(i => String(currentToc[i]?.title || '').trim())
+	        .filter(Boolean);
+	    }
+
+	    function getSearchResultNavPath(match) {
+	      let tocIndex = -1;
+	      if (currentBook?.format === 'pdf') {
+	        tocIndex = findTocIndexForPage(Number(match?.pageNum));
+	      } else if (typeof match?.chapterIndex === 'number') {
+	        tocIndex = findTocIndexForChapter(Number(match.chapterIndex));
+	      }
+	      const tocPath = getTocNavPathByIndex(tocIndex);
+	      if (tocPath.length) return tocPath;
+	      return Array.isArray(match?.navPath)
+	        ? match.navPath.map(x => String(x || '').trim()).filter(Boolean)
+	        : [];
+	    }
+
+	    function formatSearchResultLocation(match, idx, total) {
+	      const navPath = getSearchResultNavPath(match);
+	      const title = String(match?.sectionTitle || match?.title || '').trim();
+	      const primary = currentBook?.format === 'pdf'
+	        ? `Page ${Number(match?.pageNum) || 1}`
+	        : (title || `Chapter ${Number(match?.chapterIndex || 0) + 1}`);
+	      const secondary = (typeof match?.pos === 'number')
 	        ? `${Math.round(match.pos * 100)}%`
 	        : `${idx + 1}/${total}`;
-	      return `${chapterLabel} • ${pct}`;
+	      return {
+	        primary,
+	        secondary,
+	        path: navPath.join(' > ')
+	      };
 	    }
 
 		    async function searchInBook(opts = {}) {
@@ -9496,13 +9757,11 @@
 		      if (signal.aborted) return;
 		      const isPreparingPdfSearch = currentBook?.format === 'pdf'
 		        && (!pdfSearchStatus || pdfSearchStatus.status === 'missing' || pdfSearchStatus.status === 'building');
-		      els.searchResultsPanel.innerHTML = `
-		        <div class="search-results-header">
-		          <span>${escapeHtml(isPreparingPdfSearch ? t('pdfSearchPreparing') : 'Searching…')}</span>
-		          <span class="search-meta">${escapeHtml(t('searchEscToClear'))}</span>
-		        </div>
-		        <div style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(isPreparingPdfSearch ? t('pdfSearchPreparingBody') : t('searchScanning'))}</div>
-		      `;
+		      els.searchResultsPanel.innerHTML = renderSearchSidebarMessage(
+		        isPreparingPdfSearch ? t('pdfSearchPreparing') : t('results'),
+		        isPreparingPdfSearch ? t('pdfSearchPreparingBody') : t('searchScanning'),
+		        t('searchEscToClear')
+		      );
 		      const codemapEl = document.getElementById('search-codemap');
 		      if (codemapEl) codemapEl.classList.add('visible');
 		      els.searchNav.style.display = 'flex';
@@ -9520,13 +9779,11 @@
 		        bookSearchState.matches = [];
 		        if (currentBook?.format === 'pdf') {
 		          showBookSearchResults();
-		          els.searchResultsPanel.innerHTML = `
-		            <div class="search-results-header">
-		              <span>${escapeHtml(t('pdfSearchFailed'))}</span>
-		              <span class="search-meta">${escapeHtml(t('searchEscToClear'))}</span>
-		            </div>
-		            <div style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(t('pdfSearchFailedBody'))}</div>
-		          `;
+		          els.searchResultsPanel.innerHTML = renderSearchSidebarMessage(
+		            t('pdfSearchFailed'),
+		            t('pdfSearchFailedBody'),
+		            t('searchEscToClear')
+		          );
 		          els.searchNav.style.display = 'none';
 		          els.searchPosition.textContent = '0/0';
 		          return;
@@ -9545,30 +9802,26 @@
           : null;
         if (currentBook?.format === 'pdf' && afterPdfStatus?.status === 'failed') {
           showBookSearchResults();
-          els.searchResultsPanel.innerHTML = `
-            <div class="search-results-header">
-              <span>${escapeHtml(t('pdfSearchFailed'))}</span>
-              <span class="search-meta">${escapeHtml(t('searchEscToClear'))}</span>
-            </div>
-            <div style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(t('pdfSearchFailedBody'))}</div>
-          `;
+          els.searchResultsPanel.innerHTML = renderSearchSidebarMessage(
+            t('pdfSearchFailed'),
+            t('pdfSearchFailedBody'),
+            t('searchEscToClear')
+          );
           els.searchPosition.textContent = '0/0';
           return;
         }
         showBookSearchResults();
-        els.searchResultsPanel.innerHTML = `
-	          <div class="search-results-header">
-	            <span>No results</span>
-	            <span style="opacity:0.85;">${escapeHtml(t('searchEscToClear'))}</span>
-	          </div>
-	          <div style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(t('searchTryDifferent'))}</div>
-	        `;
+        els.searchResultsPanel.innerHTML = renderSearchSidebarMessage(
+          t('noResultsFound'),
+          t('searchTryDifferent'),
+          t('searchEscToClear')
+        );
 	        els.searchPosition.textContent = '0/0';
 	        return;
 	      }
 
 	      function snippetHtml(snippet, q) {
-	        const raw = String(snippet || '').trim().replace(/\s+/g, ' ').slice(0, 180);
+	        const raw = String(snippet || '').trim().replace(/\s+/g, ' ').slice(0, 260);
 	        if (!raw) return '';
 	        const qRaw = String(q || '');
 	        if (!qRaw) return escapeHtml(raw);
@@ -9587,6 +9840,15 @@
 	          i = j + qRaw.length;
 	        }
 	        return out;
+	      }
+
+	      function resultContextHtml(match, q) {
+	        const before = String(match?.contextBefore || '').trim();
+	        const hit = String(match?.matchText || q || '').trim();
+	        const after = String(match?.contextAfter || '').trim();
+	        const context = `${before}${before && hit ? ' ' : ''}${hit}${after && hit ? ' ' : ''}${after}`.trim();
+	        if (context) return snippetHtml(context, hit || q);
+	        return snippetHtml(match?.snippet || '', q);
 	      }
 
 		      showBookSearchResults();
@@ -9611,25 +9873,25 @@
 
 	      const sortedListHtml = sortedIndices.map(origIdx => {
 	        const m = bookSearchState.matches[origIdx];
-	        const s = snippetHtml(m.snippet || `Match ${origIdx + 1}`, query);
-	        const chapterLabel = (currentBook?.format === 'pdf')
-	          ? `Page ${Number(m.pageNum) || 1}`
-	          : `Chapter ${Number(m.chapterIndex) + 1}`;
-	        const colorDot = m.hlColor && hlColors[m.hlColor] ? `<span style="width:8px;height:8px;border-radius:50%;background:${hlColors[m.hlColor]};flex-shrink:0;margin-left:auto;"></span>` : '';
+	        const s = resultContextHtml(m, query) || escapeHtml(`Match ${origIdx + 1}`);
+	        const loc = formatSearchResultLocation(m, origIdx, total);
+	        const path = loc.path ? `<div class="result-path">${escapeHtml(loc.path)}</div>` : '';
+	        const colorDot = m.hlColor && hlColors[m.hlColor] ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${hlColors[m.hlColor]};flex-shrink:0;"></span>` : '';
 	        const meta = m.isHighlight ? `<span style="padding:2px 6px;border-radius:12px;background:color-mix(in srgb, ${hlColors[m.hlColor] || 'var(--primary)'} 20%, transparent);color:var(--text-secondary);font-size:0.72rem;">Highlight</span>` : '';
 	        return `
 	          <button type="button" class="search-result-item" data-search-index="${origIdx}">
-	            <div class="result-chapter" style="display:flex;align-items:center;gap:6px;">${escapeHtml(chapterLabel)}${colorDot}${meta}</div>
+	            <div class="result-location">
+	              <span class="result-chapter">${escapeHtml(loc.primary)}${meta ? ` ${meta}` : ''}</span>
+	              <span class="result-page">${escapeHtml(loc.secondary)}${colorDot}</span>
+	            </div>
+	            ${path}
 	            <div class="result-text">${s}</div>
 	          </button>
 	        `;
 	      }).join('');
 
       els.searchResultsPanel.innerHTML = `
-        <div class="search-results-header">
-          <span>${shown} matches</span>
-          <span class="search-meta">↑↓ to jump</span>
-        </div>
+        ${renderSearchSidebarHeader(`${shown} ${t('results')}`, '↑↓')}
         <div class="search-results-body">${sortedListHtml}</div>
       `;
 
@@ -9937,8 +10199,10 @@
 	    }
 
     function toggleBookmarks() {
+      hideBookSearchResults();
       els.bookmarksSidebar.classList.toggle('hidden');
       els.tocSidebar.classList.toggle('hidden', !els.bookmarksSidebar.classList.contains('hidden'));
+      els.readerView?.classList?.remove('reader-toc-hidden');
     }
 
 	    function hideSelectionPopup() {

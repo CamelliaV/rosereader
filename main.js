@@ -1954,6 +1954,25 @@ function computeFileFingerprint(filePath) {
   }
 }
 
+function computeBufferContentHash(buffer) {
+  try {
+    const safeBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer || '');
+    return `sha256:${crypto.createHash('sha256').update(safeBuffer).digest('hex')}`;
+  } catch (e) {
+    return null;
+  }
+}
+
+function computeFileContentHash(filePath) {
+  try {
+    const stats = fs.statSync(filePath);
+    if (!stats.isFile()) return null;
+    return computeBufferContentHash(fs.readFileSync(filePath));
+  } catch (e) {
+    return null;
+  }
+}
+
 function getBookFileSignature(book) {
   try {
     if (!book?.path) return null;
@@ -1969,6 +1988,19 @@ function getBookFileSignature(book) {
   } catch (e) {
     return null;
   }
+}
+
+function getBookSourceIdentity(book, options = {}) {
+  if (!book?.path) return null;
+  const sourceContentHash = options.buffer
+    ? computeBufferContentHash(options.buffer)
+    : computeFileContentHash(book.path);
+  if (!sourceContentHash) return null;
+  return {
+    sourceContentHash,
+    extractorVersion: 1,
+    normalizerVersion: 1
+  };
 }
 
 function isSameBookFileSignature(left, right) {
@@ -1988,6 +2020,13 @@ function isSameBookFileSignature(left, right) {
 
   if (leftFingerprint || rightFingerprint) return !!leftFingerprint && leftFingerprint === rightFingerprint;
   return true;
+}
+
+function isSameBookSourceIdentity(left, right) {
+  if (!left || !right) return false;
+  return String(left.sourceContentHash || '').trim() === String(right.sourceContentHash || '').trim()
+    && Number(left.extractorVersion || 1) === Number(right.extractorVersion || 1)
+    && Number(left.normalizerVersion || 1) === Number(right.normalizerVersion || 1);
 }
 
 function cloneJson(value) {
@@ -2040,24 +2079,20 @@ function getBookForRenderer(book) {
   return out;
 }
 
-function getReusableBookSearchIndex(book, signature) {
-  if (!book || !isReusableSearchIndex(book.searchIndex, book.format, signature)) return null;
+function getReusableBookSearchIndex(book, sourceIdentity) {
+  if (!book || !isReusableSearchIndex(book.searchIndex, book.format, sourceIdentity)) return null;
   return sanitizeSearchIndex(book.searchIndex);
 }
 
-function ensureSearchIndexForContent(book, content, signature, extras = {}) {
+function ensureSearchIndexForContent(book, content, sourceIdentity, extras = {}) {
   let changed = false;
-  if (signature?.fingerprint && !book.fileFingerprint) {
-    book.fileFingerprint = signature.fingerprint;
-    changed = true;
-  }
 
-  const cached = getReusableBookSearchIndex(book, signature);
+  const cached = getReusableBookSearchIndex(book, sourceIdentity);
   if (cached) return { index: cached, changed, cached: true };
 
   const index = buildSearchIndexFromContent({
     format: book.format,
-    signature,
+    sourceIdentity,
     toc: content?.toc || [],
     chapterIds: content?.chapterIds || [],
     rawChapters: content?.rawChapters || [],
@@ -2079,8 +2114,8 @@ function ensureSearchIndexForContent(book, content, signature, extras = {}) {
 function getPdfSearchIndexStatus(bookId) {
   const book = appData.books?.[bookId];
   if (!book || book.format !== 'pdf') return { status: 'unavailable' };
-  const signature = getBookFileSignature(book);
-  const cached = getReusableBookSearchIndex(book, signature);
+  const sourceIdentity = getBookSourceIdentity(book);
+  const cached = getReusableBookSearchIndex(book, sourceIdentity);
   if (cached) {
     return {
       status: 'ready',
@@ -2106,25 +2141,30 @@ function getPdfSearchIndexStatus(bookId) {
   return { status: 'missing' };
 }
 
-async function buildPdfSearchIndex(bookId, signatureAtStart) {
+async function buildPdfSearchIndex(bookId, sourceIdentityAtStart) {
   const book = appData.books?.[bookId];
   if (!book || book.format !== 'pdf') return { status: 'unavailable' };
 
-  const currentSignature = getBookFileSignature(book);
-  if (getReusableBookSearchIndex(book, currentSignature)) {
+  const currentSourceIdentity = getBookSourceIdentity(book);
+  if (getReusableBookSearchIndex(book, currentSourceIdentity)) {
     return getPdfSearchIndexStatus(bookId);
   }
-  if (signatureAtStart && !isSameBookFileSignature(signatureAtStart, currentSignature)) {
+  if (sourceIdentityAtStart && !isSameBookSourceIdentity(sourceIdentityAtStart, currentSourceIdentity)) {
     throw new Error('PDF file changed while preparing search');
   }
 
   const buffer = fs.readFileSync(book.path);
+  const bufferSourceIdentity = getBookSourceIdentity(book, { buffer });
+  if (sourceIdentityAtStart && !isSameBookSourceIdentity(sourceIdentityAtStart, bufferSourceIdentity)) {
+    throw new Error('PDF file changed while preparing search');
+  }
+
   if (typeof PDFParse !== 'function') throw new TypeError('PDFParse is not available');
   const parser = new PDFParse({ data: buffer });
   try {
     const result = await parser.getText();
-    const signatureAfter = getBookFileSignature(book);
-    if (!isSameBookFileSignature(currentSignature, signatureAfter)) {
+    const sourceIdentityAfter = getBookSourceIdentity(book);
+    if (!isSameBookSourceIdentity(bufferSourceIdentity, sourceIdentityAfter)) {
       throw new Error('PDF file changed while preparing search');
     }
     const pdfPages = Array.isArray(result.pages)
@@ -2136,7 +2176,7 @@ async function buildPdfSearchIndex(bookId, signatureAtStart) {
       chapterIds: [],
       rawChapters: [result.text || '']
     };
-    const searchIndexState = ensureSearchIndexForContent(book, content, signatureAfter, { pdfPages });
+    const searchIndexState = ensureSearchIndexForContent(book, content, sourceIdentityAfter, { pdfPages });
     if (searchIndexState.changed) saveData();
     return {
       status: searchIndexState.index ? 'ready' : 'failed',
@@ -2152,8 +2192,8 @@ function ensurePdfSearchIndexForBook(bookId, options = {}) {
   const book = appData.books?.[bookId];
   if (!book || book.format !== 'pdf') return Promise.resolve({ status: 'unavailable' });
 
-  const signature = getBookFileSignature(book);
-  const cached = getReusableBookSearchIndex(book, signature);
+  const sourceIdentity = getBookSourceIdentity(book);
+  const cached = getReusableBookSearchIndex(book, sourceIdentity);
   if (cached) return Promise.resolve(getPdfSearchIndexStatus(bookId));
 
   const existing = pdfSearchIndexJobs.get(bookId);
@@ -2178,7 +2218,7 @@ function ensurePdfSearchIndexForBook(bookId, options = {}) {
     job.status = 'running';
     job.updatedAt = Date.now();
     try {
-      const result = await buildPdfSearchIndex(bookId, signature);
+      const result = await buildPdfSearchIndex(bookId, sourceIdentity);
       if (result?.status === 'ready') {
         pdfSearchIndexJobs.delete(bookId);
         return result;
@@ -3444,8 +3484,8 @@ async function readBookContent(id) {
         }
 
         const content = { chapters, toc, chapterIds, rawChapters };
-        const signature = getBookFileSignature(book);
-        const searchIndexState = ensureSearchIndexForContent(book, content, signature);
+        const sourceIdentity = getBookSourceIdentity(book);
+        const searchIndexState = ensureSearchIndexForContent(book, content, sourceIdentity);
         if (searchIndexState.changed) saveData();
 
         resolve({
@@ -3460,11 +3500,12 @@ async function readBookContent(id) {
   } else if (book.format === 'pdf') {
     const buffer = fs.readFileSync(book.path);
     const signature = getBookFileSignature(book);
+    const sourceIdentity = getBookSourceIdentity(book, { buffer });
     if (signature?.fingerprint && !book.fileFingerprint) {
       book.fileFingerprint = signature.fingerprint;
       saveData();
     }
-    const cachedIndex = getReusableBookSearchIndex(book, signature);
+    const cachedIndex = getReusableBookSearchIndex(book, sourceIdentity);
     const existingJob = pdfSearchIndexJobs.get(id);
     if (existingJob?.status === 'failed') pdfSearchIndexJobs.delete(id);
     return {
@@ -3500,7 +3541,8 @@ async function readBookContent(id) {
     }
 
     const content = buildTxtContentFromPlan(normalizedText, fallbackTitle, plan);
-    const searchIndexState = ensureSearchIndexForContent(book, content, signature);
+    const sourceIdentity = getBookSourceIdentity(book);
+    const searchIndexState = ensureSearchIndexForContent(book, content, sourceIdentity);
     dataChanged = dataChanged || searchIndexState.changed;
     if (dataChanged) saveData();
     return {
@@ -3518,8 +3560,8 @@ async function readBookContent(id) {
     const markdown = readTextFileBestEffort(book.path);
     const fallbackTitle = book.title || path.basename(book.path || '', path.extname(book.path || ''));
     const content = buildMarkdownContentWithToc(markdown, fallbackTitle, book.path || '');
-    const signature = getBookFileSignature(book);
-    const searchIndexState = ensureSearchIndexForContent(book, content, signature);
+    const sourceIdentity = getBookSourceIdentity(book);
+    const searchIndexState = ensureSearchIndexForContent(book, content, sourceIdentity);
     if (searchIndexState.changed) saveData();
     return {
       ...content,
@@ -3957,15 +3999,14 @@ ipcMain.handle('get-state', () => ({
 ipcMain.handle('search-in-book', async (_, bookId, query) => {
   const book = appData.books[bookId];
   if (!book) return [];
-  const signature = getBookFileSignature(book);
-  let index = getReusableBookSearchIndex(book, signature);
+  let index = getReusableBookSearchIndex(book, getBookSourceIdentity(book));
   if (!index) {
     if (book.format === 'pdf') {
       await ensurePdfSearchIndexForBook(bookId);
     } else {
       await readBookContent(bookId);
     }
-    index = getReusableBookSearchIndex(book, getBookFileSignature(book));
+    index = getReusableBookSearchIndex(book, getBookSourceIdentity(book));
   }
   return searchPersistedIndex(index, query, { limit: 1000 });
 });
