@@ -2802,6 +2802,7 @@
     const { ipcRenderer } = require('electron');
     const path = require('path');
     const { pathToFileURL } = require('url');
+    const { findPdfTextLayerMatch } = require('./pdf-search-align');
 
 		    const els = {
 	      toast: document.getElementById('toast'),
@@ -9139,14 +9140,15 @@
 		        }
 		      };
 
-		      const markPdfItemMatch = (m, matchIndex) => {
-		        if (typeof m.itemIndex !== 'number') return false;
-		        const span = spans[m.itemIndex];
-		        const item = pageItems[m.itemIndex];
-		        const str = item?.str || span?.textContent || '';
+		      const markPdfTextLayerMatch = (location, matchIndex) => {
+		        if (!location || typeof location.itemIndex !== 'number') return false;
+		        const span = spans[location.itemIndex];
+		        const item = pageItems[location.itemIndex];
+		        const str = span?.textContent || item?.str || '';
 		        if (!span || !str) return false;
-		        const charStart = Math.max(0, Math.min(str.length, Number(m.charIndex || 0)));
-		        const charEnd = Math.max(charStart + 1, Math.min(str.length, charStart + Number(m.charLength || q.length)));
+		        const charStart = Math.max(0, Math.min(str.length, Number(location.charIndex || 0)));
+		        const charEnd = Math.max(charStart + 1, Math.min(str.length, charStart + Number(location.charLength || q.length)));
+		        if (addRangeMarks(span, charStart, charEnd, matchIndex)) return true;
 		        if (viewport && item) {
 		          try {
 		            const tx = pdfjsLib.Util.transform(viewport.transform, item.transform);
@@ -9167,7 +9169,7 @@
 		            }, matchIndex);
 		          } catch (e) {}
 		        }
-		        return addRangeMarks(span, charStart, charEnd, matchIndex);
+		        return false;
 		      };
 
 		      const markPageOccurrence = (targetOccurrence, matchIndex) => {
@@ -9190,7 +9192,11 @@
 		      };
 
 		      for (const { m, idx } of matches) {
-		        markPdfItemMatch(m, idx)
+		        const textItemsForAlignment = pageItems.length === spans.length
+		          ? pageItems
+		          : spans.map(span => ({ str: span.textContent || '' }));
+		        const aligned = findPdfTextLayerMatch(textItemsForAlignment, m, query);
+		        markPdfTextLayerMatch(aligned, idx)
 		          || markPageOccurrence(Math.max(0, Number(m.occurrenceInPage || 0)), idx);
 		      }
 		    }
