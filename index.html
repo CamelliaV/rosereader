@@ -575,9 +575,12 @@
 		    #reader-view header { position: absolute; left: 0; right: 0; top: 0; z-index: 100; background: var(--glass-strong); backdrop-filter: blur(18px) saturate(160%); box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
 		    #reader-view header.reader-header { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; overflow: visible; }
 		    .reader-header-left, .reader-header-right { display: flex; align-items: center; gap: 10px; }
-		    .reader-header-right { justify-content: flex-end; min-width: 0; overflow: visible; }
+		    .reader-header-right { justify-content: flex-end; min-width: 0; max-width: 100%; overflow: visible; }
 		    .reader-header-center { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 12px; }
 		    #reader-view .reader-header-center .book-name { text-align: center; flex: 0 1 auto; max-width: min(60vw, 720px); font-weight: 780; }
+		    #reader-view.pdf-active header.reader-header { grid-template-columns: auto minmax(0, auto) minmax(0, 1fr); }
+		    #reader-view.pdf-active .reader-header-right { gap: 6px; }
+		    #reader-view.pdf-active .reader-header-center .book-name { max-width: min(28vw, 380px); }
 		    #reader-view.reader-ui-hidden header.reader-header { opacity: 0; pointer-events: none; transform: translateY(-100%); transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 		    #reader-view header.reader-header { transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); overflow: hidden; }
 		    #reader-view.reader-ui-hidden header.reader-header > * { opacity: 0; }
@@ -1836,10 +1839,25 @@
 	    }
 
     /* PDF Mode */
-    .reader-content.pdf-mode { padding: 0 !important; overflow: auto; }
-    .reader-content.pdf-mode .reader-scroll-body { max-width: none; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-    .pdf-page { display: flex; justify-content: center; margin-bottom: 20px; min-height: 400px; position: relative; }
-    .pdf-page-container { position: relative; box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
+    .reader-content.pdf-mode {
+      padding: 0 !important;
+      overflow: auto;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--pdf-desk-bg, #ebe3d5) 88%, #fff 12%), var(--pdf-desk-bg, #ebe3d5)) !important;
+    }
+    .reader-content.pdf-mode .reader-scroll-body { max-width: none; margin: 0; padding: 28px 24px; display: flex; flex-direction: column; align-items: center; }
+    .pdf-page { display: flex; justify-content: center; margin-bottom: var(--pdf-page-gap, 24px); min-height: 400px; position: relative; }
+    .pdf-page-container {
+      position: relative;
+      background: var(--pdf-page-bg, #f8f1e3);
+      border: 1px solid color-mix(in srgb, var(--pdf-page-fg, #4f321c) 16%, transparent);
+      border-radius: var(--pdf-page-radius, 6px);
+      box-shadow:
+        0 1px 0 color-mix(in srgb, white 42%, transparent) inset,
+        0 16px 42px color-mix(in srgb, var(--pdf-shadow-color, #4a2f20) 22%, transparent),
+        0 3px 12px color-mix(in srgb, var(--pdf-shadow-color, #4a2f20) 12%, transparent);
+      overflow: hidden;
+    }
     .pdf-page canvas { display: block; }
 	    .pdf-page .textLayer {
 	      position: absolute;
@@ -1969,6 +1987,93 @@
     }
     .pdf-page .annotationLayer .linkAnnotation > a:hover {
       background: rgba(255, 255, 0, 0.2);
+    }
+    .pdf-header-tools {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 0 1 auto;
+      color: var(--pdf-toolbar-fg, var(--text));
+    }
+    #reader-view.pdf-active .pdf-header-tools { display: inline-flex; }
+    .pdf-header-tools .pdf-tool-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px;
+      border-radius: 9px;
+      background: color-mix(in srgb, var(--pdf-toolbar-bg, var(--bg-card)) 72%, transparent);
+      border: 1px solid color-mix(in srgb, var(--pdf-toolbar-fg, var(--text)) 12%, transparent);
+      min-width: 0;
+    }
+    .pdf-header-tools button,
+    .pdf-header-tools select {
+      height: 30px;
+      border: 0;
+      border-radius: 7px;
+      color: inherit;
+      background: transparent;
+      font: inherit;
+      font-size: 0.78rem;
+      line-height: 1;
+    }
+    .pdf-header-tools button {
+      min-width: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 8px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease, color 0.15s ease;
+    }
+    .pdf-header-tools button:hover,
+    .pdf-header-tools button.active,
+    .pdf-header-tools select:hover {
+      background: color-mix(in srgb, var(--pdf-accent, #d19600) 24%, transparent);
+    }
+    .pdf-header-tools button:active { transform: translateY(1px); }
+    .pdf-header-tools svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+    }
+    .pdf-header-tools select {
+      width: clamp(104px, 11vw, 150px);
+      min-width: 0;
+      padding: 0 22px 0 8px;
+      outline: none;
+      cursor: pointer;
+    }
+    .pdf-header-tools .pdf-zoom-readout {
+      min-width: 42px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-variant-numeric: tabular-nums;
+      color: color-mix(in srgb, var(--pdf-toolbar-fg, #4f321c) 78%, transparent);
+    }
+    #reader-view.pdf-active .reader-search {
+      flex-shrink: 0;
+    }
+    #reader-view.pdf-active .reader-search .search-box {
+      min-width: 180px;
+    }
+    #reader-view.pdf-active .reader-search .search-box input {
+      width: 116px;
+    }
+    #reader-view.pdf-active .reader-search .search-box:focus-within input {
+      width: 168px;
+    }
+    @media (max-width: 980px) {
+      #reader-view.pdf-active .reader-header-center .book-name { max-width: min(32vw, 360px); }
+      #reader-view.pdf-active .pdf-header-tools select { width: 108px; }
+      #reader-view.pdf-active .pdf-header-tools .pdf-zoom-readout { display: none; }
+    }
+    @media (max-width: 760px) {
+      #reader-view.pdf-active .pdf-header-tools .pdf-tool-theme { display: none; }
+      #reader-view.pdf-active .reader-search .search-box { min-width: 160px; }
+      #reader-view.pdf-active .reader-search .search-box input,
+      #reader-view.pdf-active .reader-search .search-box:focus-within input { width: 96px; }
     }
   </style>
 </head>
@@ -2197,6 +2302,29 @@
 		            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4z"/><path d="M8 16V9l2 2 2-2v7"/><path d="M14 16V9h2.5a2 2 0 0 1 0 4H14"/></svg>
 		            <span class="mode-label" id="markdown-view-toggle-label">Rendered</span>
 		          </button>
+		          <div class="pdf-header-tools" id="pdf-header-tools" aria-label="PDF reader controls">
+		            <div class="pdf-tool-group pdf-tool-theme">
+		              <button type="button" id="pdf-reader-mode-btn" onclick="togglePdfReaderMode()" title="Toggle PDF Reader Mode" aria-label="Toggle PDF Reader Mode">
+		                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"/></svg>
+		              </button>
+		              <select id="pdf-theme-select" onchange="setPdfTheme(this.value)" title="PDF Theme" aria-label="PDF Theme"></select>
+		            </div>
+		            <div class="pdf-tool-group pdf-tool-zoom">
+		              <button type="button" id="pdf-zoom-out-btn" onclick="bumpPdfZoom(-10)" title="Zoom out" aria-label="Zoom out">
+		                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M8 11h6"/><path d="m21 21-4.35-4.35"/></svg>
+		              </button>
+		              <span class="pdf-zoom-readout" id="pdf-toolbar-zoom">120%</span>
+		              <button type="button" id="pdf-zoom-in-btn" onclick="bumpPdfZoom(10)" title="Zoom in" aria-label="Zoom in">
+		                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M8 11h6"/><path d="M11 8v6"/><path d="m21 21-4.35-4.35"/></svg>
+		              </button>
+		              <button type="button" id="pdf-zoom-reset-btn" onclick="resetPdfZoom()" title="Reset zoom" aria-label="Reset zoom">
+		                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/></svg>
+		              </button>
+		              <button type="button" id="pdf-fit-width-btn" onclick="togglePdfFitWidth()" title="Fit width" aria-label="Fit width">
+		                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 8V5a1 1 0 0 1 1-1h3"/><path d="M20 8V5a1 1 0 0 0-1-1h-3"/><path d="M4 16v3a1 1 0 0 0 1 1h3"/><path d="M20 16v3a1 1 0 0 1-1 1h-3"/><path d="M8 12h8"/></svg>
+		              </button>
+		            </div>
+		          </div>
 	          <div class="reader-search" id="reader-search">
 	            <div class="search-box">
 	              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -2346,6 +2474,29 @@
 	      <div class="setting-row">
 	        <label><span id="label-pdf-zoom-text">PDF Zoom</span>: <span id="pdf-zoom-val">120</span>%</label>
 	        <input type="range" id="pdf-zoom" min="50" max="220" value="120" oninput="updateSetting('pdfZoom', +this.value)">
+	      </div>
+	      <div class="setting-row">
+	        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+	          <span id="label-pdf-reader-mode">PDF Reader Mode</span>
+	          <input type="checkbox" id="pdf-reader-mode-toggle" onchange="updateSetting('pdfReaderMode', this.checked)">
+	        </label>
+	      </div>
+	      <div class="setting-row">
+	        <label id="label-pdf-theme">PDF Theme</label>
+	        <select id="pdf-theme-setting" onchange="setPdfTheme(this.value)"></select>
+	      </div>
+	      <div class="setting-row">
+	        <label id="label-pdf-fit-mode">PDF Fit Mode</label>
+	        <select id="pdf-fit-mode-setting" onchange="setPdfFitMode(this.value)">
+	          <option value="manual" id="opt-pdf-fit-manual">Manual zoom</option>
+	          <option value="width" id="opt-pdf-fit-width">Fit width</option>
+	        </select>
+	      </div>
+	      <div class="setting-row">
+	        <label style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+	          <span id="label-pdf-blend-images">Blend PDF images with theme</span>
+	          <input type="checkbox" id="pdf-blend-images-toggle" onchange="updateSetting('pdfBlendImages', this.checked)">
+	        </label>
 	      </div>
 		      <div class="setting-row">
 		        <label><span id="label-reader-width-text">Reader Width</span>: <span id="reader-width-val">1600</span>px</label>
@@ -2788,12 +2939,144 @@
       } : { r: 255, g: 255, b: 255 };
     }
 
+    const PDF_THEME_PRESETS = [
+      { id: 'original', label: 'Original', background: '#ffffff', foreground: '#1f1f1f', accents: ['#174ea6'], original: true, desk: '#e9e6df' },
+      { id: 'firefox-sepia', label: 'Firefox Sepia', background: '#F4ECD8', foreground: '#5B4636', accents: ['#0060DF', '#B5007F'], desk: '#e5d8c0' },
+      { id: 'firefox-dark', label: 'Firefox Dark', background: '#1C1B22', foreground: '#EEEEEE', accents: ['#45A1FF', '#E675FD'], desk: '#121116' },
+      { id: 'safari-sepia', label: 'Safari Sepia', background: '#F8F1E3', foreground: '#4F321C', accents: ['#D19600'], desk: '#e8ddc9' },
+      { id: 'safari-gray', label: 'Safari Gray', background: '#4A4A4D', foreground: '#D7D7D8', accents: ['#5AC8FA'], desk: '#313235' },
+      { id: 'safari-night', label: 'Safari Night', background: '#121212', foreground: '#B0B0B0', accents: ['#5AC8FA'], desk: '#080808' },
+      { id: 'solarized-light', label: 'Solarized Light', background: '#FDF6E3', foreground: '#657B83', accents: ['#B58900', '#CB4B16', '#DC322F', '#D33682', '#6C71C4', '#268BD2', '#2AA198', '#859900'], desk: '#eee8d5' },
+      { id: 'solarized-dark', label: 'Solarized Dark', background: '#002B36', foreground: '#839496', accents: ['#B58900', '#CB4B16', '#DC322F', '#D33682', '#6C71C4', '#268BD2', '#2AA198', '#859900'], desk: '#001f27' },
+      { id: 'nord-light', label: 'Nord Snow', background: '#ECEFF4', foreground: '#3B4252', accents: ['#5E81AC', '#88C0D0', '#A3BE8C', '#EBCB8B', '#BF616A'], desk: '#d9dee8' },
+      { id: 'nord-dark', label: 'Nord Night', background: '#2E3440', foreground: '#D8DEE9', accents: ['#8FBCBB', '#88C0D0', '#81A1C1', '#A3BE8C', '#B48EAD'], desk: '#232831' },
+      { id: 'rose-archive', label: 'Rose Archive', background: '#F3EADB', foreground: '#4A2F20', accents: ['#B87518', '#8D6D49'], desk: '#e5d5bf' }
+    ];
+
+    const PDF_THEME_LABEL_KEYS = {
+      original: 'pdfThemeOriginal',
+      'firefox-sepia': 'pdfThemeFirefoxSepia',
+      'firefox-dark': 'pdfThemeFirefoxDark',
+      'safari-sepia': 'pdfThemeSafariSepia',
+      'safari-gray': 'pdfThemeSafariGray',
+      'safari-night': 'pdfThemeSafariNight',
+      'solarized-light': 'pdfThemeSolarizedLight',
+      'solarized-dark': 'pdfThemeSolarizedDark',
+      'nord-light': 'pdfThemeNordLight',
+      'nord-dark': 'pdfThemeNordDark',
+      'rose-archive': 'pdfThemeRoseArchive'
+    };
+
+    function getPdfThemePreset(themeId = settings.pdfTheme) {
+      const id = String(themeId || '').trim();
+      return PDF_THEME_PRESETS.find(theme => theme.id === id) || PDF_THEME_PRESETS.find(theme => theme.id === 'safari-sepia');
+    }
+
+    function isPdfReaderModeActive() {
+      return settings.pdfReaderMode !== false && currentBook?.format === 'pdf';
+    }
+
+    function populatePdfThemeControls() {
+      const current = getPdfThemePreset().id;
+      const html = PDF_THEME_PRESETS
+        .map(theme => `<option value="${escapeHtml(theme.id)}">${escapeHtml(t(PDF_THEME_LABEL_KEYS[theme.id] || '') || theme.label)}</option>`)
+        .join('');
+      for (const id of ['pdf-theme-select', 'pdf-theme-setting']) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.innerHTML !== html) el.innerHTML = html;
+        el.value = current;
+      }
+    }
+
+    function setPdfTheme(themeId) {
+      settings.pdfTheme = getPdfThemePreset(themeId).id;
+      ipcRenderer.invoke('update-settings', settings);
+      applySettings();
+    }
+
+    function setPdfFitMode(mode) {
+      settings.pdfFitMode = mode === 'width' ? 'width' : 'manual';
+      ipcRenderer.invoke('update-settings', settings);
+      applySettings();
+    }
+
+    function togglePdfReaderMode() {
+      settings.pdfReaderMode = !(settings.pdfReaderMode !== false);
+      ipcRenderer.invoke('update-settings', settings);
+      applySettings();
+    }
+
+    function togglePdfFitWidth() {
+      setPdfFitMode(settings.pdfFitMode === 'width' ? 'manual' : 'width');
+    }
+
+    function bumpPdfZoom(delta) {
+      settings.pdfFitMode = 'manual';
+      bumpSetting('pdfZoom', delta, 50, 220);
+    }
+
+    function resetPdfZoom() {
+      settings.pdfFitMode = 'manual';
+      settings.pdfZoom = 120;
+      ipcRenderer.invoke('update-settings', settings);
+      applySettings();
+    }
+
+    function getPdfRenderScale(pageViewportAtOne) {
+      if (settings.pdfFitMode === 'width' && pageViewportAtOne?.width) {
+        const readerWidth = els.readerContent?.clientWidth || window.innerWidth || 1000;
+        const available = Math.max(320, readerWidth - 56);
+        return Math.max(0.5, Math.min(3.0, available / pageViewportAtOne.width));
+      }
+      return Math.max(0.5, Math.min(2.2, (settings.pdfZoom || 120) / 100));
+    }
+
+    function applyPdfThemeVariables() {
+      const rc = document.getElementById('reader-content');
+      if (!rc) return;
+      const theme = isPdfReaderModeActive() ? getPdfThemePreset() : getPdfThemePreset('original');
+      const accent = theme.accents?.[0] || '#d19600';
+      rc.style.setProperty('--pdf-desk-bg', theme.desk || theme.background);
+      rc.style.setProperty('--pdf-page-bg', theme.background);
+      rc.style.setProperty('--pdf-page-fg', theme.foreground);
+      rc.style.setProperty('--pdf-toolbar-bg', theme.background);
+      rc.style.setProperty('--pdf-toolbar-fg', theme.foreground);
+      rc.style.setProperty('--pdf-accent', accent);
+      rc.style.setProperty('--pdf-shadow-color', theme.original ? '#1f1f1f' : theme.foreground);
+      rc.style.setProperty('--reader-accent-color', accent);
+      rc.style.setProperty('--reader-search-highlight-bg', colorMixAlpha(accent, 0.28));
+      rc.style.setProperty('--reader-search-highlight-current', accent);
+    }
+
+    function colorMixAlpha(hex, alpha) {
+      const { r, g, b } = hexToRgb(hex);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function syncPdfReaderControls() {
+      populatePdfThemeControls();
+      const readerModeToggle = document.getElementById('pdf-reader-mode-toggle');
+      if (readerModeToggle) readerModeToggle.checked = settings.pdfReaderMode !== false;
+      const readerModeBtn = document.getElementById('pdf-reader-mode-btn');
+      if (readerModeBtn) readerModeBtn.classList.toggle('active', settings.pdfReaderMode !== false);
+      const blendToggle = document.getElementById('pdf-blend-images-toggle');
+      if (blendToggle) blendToggle.checked = settings.pdfBlendImages === true;
+      const fitMode = document.getElementById('pdf-fit-mode-setting');
+      if (fitMode) fitMode.value = settings.pdfFitMode === 'width' ? 'width' : 'manual';
+      const fitBtn = document.getElementById('pdf-fit-width-btn');
+      if (fitBtn) fitBtn.classList.toggle('active', settings.pdfFitMode === 'width');
+      const zoomReadout = document.getElementById('pdf-toolbar-zoom');
+      if (zoomReadout) zoomReadout.textContent = settings.pdfFitMode === 'width' ? 'Fit' : `${settings.pdfZoom || 120}%`;
+    }
+
     // Recolor canvas pixels - replace white with bgColor, black with textColor
     // Preserves colorful pixels (images) by checking saturation
     // preserveImages: if true, uses a smarter algorithm to preserve colorful images while still theming text
-    function recolorCanvas(ctx, width, height, bgColor, textColor, preserveImages = false) {
+    function recolorCanvas(ctx, width, height, bgColor, textColor, preserveImages = true, accents = [], blendImages = false) {
       const bg = hexToRgb(bgColor);
       const fg = hexToRgb(textColor);
+      const accentRgb = hexToRgb(accents?.[0] || textColor);
       const imageData = ctx.getImageData(0, 0, width, height);
       const data = imageData.data;
 
@@ -2810,6 +3093,14 @@
 
         // If pixel is colorful (part of an image), preserve it
         if (saturation > saturationThreshold) {
+          if (blendImages) {
+            const lum = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+            const ink = lum < 0.5 ? accentRgb : bg;
+            const mix = lum < 0.5 ? 0.42 : 0.18;
+            data[i] = Math.round(r * (1 - mix) + ink.r * mix);
+            data[i + 1] = Math.round(g * (1 - mix) + ink.g * mix);
+            data[i + 2] = Math.round(b * (1 - mix) + ink.b * mix);
+          }
           continue;
         }
 
@@ -2900,7 +3191,8 @@
       if (!pdfDoc) return;
       try {
         const page = await pdfDoc.getPage(pageNum);
-        const scale = (settings.pdfZoom || 120) / 100;
+        const baseViewport = page.getViewport({ scale: 1 });
+        const scale = getPdfRenderScale(baseViewport);
 	        const viewport = page.getViewport({ scale });
 	        pdfPageViewports.set(pageNum, viewport);
         const outputScale = window.devicePixelRatio || 1;
@@ -2929,11 +3221,20 @@
           background: 'white'
         }).promise;
 
-        // Recolor the canvas to match theme
-        const bgColor = settings.bgColor || '#f8f1e3';
-        const textColor = settings.textColor || '#4f321c';
-        const preserveImages = settings.theme === 'midnight';
-	        recolorCanvas(ctx, canvas.width, canvas.height, bgColor, textColor, preserveImages);
+        const pdfTheme = getPdfThemePreset();
+        const readerMode = isPdfReaderModeActive() && !pdfTheme.original;
+        if (readerMode) {
+          recolorCanvas(
+            ctx,
+            canvas.width,
+            canvas.height,
+            pdfTheme.background,
+            pdfTheme.foreground,
+            true,
+            pdfTheme.accents || [],
+            settings.pdfBlendImages === true
+          );
+        }
 
 	        pageContainer.appendChild(canvas);
 
@@ -3432,7 +3733,8 @@
 	      if (pdfPageDataPromises.has(pageNum)) return pdfPageDataPromises.get(pageNum);
 	      const promise = (async () => {
 	        const page = await pdfDoc.getPage(pageNum);
-	        const scale = (settings.pdfZoom || 120) / 100;
+	        const baseViewport = page.getViewport({ scale: 1 });
+	        const scale = getPdfRenderScale(baseViewport);
 	        const viewport = page.getViewport({ scale });
 	        pdfPageViewports.set(pageNum, viewport);
 	        let items = pdfPageTextItems.get(pageNum);
@@ -3818,6 +4120,16 @@
 	        , showHeroCover: 'Show cover header in reader'
 	        , collapseSidebar: 'Collapse library sidebar'
 	        , pdfZoom: 'PDF Zoom'
+	        , pdfReaderMode: 'PDF Reader Mode'
+	        , pdfTheme: 'PDF Theme'
+	        , pdfFitMode: 'PDF Fit Mode'
+	        , pdfFitManual: 'Manual zoom'
+	        , pdfFitWidth: 'Fit width'
+	        , pdfBlendImages: 'Blend PDF images with theme'
+	        , pdfZoomIn: 'Zoom in'
+	        , pdfZoomOut: 'Zoom out'
+	        , pdfZoomReset: 'Reset zoom'
+	        , pdfToggleToolbar: 'Toggle top bar'
 	        , readerWidth: 'Reader Width'
 	        , readerPadding: 'Reader Padding'
 	        , tocWidth: 'TOC Width'
@@ -3922,6 +4234,24 @@
 	        , removedLibrary: 'Removed library'
 	        , failedOpenBook: 'Failed to open book'
 	        , failedRenderPdf: 'Failed to render PDF'
+	        , pdfSearchPreparing: 'Preparing PDF search…'
+	        , pdfSearchPreparingBody: 'Building this PDF search index. Reading can continue while RoseReader prepares search.'
+	        , pdfSearchFailed: 'PDF search unavailable'
+	        , pdfSearchFailedBody: 'Search indexing failed for this session. Reopen this PDF to retry.'
+	        , searchScanning: 'Scanning for matches…'
+	        , searchEscToClear: 'Esc to clear'
+	        , searchTryDifferent: 'Try a different word or shorter query.'
+	        , pdfThemeOriginal: 'Original'
+	        , pdfThemeFirefoxSepia: 'Firefox Sepia'
+	        , pdfThemeFirefoxDark: 'Firefox Dark'
+	        , pdfThemeSafariSepia: 'Safari Sepia'
+	        , pdfThemeSafariGray: 'Safari Gray'
+	        , pdfThemeSafariNight: 'Safari Night'
+	        , pdfThemeSolarizedLight: 'Solarized Light'
+	        , pdfThemeSolarizedDark: 'Solarized Dark'
+	        , pdfThemeNordLight: 'Nord Snow'
+	        , pdfThemeNordDark: 'Nord Night'
+	        , pdfThemeRoseArchive: 'Rose Archive'
 	        , recentSearches: 'Recent Searches'
 	        , recentBooks: 'Recent Books'
 	        , noRecentBooks: 'No recent books'
@@ -4103,6 +4433,16 @@
 	        , showHeroCover: '在阅读页显示封面头图'
 	        , collapseSidebar: '折叠书库侧栏'
 	        , pdfZoom: 'PDF 缩放'
+	        , pdfReaderMode: 'PDF 阅读模式'
+	        , pdfTheme: 'PDF 主题'
+	        , pdfFitMode: 'PDF 适配方式'
+	        , pdfFitManual: '手动缩放'
+	        , pdfFitWidth: '适宽'
+	        , pdfBlendImages: '让 PDF 图片融入主题'
+	        , pdfZoomIn: '放大'
+	        , pdfZoomOut: '缩小'
+	        , pdfZoomReset: '重置缩放'
+	        , pdfToggleToolbar: '切换顶栏'
 	        , readerWidth: '阅读区宽度'
 	        , readerPadding: '阅读区内边距'
 	        , tocWidth: '目录宽度'
@@ -4207,6 +4547,24 @@
 	        , removedLibrary: '已移除书库'
 	        , failedOpenBook: '打开书籍失败'
 	        , failedRenderPdf: '渲染 PDF 失败'
+	        , pdfSearchPreparing: '正在准备 PDF 搜索…'
+	        , pdfSearchPreparingBody: '正在为这本 PDF 建立搜索索引。阅读可以继续，搜索准备好后会自动使用。'
+	        , pdfSearchFailed: 'PDF 搜索暂不可用'
+	        , pdfSearchFailedBody: '本次会话的搜索索引建立失败。重新打开这本 PDF 时会再次尝试。'
+	        , searchScanning: '正在扫描匹配结果…'
+	        , searchEscToClear: 'Esc 清除'
+	        , searchTryDifferent: '可尝试其他词或更短的查询。'
+	        , pdfThemeOriginal: '原始'
+	        , pdfThemeFirefoxSepia: 'Firefox 护眼'
+	        , pdfThemeFirefoxDark: 'Firefox 深色'
+	        , pdfThemeSafariSepia: 'Safari 护眼'
+	        , pdfThemeSafariGray: 'Safari 灰色'
+	        , pdfThemeSafariNight: 'Safari 夜间'
+	        , pdfThemeSolarizedLight: 'Solarized 浅色'
+	        , pdfThemeSolarizedDark: 'Solarized 深色'
+	        , pdfThemeNordLight: 'Nord 雪色'
+	        , pdfThemeNordDark: 'Nord 夜色'
+	        , pdfThemeRoseArchive: 'Rose 档案纸'
 	        , recentSearches: '最近搜索'
 	        , recentBooks: '最近书籍'
 	        , noRecentBooks: '暂无最近书籍'
@@ -4382,6 +4740,25 @@
 	      setText('label-show-hero-cover', t('showHeroCover'));
 	      setText('label-sidebar-collapsed', t('collapseSidebar'));
 	      setText('label-pdf-zoom-text', t('pdfZoom'));
+	      setText('label-pdf-reader-mode', t('pdfReaderMode'));
+	      setText('label-pdf-theme', t('pdfTheme'));
+      setText('label-pdf-fit-mode', t('pdfFitMode'));
+      setText('opt-pdf-fit-manual', t('pdfFitManual'));
+      setText('opt-pdf-fit-width', t('pdfFitWidth'));
+      setText('label-pdf-blend-images', t('pdfBlendImages'));
+      setAttr('pdf-header-tools', 'aria-label', t('pdfReaderMode'));
+      setAttr('pdf-reader-mode-btn', 'title', t('pdfReaderMode'));
+      setAttr('pdf-reader-mode-btn', 'aria-label', t('pdfReaderMode'));
+      setAttr('pdf-theme-select', 'title', t('pdfTheme'));
+      setAttr('pdf-theme-select', 'aria-label', t('pdfTheme'));
+      setAttr('pdf-fit-width-btn', 'title', t('pdfFitWidth'));
+      setAttr('pdf-fit-width-btn', 'aria-label', t('pdfFitWidth'));
+      setAttr('pdf-zoom-out-btn', 'title', t('pdfZoomOut'));
+      setAttr('pdf-zoom-out-btn', 'aria-label', t('pdfZoomOut'));
+      setAttr('pdf-zoom-in-btn', 'title', t('pdfZoomIn'));
+      setAttr('pdf-zoom-in-btn', 'aria-label', t('pdfZoomIn'));
+      setAttr('pdf-zoom-reset-btn', 'title', t('pdfZoomReset'));
+      setAttr('pdf-zoom-reset-btn', 'aria-label', t('pdfZoomReset'));
 	      setText('label-reader-width-text', t('readerWidth'));
 	      setText('label-reader-padding-text', t('readerPadding'));
 	      setText('label-toc-width-text', t('tocWidth'));
@@ -4397,6 +4774,7 @@
 	      setText('btn-app-bg-remove', t('remove'));
 	      setText('label-app-bg-opacity-text', t('opacity'));
 	      setText('label-app-bg-blur-text', t('blur'));
+	      populatePdfThemeControls();
 	      setText('btn-export-data', t('export'));
 	      setText('btn-import-data', t('import'));
 	      setText('btn-settings-close', t('close'));
@@ -6984,6 +7362,7 @@
 	      hideContextMenu();
 
       els.readerContent.classList.toggle('pdf-mode', currentBook.format === 'pdf');
+      els.readerView?.classList?.toggle('pdf-active', currentBook.format === 'pdf');
 
 	      els.currentBookTitle.textContent = currentBook.title || t('untitled');
       els.libraryView.style.display = 'none';
@@ -7039,6 +7418,14 @@
         if (data.pdfData) {
           try {
             await renderPdfBook(data.pdfData);
+            ipcRenderer.invoke('prepare-pdf-search-index', id)
+              .then(status => {
+                if (currentBook?.id !== id) return;
+                if (status?.status === 'failed') {
+                  console.warn('PDF search index failed:', status?.error || status);
+                }
+              })
+              .catch(e => console.warn('PDF search index preparation failed:', e?.message || e));
             // Progress restoration will be handled by the call after startReadingSession()
           } catch (e) {
             console.error('PDF render error:', e);
@@ -7529,6 +7916,7 @@
 	      hideContextMenu();
       document.getElementById('reader-view').style.display = 'none';
       document.getElementById('library-view').style.display = 'flex';
+      els.readerView?.classList?.remove('pdf-active');
       currentBook = null;
       currentBookRenderPayload = null;
       currentBookHeroHtml = '';
@@ -7568,6 +7956,7 @@
       rc.style.setProperty('--reader-search-highlight-bg', isArchivePaper ? 'rgba(206, 152, 66, .28)' : '#fef08a');
       rc.style.setProperty('--reader-search-highlight-current', isArchivePaper ? '#b87518' : '#fb923c');
       rc.style.setProperty('--reader-search-highlight-current-text', isArchivePaper ? '#2a170d' : '#1a1a1a');
+      applyPdfThemeVariables();
       if (currentBook && revealReaderUi) showReaderUiTemporarily();
 
       const fontModeEl = document.getElementById('font-mode');
@@ -7591,6 +7980,7 @@
       const pdfZoomVal = document.getElementById('pdf-zoom-val');
       if (pdfZoom) pdfZoom.value = String(settings.pdfZoom || 120);
       if (pdfZoomVal) pdfZoomVal.textContent = String(settings.pdfZoom || 120);
+      syncPdfReaderControls();
 		      const readerWidth = document.getElementById('reader-width');
 		      const readerWidthVal = document.getElementById('reader-width-val');
 			      if (readerWidth) readerWidth.value = String(settings.readerMaxWidth || 1600);
@@ -7619,6 +8009,7 @@
 
 		      els.readerView?.classList?.toggle('fit-reader-width', settings.fitReaderWidth === true);
 		      els.readerView?.classList?.toggle('reader-topbar-hidden', settings.readerTopBarVisible === false);
+		      els.readerView?.classList?.toggle('pdf-active', currentBook?.format === 'pdf');
 		      document.querySelectorAll('#reader-view header .icon-btn[data-toggle]').forEach(btn => btn.classList.remove('active'));
 		      const fitBtn = document.querySelector('#reader-view header .icon-btn[data-toggle="fit"]');
 		      if (fitBtn) fitBtn.classList.toggle('active', settings.fitReaderWidth === true);
@@ -7663,6 +8054,7 @@
 		    function updateSetting(key, val) {
 		      settings[key] = val;
 		      if (key === 'bgColor' || key === 'textColor') settings.theme = 'custom-reader';
+		      if (key === 'pdfZoom') settings.pdfFitMode = 'manual';
 		      ipcRenderer.invoke('update-settings', settings);
 		      applySettings();
 		      applyAppTheme();
@@ -8841,6 +9233,15 @@
 	      }));
 	    }
 
+	    async function getCurrentPdfSearchIndexStatus() {
+	      if (!currentBook?.id || currentBook.format !== 'pdf') return null;
+	      try {
+	        return await ipcRenderer.invoke('get-pdf-search-index-status', currentBook.id);
+	      } catch (e) {
+	        return null;
+	      }
+	    }
+
 	    function computeScrollTopForElementInContainer(container, el, block = 'center') {
 	      if (!container || !el) return null;
 	      const containerRect = container.getBoundingClientRect();
@@ -9089,12 +9490,18 @@
 		      clearHighlights();
 
 		      showBookSearchResults();
+		      const pdfSearchStatus = currentBook?.format === 'pdf'
+		        ? await getCurrentPdfSearchIndexStatus()
+		        : null;
+		      if (signal.aborted) return;
+		      const isPreparingPdfSearch = currentBook?.format === 'pdf'
+		        && (!pdfSearchStatus || pdfSearchStatus.status === 'missing' || pdfSearchStatus.status === 'building');
 		      els.searchResultsPanel.innerHTML = `
 		        <div class="search-results-header">
-		          <span>Searching…</span>
-		          <span class="search-meta">Esc to clear</span>
+		          <span>${escapeHtml(isPreparingPdfSearch ? t('pdfSearchPreparing') : 'Searching…')}</span>
+		          <span class="search-meta">${escapeHtml(t('searchEscToClear'))}</span>
 		        </div>
-		        <div style="padding:12px 16px;color:var(--text-secondary);">Scanning for matches…</div>
+		        <div style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(isPreparingPdfSearch ? t('pdfSearchPreparingBody') : t('searchScanning'))}</div>
 		      `;
 		      const codemapEl = document.getElementById('search-codemap');
 		      if (codemapEl) codemapEl.classList.add('visible');
@@ -9106,7 +9513,26 @@
 		      if (signal.aborted) return;
 
 		      bookSearchState.query = query;
-		      bookSearchState.matches = await highlightMatches(query, signal);
+		      try {
+		        bookSearchState.matches = await highlightMatches(query, signal);
+		      } catch (e) {
+		        if (signal.aborted) return;
+		        bookSearchState.matches = [];
+		        if (currentBook?.format === 'pdf') {
+		          showBookSearchResults();
+		          els.searchResultsPanel.innerHTML = `
+		            <div class="search-results-header">
+		              <span>${escapeHtml(t('pdfSearchFailed'))}</span>
+		              <span class="search-meta">${escapeHtml(t('searchEscToClear'))}</span>
+		            </div>
+		            <div style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(t('pdfSearchFailedBody'))}</div>
+		          `;
+		          els.searchNav.style.display = 'none';
+		          els.searchPosition.textContent = '0/0';
+		          return;
+		        }
+		        throw e;
+		      }
 		      bookSearchState.currentIndex = -1;
 
 	      if (signal.aborted || !bookSearchState.matches.length && signal.aborted) return;
@@ -9114,13 +9540,28 @@
       const total = bookSearchState.matches.length;
 	      els.searchNav.style.display = total ? 'flex' : 'none';
       if (!total) {
+        const afterPdfStatus = currentBook?.format === 'pdf'
+          ? await getCurrentPdfSearchIndexStatus()
+          : null;
+        if (currentBook?.format === 'pdf' && afterPdfStatus?.status === 'failed') {
+          showBookSearchResults();
+          els.searchResultsPanel.innerHTML = `
+            <div class="search-results-header">
+              <span>${escapeHtml(t('pdfSearchFailed'))}</span>
+              <span class="search-meta">${escapeHtml(t('searchEscToClear'))}</span>
+            </div>
+            <div style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(t('pdfSearchFailedBody'))}</div>
+          `;
+          els.searchPosition.textContent = '0/0';
+          return;
+        }
         showBookSearchResults();
         els.searchResultsPanel.innerHTML = `
 	          <div class="search-results-header">
 	            <span>No results</span>
-	            <span style="opacity:0.85;">Esc to clear</span>
+	            <span style="opacity:0.85;">${escapeHtml(t('searchEscToClear'))}</span>
 	          </div>
-	          <div style="padding:12px 16px;color:var(--text-secondary);">Try a different word or shorter query.</div>
+	          <div style="padding:12px 16px;color:var(--text-secondary);">${escapeHtml(t('searchTryDifferent'))}</div>
 	        `;
 	        els.searchPosition.textContent = '0/0';
 	        return;
@@ -10460,6 +10901,15 @@
 
     window.addEventListener('beforeunload', () => {
       try { stopReadingSession(); } catch (e) {}
+    });
+
+    window.addEventListener('resize', () => {
+      if (currentBook?.format !== 'pdf' || settings.pdfFitMode !== 'width') return;
+      clearTimeout(window.__rosePdfResizeTimer);
+      window.__rosePdfResizeTimer = setTimeout(() => {
+        rerenderPdfPages();
+        resumeReaderAtRecordedPosition();
+      }, 180);
     });
 
     document.addEventListener('keydown', handleReaderArrowNav);

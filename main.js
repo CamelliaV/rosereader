@@ -35,6 +35,8 @@ try {
 
 let mainWindow;
 let currentEpub = null;
+let pdfSearchIndexQueue = Promise.resolve();
+const pdfSearchIndexJobs = new Map();
 const libraryWatchers = new Map();
 const LIBRARY_WATCH_DEBOUNCE_MS = 500;
 const LIBRARY_WATCH_RESYNC_MS = 800;
@@ -65,6 +67,10 @@ const defaultSettings = {
   librarySort: 'recent',
   librarySortDir: 'desc',
   pdfZoom: 120,
+  pdfReaderMode: true,
+  pdfTheme: 'safari-sepia',
+  pdfFitMode: 'manual', // 'manual' | 'width'
+  pdfBlendImages: false,
   readerMaxWidth: 1600,
   readerMargin: 48,
   tocWidth: 300,
@@ -2070,6 +2076,130 @@ function ensureSearchIndexForContent(book, content, signature, extras = {}) {
   return { index, changed, cached: false };
 }
 
+function getPdfSearchIndexStatus(bookId) {
+  const book = appData.books?.[bookId];
+  if (!book || book.format !== 'pdf') return { status: 'unavailable' };
+  const signature = getBookFileSignature(book);
+  const cached = getReusableBookSearchIndex(book, signature);
+  if (cached) {
+    return {
+      status: 'ready',
+      searchIndex: summarizeSearchIndex(cached),
+      cached: true
+    };
+  }
+  const job = pdfSearchIndexJobs.get(bookId);
+  if (job?.status === 'running' || job?.status === 'queued') {
+    return {
+      status: 'building',
+      startedAt: job.startedAt || 0,
+      updatedAt: job.updatedAt || 0
+    };
+  }
+  if (job?.status === 'failed') {
+    return {
+      status: 'failed',
+      error: job.error || '',
+      updatedAt: job.updatedAt || 0
+    };
+  }
+  return { status: 'missing' };
+}
+
+async function buildPdfSearchIndex(bookId, signatureAtStart) {
+  const book = appData.books?.[bookId];
+  if (!book || book.format !== 'pdf') return { status: 'unavailable' };
+
+  const currentSignature = getBookFileSignature(book);
+  if (getReusableBookSearchIndex(book, currentSignature)) {
+    return getPdfSearchIndexStatus(bookId);
+  }
+  if (signatureAtStart && !isSameBookFileSignature(signatureAtStart, currentSignature)) {
+    throw new Error('PDF file changed while preparing search');
+  }
+
+  const buffer = fs.readFileSync(book.path);
+  if (typeof PDFParse !== 'function') throw new TypeError('PDFParse is not available');
+  const parser = new PDFParse({ data: buffer });
+  try {
+    const result = await parser.getText();
+    const signatureAfter = getBookFileSignature(book);
+    if (!isSameBookFileSignature(currentSignature, signatureAfter)) {
+      throw new Error('PDF file changed while preparing search');
+    }
+    const pdfPages = Array.isArray(result.pages)
+      ? result.pages.map(page => ({ pageNum: Number(page?.num || 0) || 1, text: page?.text || '' }))
+      : [];
+    const content = {
+      chapters: [],
+      toc: [],
+      chapterIds: [],
+      rawChapters: [result.text || '']
+    };
+    const searchIndexState = ensureSearchIndexForContent(book, content, signatureAfter, { pdfPages });
+    if (searchIndexState.changed) saveData();
+    return {
+      status: searchIndexState.index ? 'ready' : 'failed',
+      searchIndex: summarizeSearchIndex(searchIndexState.index),
+      cached: searchIndexState.cached === true
+    };
+  } finally {
+    try { await parser.destroy(); } catch (e) {}
+  }
+}
+
+function ensurePdfSearchIndexForBook(bookId, options = {}) {
+  const book = appData.books?.[bookId];
+  if (!book || book.format !== 'pdf') return Promise.resolve({ status: 'unavailable' });
+
+  const signature = getBookFileSignature(book);
+  const cached = getReusableBookSearchIndex(book, signature);
+  if (cached) return Promise.resolve(getPdfSearchIndexStatus(bookId));
+
+  const existing = pdfSearchIndexJobs.get(bookId);
+  if (existing?.promise && (existing.status === 'queued' || existing.status === 'running')) {
+    return existing.promise;
+  }
+  if (existing?.status === 'failed' && options.retry !== true) {
+    return Promise.resolve(getPdfSearchIndexStatus(bookId));
+  }
+
+  const now = Date.now();
+  const job = {
+    status: 'queued',
+    startedAt: now,
+    updatedAt: now,
+    promise: null,
+    error: ''
+  };
+  pdfSearchIndexJobs.set(bookId, job);
+
+  const run = async () => {
+    job.status = 'running';
+    job.updatedAt = Date.now();
+    try {
+      const result = await buildPdfSearchIndex(bookId, signature);
+      if (result?.status === 'ready') {
+        pdfSearchIndexJobs.delete(bookId);
+        return result;
+      }
+      job.status = 'failed';
+      job.error = result?.error || 'PDF search index is unavailable';
+      job.updatedAt = Date.now();
+      return getPdfSearchIndexStatus(bookId);
+    } catch (e) {
+      job.status = 'failed';
+      job.error = e?.message || 'PDF search index failed';
+      job.updatedAt = Date.now();
+      return getPdfSearchIndexStatus(bookId);
+    }
+  };
+
+  job.promise = pdfSearchIndexQueue.then(run, run);
+  pdfSearchIndexQueue = job.promise.catch(() => {});
+  return job.promise;
+}
+
 async function ensureBooksForFiles(files, libraryId) {
   const existingByPath = new Map();
   const missingByFingerprint = new Map();
@@ -3329,33 +3459,25 @@ async function readBookContent(id) {
     });
   } else if (book.format === 'pdf') {
     const buffer = fs.readFileSync(book.path);
-    if (typeof PDFParse !== 'function') throw new TypeError('PDFParse is not available');
-    const parser = new PDFParse({ data: buffer });
-    try {
-      const result = await parser.getText();
-      const pdfData = buffer.toString('base64');
-      const pdfPages = Array.isArray(result.pages)
-        ? result.pages.map(page => ({ pageNum: Number(page?.num || 0) || 1, text: page?.text || '' }))
-        : [];
-      const content = {
-        chapters: [],
-        toc: [],
-        chapterIds: [],
-        rawChapters: [result.text],
-        pdfData,
-        pageCount: result.total || result.numpages || 1
-      };
-      const signature = getBookFileSignature(book);
-      const searchIndexState = ensureSearchIndexForContent(book, content, signature, { pdfPages });
-      if (searchIndexState.changed) saveData();
-      return {
-        ...content,
-        searchIndex: summarizeSearchIndex(searchIndexState.index),
-        searchIndexCached: searchIndexState.cached
-      };
-    } finally {
-      try { await parser.destroy(); } catch (e) {}
+    const signature = getBookFileSignature(book);
+    if (signature?.fingerprint && !book.fileFingerprint) {
+      book.fileFingerprint = signature.fingerprint;
+      saveData();
     }
+    const cachedIndex = getReusableBookSearchIndex(book, signature);
+    const existingJob = pdfSearchIndexJobs.get(id);
+    if (existingJob?.status === 'failed') pdfSearchIndexJobs.delete(id);
+    return {
+      chapters: [],
+      toc: [],
+      chapterIds: [],
+      rawChapters: [],
+      pdfData: buffer.toString('base64'),
+      pageCount: 0,
+      searchIndex: summarizeSearchIndex(cachedIndex),
+      searchIndexCached: !!cachedIndex,
+      searchIndexStatus: cachedIndex ? 'ready' : 'missing'
+    };
   } else if (book.format === 'txt') {
     const text = readTextFileBestEffort(book.path);
     const fallbackTitle = book.title || path.basename(book.path || '', path.extname(book.path || ''));
@@ -3838,11 +3960,17 @@ ipcMain.handle('search-in-book', async (_, bookId, query) => {
   const signature = getBookFileSignature(book);
   let index = getReusableBookSearchIndex(book, signature);
   if (!index) {
-    await readBookContent(bookId);
-    index = getReusableBookSearchIndex(book, signature) || sanitizeSearchIndex(book.searchIndex);
+    if (book.format === 'pdf') {
+      await ensurePdfSearchIndexForBook(bookId);
+    } else {
+      await readBookContent(bookId);
+    }
+    index = getReusableBookSearchIndex(book, getBookFileSignature(book));
   }
   return searchPersistedIndex(index, query, { limit: 1000 });
 });
+ipcMain.handle('prepare-pdf-search-index', async (_, bookId) => ensurePdfSearchIndexForBook(bookId, { retry: true }));
+ipcMain.handle('get-pdf-search-index-status', (_, bookId) => getPdfSearchIndexStatus(bookId));
 ipcMain.handle('export-data', async (_, filePath) => exportData(filePath));
 ipcMain.handle('import-data', async (_, filePath) => importData(filePath));
 ipcMain.handle('get-stats', () => appData.stats);
