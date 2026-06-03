@@ -1115,10 +1115,22 @@
 		      cursor: pointer;
 		      box-decoration-break: clone;
 		      -webkit-box-decoration-break: clone;
-		    }
-		    .note-anchor:hover { background: color-mix(in srgb, var(--primary) 18%, transparent); }
+			    }
+			    .note-anchor:hover { background: color-mix(in srgb, var(--primary) 18%, transparent); }
+    .annotation-jump-target {
+      background: color-mix(in srgb, var(--primary) 22%, transparent);
+      outline: 2px solid color-mix(in srgb, var(--primary) 58%, transparent);
+      border-radius: 5px;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+      animation: annotationJumpPulse 1.4s ease-out;
+    }
+    @keyframes annotationJumpPulse {
+      0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 42%, transparent); }
+      100% { box-shadow: 0 0 0 14px transparent; }
+    }
 
-		    /* In-book search - Modern floating search */
+			    /* In-book search - Modern floating search */
 		    .reader-search {
 		      display: flex;
 		      align-items: center;
@@ -1661,9 +1673,212 @@
 	    .insights-bar > span { position:absolute; inset:0; transform-origin: bottom; background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 72%, transparent), color-mix(in srgb, var(--primary) 24%, transparent)); }
 	    .insights-bar[data-active="true"] { background: color-mix(in srgb, var(--primary) 12%, transparent); }
 	    .insights-list { margin-top: 10px; display:flex; flex-direction:column; gap: 8px; }
-	    .insights-item { display:flex; align-items:center; justify-content:space-between; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--hairline); background: var(--glass); }
-	    .insights-item .name { font-weight: 700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-	    .insights-item .meta { color: var(--text-secondary); font-weight: 720; font-size: 0.85rem; }
+    .insights-item { display:flex; align-items:center; justify-content:space-between; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--hairline); background: var(--glass); }
+    .insights-item .name { font-weight: 700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .insights-item .meta { color: var(--text-secondary); font-weight: 720; font-size: 0.85rem; }
+
+    .annotation-center-modal {
+      width: min(1100px, 94vw);
+      height: min(760px, 88vh);
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .annotation-center-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid var(--hairline);
+      flex-shrink: 0;
+    }
+    .annotation-center-head h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
+    .annotation-center-summary { margin-top: 6px; color: var(--text-secondary); font-size: 0.86rem; line-height: 1.4; }
+    .annotation-center-head .btn-secondary {
+      width: auto;
+      margin: 0;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 740;
+    }
+    .annotation-center-toolbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1.5fr) repeat(6, minmax(104px, 1fr));
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--hairline);
+      background: color-mix(in srgb, var(--bg) 36%, transparent);
+      flex-shrink: 0;
+    }
+    .annotation-center-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      padding: 0 10px;
+      background: var(--glass-strong);
+    }
+    .annotation-center-search svg { width: 16px; height: 16px; color: var(--text-secondary); flex-shrink: 0; }
+    .annotation-center-search input {
+      border: 0;
+      background: transparent;
+      outline: 0;
+      padding: 10px 0;
+      min-width: 0;
+      width: 100%;
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+    .annotation-center-toolbar select {
+      min-width: 0;
+      border: 1px solid var(--hairline);
+      border-radius: 12px;
+      background: var(--glass-strong);
+      color: var(--text);
+      padding: 9px 10px;
+      font-size: 0.86rem;
+      font-weight: 690;
+    }
+    .annotation-center-list {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 12px 14px 18px;
+    }
+    .annotation-center-group-title {
+      position: sticky;
+      top: -12px;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 8px 8px;
+      color: var(--text-secondary);
+      background: color-mix(in srgb, var(--glass-strong) 90%, transparent);
+      backdrop-filter: blur(12px);
+      font-size: 0.76rem;
+      font-weight: 820;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .annotation-center-row {
+      display: grid;
+      grid-template-columns: 10px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+      width: 100%;
+      border: 1px solid var(--hairline);
+      border-radius: 14px;
+      background: var(--surface);
+      color: var(--text);
+      text-align: left;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out), border-color 140ms var(--ease-out), background 140ms var(--ease-out);
+      font: inherit;
+    }
+    .annotation-center-row:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+      border-color: color-mix(in srgb, var(--primary) 24%, var(--hairline) 76%);
+      background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+    }
+    .annotation-center-color {
+      width: 10px;
+      min-height: 100%;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--text-secondary) 46%, transparent);
+    }
+    .annotation-center-color.yellow { background: #f5c542; }
+    .annotation-center-color.green { background: #44b678; }
+    .annotation-center-color.blue { background: #3b82c4; }
+    .annotation-center-color.pink { background: #d95f8a; }
+    .annotation-center-color.purple { background: #9b6bd3; }
+    .annotation-center-color.orange { background: #e58b32; }
+    .annotation-center-main { min-width: 0; }
+    .annotation-center-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 720;
+    }
+    .annotation-center-pill {
+      display: inline-flex;
+      align-items: center;
+      max-width: 260px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--hairline);
+      background: color-mix(in srgb, var(--bg-card) 72%, transparent);
+      color: color-mix(in srgb, var(--text) 82%, transparent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .annotation-center-text {
+      color: color-mix(in srgb, var(--text) 94%, transparent);
+      line-height: 1.55;
+      font-size: 0.94rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .annotation-center-note {
+      margin-top: 7px;
+      color: color-mix(in srgb, var(--text) 78%, transparent);
+      font-size: 0.88rem;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .annotation-center-side {
+      min-width: 120px;
+      max-width: 220px;
+      text-align: right;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      line-height: 1.45;
+      font-weight: 720;
+    }
+    .annotation-center-location {
+      color: color-mix(in srgb, var(--primary) 72%, var(--text) 28%);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .annotation-center-empty {
+      padding: 56px 18px;
+      text-align: center;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .annotation-center-row mark {
+      background: color-mix(in srgb, var(--primary) 18%, transparent);
+      color: color-mix(in srgb, var(--primary) 78%, var(--text) 22%);
+      border-radius: 4px;
+      padding: 0 2px;
+    }
+    @media (max-width: 900px) {
+      .annotation-center-toolbar { grid-template-columns: 1fr 1fr; }
+      .annotation-center-search { grid-column: 1 / -1; }
+      .annotation-center-row { grid-template-columns: 8px minmax(0, 1fr); }
+      .annotation-center-side { grid-column: 2; text-align: left; max-width: none; }
+    }
 
     .hidden { display: none !important; }
 
@@ -2262,6 +2477,7 @@
 		          <kbd id="library-search-kbd" aria-hidden="true">⌘K</kbd>
 		        </div>
 	        <div class="header-spacer"></div>
+		        <button id="btn-annotation-center" onclick="showAnnotationCenter()">Annotations</button>
 		        <button id="btn-new-library" onclick="showCreateLibraryModal()">+ New Library</button>
 	        <button id="btn-import-dir" class="primary" onclick="importDir()">Import Directory</button>
 	        <button id="btn-settings" onclick="showSettings()">Settings</button>
@@ -2795,6 +3011,31 @@
 	    </div>
 	  </div>
 
+	  <div id="annotation-center-modal" class="modal hidden" onclick="if(event.target===this)hideAnnotationCenter()">
+	    <div class="modal-content annotation-center-modal">
+	      <div class="annotation-center-head">
+	        <div>
+	          <h2 id="annotation-center-title">Annotations</h2>
+	          <div class="annotation-center-summary" id="annotation-center-summary">-</div>
+	        </div>
+	        <button id="annotation-center-close" class="btn-secondary" onclick="hideAnnotationCenter()">Close</button>
+	      </div>
+	      <div class="annotation-center-toolbar">
+	        <div class="annotation-center-search">
+	          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+	          <input id="annotation-center-search" type="text" placeholder="Search annotations…" autocomplete="off" spellcheck="false" oninput="onAnnotationCenterFilterChange()">
+	        </div>
+	        <select id="annotation-center-type" onchange="onAnnotationCenterFilterChange()"></select>
+	        <select id="annotation-center-format" onchange="onAnnotationCenterFilterChange()"></select>
+	        <select id="annotation-center-color" onchange="onAnnotationCenterFilterChange()"></select>
+	        <select id="annotation-center-library" onchange="onAnnotationCenterFilterChange()"></select>
+	        <select id="annotation-center-book" onchange="onAnnotationCenterFilterChange()"></select>
+	        <select id="annotation-center-group" onchange="onAnnotationCenterFilterChange()"></select>
+	      </div>
+	      <div class="annotation-center-list" id="annotation-center-list"></div>
+	    </div>
+	  </div>
+
 	  <div id="context-menu" class="context-menu hidden"></div>
 	  <div id="toast" class="toast hidden"></div>
 
@@ -2828,11 +3069,21 @@
 	      statReadTime: document.getElementById('stat-read-time'),
 	      statStreak: document.getElementById('stat-streak'),
 	      statLastRead: document.getElementById('stat-last-read'),
-	      statBooksTouched30d: document.getElementById('stat-books-touched-30d'),
+      statBooksTouched30d: document.getElementById('stat-books-touched-30d'),
 	      btnInsights: document.getElementById('btn-insights'),
 	      insightsShare: document.getElementById('insights-share'),
 	      insightsModal: document.getElementById('insights-modal'),
 	      insightsBody: document.getElementById('insights-body'),
+      annotationCenterModal: document.getElementById('annotation-center-modal'),
+      annotationCenterSummary: document.getElementById('annotation-center-summary'),
+      annotationCenterList: document.getElementById('annotation-center-list'),
+      annotationCenterSearch: document.getElementById('annotation-center-search'),
+      annotationCenterType: document.getElementById('annotation-center-type'),
+      annotationCenterFormat: document.getElementById('annotation-center-format'),
+      annotationCenterColor: document.getElementById('annotation-center-color'),
+      annotationCenterLibrary: document.getElementById('annotation-center-library'),
+      annotationCenterBook: document.getElementById('annotation-center-book'),
+      annotationCenterGroup: document.getElementById('annotation-center-group'),
       folderTree: document.getElementById('folder-tree'),
       sidebarTitle: document.getElementById('sidebar-title'),
       tabLibraries: document.getElementById('tab-libraries'),
@@ -2903,6 +3154,12 @@
     const coverUrlCache = new Map();
     let navigation = { stack: [{ view: 'library' }], index: 0 };
     let lastOpenedBookId = null;
+    let annotationCenterState = {
+      items: [],
+      filtered: [],
+      loading: false,
+      activeMap: new Map()
+    };
 
     ipcRenderer.on('libraries-auto-refreshed', async (_, payload = {}) => {
       await refreshState();
@@ -3570,10 +3827,10 @@
     }
 
     // Scroll to a PDF highlight and flash it
-	    async function scrollToPdfHighlight(highlight) {
-	      const pageNum = highlight.pageNum;
-	      const pageEl = document.getElementById(`pdf-page-${pageNum}`);
-	      if (!pageEl) return;
+		    async function scrollToPdfHighlight(highlight) {
+		      const pageNum = highlight.pageNum;
+		      const pageEl = document.getElementById(`pdf-page-${pageNum}`);
+		      if (!pageEl) return false;
 
       // Ensure page is rendered
       if (!pdfRenderedPages.has(pageNum)) {
@@ -3582,17 +3839,17 @@
       }
 
 	      // Find the highlighted spans
-	      const textLayer = pageEl.querySelector('.textLayer');
-	      if (!textLayer) return;
+		      const textLayer = pageEl.querySelector('.textLayer');
+		      if (!textLayer) return false;
 
 	      const highlightRects = pageEl.querySelectorAll(`.pdf-highlight-rect[data-highlight-id="${cssEscape(highlight.id)}"]`);
 	      const highlightSpans = textLayer.querySelectorAll(`span[data-highlight-id="${highlight.id}"]`);
 	      const targets = highlightRects.length ? [...highlightRects] : [...highlightSpans];
-	      if (targets.length === 0) {
-	        // Fallback: scroll to page
-	        pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-	        return;
-	      }
+		      if (targets.length === 0) {
+		        // Fallback: scroll to page
+		        pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		        return true;
+		      }
 
 	      // Scroll to first highlighted element
 	      const firstEl = targets[0];
@@ -3612,10 +3869,11 @@
 	        el.classList.add('highlight-flash');
 	      });
 
-	      setTimeout(() => {
-	        targets.forEach(el => el.classList.remove('highlight-flash'));
-	      }, 1500);
-	    }
+		      setTimeout(() => {
+		        targets.forEach(el => el.classList.remove('highlight-flash'));
+		      }, 1500);
+		      return true;
+		    }
 
 	    function mergeRectsPx(rects, eps = 2) {
 	      const out = [];
@@ -4384,6 +4642,27 @@
 	        , noRecentBooks: 'No recent books'
 	        , noResultsFound: 'No results found'
 	        , results: 'Results'
+	        , annotationCenter: 'Annotations'
+	        , annotationCenterSearchPlaceholder: 'Search annotation text, note, book, or location…'
+	        , annotationCenterSummary: '{shown} of {total} annotations · {books} book(s)'
+	        , annotationCenterEmpty: 'No annotations yet.'
+	        , annotationCenterNoMatches: 'No annotations match the current filters.'
+	        , annotationCenterLoading: 'Loading annotations…'
+	        , annotationCenterOpenFailed: 'Unable to open annotation'
+	        , annotationAllTypes: 'All types'
+	        , annotationAllFormats: 'All formats'
+	        , annotationAllColors: 'All colors'
+	        , annotationAllLibraries: 'All libraries'
+	        , annotationAllBooks: 'All books'
+	        , annotationGroupByBook: 'Group by book'
+	        , annotationGroupByType: 'Group by type'
+	        , annotationGroupByColor: 'Group by color'
+	        , annotationGroupByLibrary: 'Group by library'
+	        , annotationGroupByDate: 'Group by date'
+	        , annotationTypeHighlight: 'Highlight'
+	        , annotationTypeNote: 'Note'
+	        , annotationTypeBookmark: 'Bookmark'
+	        , annotationUnknownLocation: 'Unknown location'
 	        , addBookmark: 'Add Bookmark'
 	        , allHighlights: 'All Highlights'
 	        , notes: 'Notes'
@@ -4697,6 +4976,27 @@
 	        , noRecentBooks: '暂无最近书籍'
 	        , noResultsFound: '未找到结果'
 	        , results: '结果'
+	        , annotationCenter: '注释中心'
+	        , annotationCenterSearchPlaceholder: '搜索标注内容、笔记、书名或位置…'
+	        , annotationCenterSummary: '显示 {shown}/{total} 条注释 · {books} 本书'
+	        , annotationCenterEmpty: '暂无注释。'
+	        , annotationCenterNoMatches: '没有符合当前筛选的注释。'
+	        , annotationCenterLoading: '正在加载注释…'
+	        , annotationCenterOpenFailed: '无法打开注释'
+	        , annotationAllTypes: '全部类型'
+	        , annotationAllFormats: '全部格式'
+	        , annotationAllColors: '全部颜色'
+	        , annotationAllLibraries: '全部书库'
+	        , annotationAllBooks: '全部书籍'
+	        , annotationGroupByBook: '按书籍分组'
+	        , annotationGroupByType: '按类型分组'
+	        , annotationGroupByColor: '按颜色分组'
+	        , annotationGroupByLibrary: '按书库分组'
+	        , annotationGroupByDate: '按日期分组'
+	        , annotationTypeHighlight: '高亮'
+	        , annotationTypeNote: '笔记'
+	        , annotationTypeBookmark: '书签'
+	        , annotationUnknownLocation: '未知位置'
 	        , addBookmark: '添加书签'
 	        , allHighlights: '全部高亮'
 	        , notes: '笔记'
@@ -4744,12 +5044,26 @@
 	      return 'en';
 	    }
 
+	    function getLocaleCandidates() {
+	      const candidates = [
+	        ...(Array.isArray(systemLocaleInfo?.languages) ? systemLocaleInfo.languages : []),
+	        systemLocaleInfo?.locale,
+	        ...(Array.isArray(navigator.languages) ? navigator.languages : []),
+	        navigator.language
+	      ].map(value => String(value || '').trim()).filter(Boolean);
+	      return [...new Set(candidates)];
+	    }
+
+	    function pickActiveSystemLocale() {
+	      const normalized = getLocaleCandidates().map(normalizeLocale);
+	      if (normalized.includes('zh-CN')) return 'zh-CN';
+	      return normalized.find(locale => locale === 'en') || 'en';
+	    }
+
 	    function getActiveLocale() {
 	      const pref = String(settings.locale || 'system');
 	      if (pref !== 'system') return normalizeLocale(pref);
-	      const fromNav = navigator.language || 'en';
-	      const fromSys = (systemLocaleInfo?.languages?.[0] || systemLocaleInfo?.locale || '');
-	      return normalizeLocale(fromSys || fromNav);
+	      return pickActiveSystemLocale();
 	    }
 
 	    function t(key) {
@@ -4767,7 +5081,7 @@
 	    }
 
 	    function getSystemLocaleCode() {
-	      return String(systemLocaleInfo?.languages?.[0] || systemLocaleInfo?.locale || navigator.language || 'en-US');
+	      return String(getLocaleCandidates()[0] || 'en-US');
 	    }
 
 	    function getLocaleDisplayLabel(rawLocale) {
@@ -4818,8 +5132,12 @@
 		      const closeHint = document.getElementById('search-hint-close');
 		      if (closeHint) closeHint.innerHTML = `<kbd>esc</kbd> ${escapeHtml(t('searchHintClose'))}`;
 		      setText('btn-new-library', t('newLibrary'));
+	      setText('btn-annotation-center', t('annotationCenter'));
 	      setText('btn-import-dir', t('importDirectory'));
 	      setText('btn-settings', t('settings'));
+	      setText('annotation-center-title', t('annotationCenter'));
+	      setText('annotation-center-close', t('close'));
+	      setPlaceholder('annotation-center-search', t('annotationCenterSearchPlaceholder'));
 	      setText('tab-libraries', t('libraries'));
 	      setText('tab-folders', t('folders'));
 	      setText('nav-all-books', t('allBooks'));
@@ -6158,7 +6476,7 @@
 	        await persistSelectedLibrary('all');
 	        initializedLibrarySelection = true;
 	      }
-	      getSystemLocaleInfo().then(() => applyI18n()).catch(() => {});
+	      await getSystemLocaleInfo().catch(() => {});
 	      applyAppTheme();
 	      applySidebarMode();
 	    }
@@ -6643,6 +6961,323 @@
       if (els.bookMetaContent) els.bookMetaContent.textContent = '';
     }
 
+    function getAnnotationTypeLabel(type) {
+      if (type === 'highlight') return t('annotationTypeHighlight');
+      if (type === 'note') return t('annotationTypeNote');
+      if (type === 'bookmark') return t('annotationTypeBookmark');
+      return String(type || '');
+    }
+
+    function getAnnotationColorLabel(color) {
+      const labels = getActiveLocale() === 'zh-CN'
+        ? { yellow: '黄色', green: '绿色', blue: '蓝色', pink: '粉色', purple: '紫色', orange: '橙色' }
+        : { yellow: 'Yellow', green: 'Green', blue: 'Blue', pink: 'Pink', purple: 'Purple', orange: 'Orange' };
+      const key = String(color || '').trim();
+      return labels[key] || key || '-';
+    }
+
+    function getAnnotationPrimaryText(item) {
+      if (!item) return '';
+      if (item.type === 'note') return String(item.quote || item.text || item.note || '').trim();
+      if (item.type === 'bookmark') return String(item.label || item.quote || '').trim();
+      return String(item.text || item.label || '').trim();
+    }
+
+    function getAnnotationLocationLabel(item) {
+      const pageNum = Number(item?.pageNum || 0);
+      if (Number.isFinite(pageNum) && pageNum > 0) {
+        return getActiveLocale() === 'zh-CN' ? `第 ${Math.floor(pageNum)} 页` : `Page ${Math.floor(pageNum)}`;
+      }
+      const location = String(item?.locationLabel || '').trim();
+      if (location) return location;
+      const chapterIndex = Number(item?.chapterIndex);
+      if (Number.isFinite(chapterIndex) && chapterIndex >= 0) {
+        return getActiveLocale() === 'zh-CN' ? `第 ${Math.floor(chapterIndex) + 1} 章` : `Chapter ${Math.floor(chapterIndex) + 1}`;
+      }
+      return t('annotationUnknownLocation');
+    }
+
+    function getAnnotationSearchText(item) {
+      if (!item) return '';
+      return [
+        item.type,
+        getAnnotationTypeLabel(item.type),
+        item.color,
+        getAnnotationColorLabel(item.color),
+        item.text,
+        item.quote,
+        item.note,
+        item.label,
+        item.locationLabel,
+        item.book?.title,
+        item.book?.author,
+        item.book?.format,
+        item.book?.libraryName
+      ].filter(Boolean).join(' ');
+    }
+
+    function htmlWithQueryMarks(text, query) {
+      const raw = String(text || '');
+      const q = String(query || '').trim();
+      if (!q) return escapeHtml(raw);
+      const lower = raw.toLowerCase();
+      const needle = q.toLowerCase();
+      if (!needle || !lower.includes(needle)) return escapeHtml(raw);
+
+      let out = '';
+      let cursor = 0;
+      let guard = 0;
+      while (cursor < raw.length && guard < 40) {
+        const idx = lower.indexOf(needle, cursor);
+        if (idx < 0) break;
+        out += escapeHtml(raw.slice(cursor, idx));
+        out += `<mark>${escapeHtml(raw.slice(idx, idx + q.length))}</mark>`;
+        cursor = idx + q.length;
+        guard += 1;
+      }
+      out += escapeHtml(raw.slice(cursor));
+      return out;
+    }
+
+    function setAnnotationSelectOptions(select, options, preferredValue) {
+      if (!select) return '';
+      const safeOptions = Array.isArray(options) && options.length ? options : [{ value: '', label: '-' }];
+      const selected = safeOptions.some(o => String(o.value) === String(preferredValue))
+        ? String(preferredValue)
+        : String(safeOptions[0].value);
+      select.innerHTML = safeOptions.map(o => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join('');
+      select.value = selected;
+      return selected;
+    }
+
+    function populateAnnotationCenterFilters() {
+      const items = annotationCenterState.items || [];
+      const current = {
+        type: els.annotationCenterType?.value || '',
+        format: els.annotationCenterFormat?.value || '',
+        color: els.annotationCenterColor?.value || '',
+        library: els.annotationCenterLibrary?.value || '',
+        book: els.annotationCenterBook?.value || '',
+        group: els.annotationCenterGroup?.value || 'book'
+      };
+
+      const typeOptions = [
+        { value: '', label: t('annotationAllTypes') },
+        { value: 'highlight', label: t('annotationTypeHighlight') },
+        { value: 'note', label: t('annotationTypeNote') },
+        { value: 'bookmark', label: t('annotationTypeBookmark') }
+      ];
+      const formats = [...new Set(items.map(item => String(item.book?.format || '').trim()).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b));
+      const colors = [...new Set(items.map(item => String(item.color || '').trim()).filter(Boolean))]
+        .sort((a, b) => getAnnotationColorLabel(a).localeCompare(getAnnotationColorLabel(b)));
+      const libraries = new Map();
+      const books = new Map();
+      for (const item of items) {
+        const libId = String(item.book?.libraryId || '').trim();
+        if (libId && !libraries.has(libId)) libraries.set(libId, item.book?.libraryName || t('libraryFallback'));
+        const bookId = String(item.bookId || '').trim();
+        if (bookId && !books.has(bookId)) books.set(bookId, item.book?.title || t('untitled'));
+      }
+
+      setAnnotationSelectOptions(els.annotationCenterType, typeOptions, current.type);
+      setAnnotationSelectOptions(els.annotationCenterFormat, [
+        { value: '', label: t('annotationAllFormats') },
+        ...formats.map(format => ({ value: format, label: format.toUpperCase() }))
+      ], current.format);
+      setAnnotationSelectOptions(els.annotationCenterColor, [
+        { value: '', label: t('annotationAllColors') },
+        ...colors.map(color => ({ value: color, label: getAnnotationColorLabel(color) }))
+      ], current.color);
+      setAnnotationSelectOptions(els.annotationCenterLibrary, [
+        { value: '', label: t('annotationAllLibraries') },
+        ...[...libraries.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([value, label]) => ({ value, label }))
+      ], current.library);
+      setAnnotationSelectOptions(els.annotationCenterBook, [
+        { value: '', label: t('annotationAllBooks') },
+        ...[...books.entries()].sort((a, b) => a[1].localeCompare(b[1])).map(([value, label]) => ({ value, label }))
+      ], current.book);
+      setAnnotationSelectOptions(els.annotationCenterGroup, [
+        { value: 'book', label: t('annotationGroupByBook') },
+        { value: 'type', label: t('annotationGroupByType') },
+        { value: 'color', label: t('annotationGroupByColor') },
+        { value: 'library', label: t('annotationGroupByLibrary') },
+        { value: 'date', label: t('annotationGroupByDate') }
+      ], current.group || 'book');
+    }
+
+    function getFilteredAnnotationCenterItems() {
+      const query = String(els.annotationCenterSearch?.value || '').trim();
+      const tokens = tokenizeQuery(query);
+      const type = els.annotationCenterType?.value || '';
+      const format = els.annotationCenterFormat?.value || '';
+      const color = els.annotationCenterColor?.value || '';
+      const libraryId = els.annotationCenterLibrary?.value || '';
+      const bookId = els.annotationCenterBook?.value || '';
+
+      return (annotationCenterState.items || []).filter(item => {
+        if (type && item.type !== type) return false;
+        if (format && item.book?.format !== format) return false;
+        if (color && item.color !== color) return false;
+        if (libraryId && String(item.book?.libraryId || '') !== libraryId) return false;
+        if (bookId && String(item.bookId || '') !== bookId) return false;
+        if (!tokens.length) return true;
+        const hay = normalizeSearchText(getAnnotationSearchText(item));
+        return tokens.every(token => hay.includes(token));
+      });
+    }
+
+    function formatAnnotationDateGroup(ts) {
+      const n = Number(ts || 0);
+      if (!n) return t('unknownTimeShort');
+      const d = new Date(n);
+      if (!Number.isFinite(d.getTime())) return t('unknownTimeShort');
+      const locale = getActiveLocale() === 'zh-CN' ? 'zh-CN' : 'en-US';
+      return d.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
+    function getAnnotationGroupLabel(item, groupBy) {
+      if (groupBy === 'type') return getAnnotationTypeLabel(item.type) || '-';
+      if (groupBy === 'color') return item.color ? getAnnotationColorLabel(item.color) : getAnnotationTypeLabel(item.type);
+      if (groupBy === 'library') return item.book?.libraryName || t('libraryFallback');
+      if (groupBy === 'date') return formatAnnotationDateGroup(item.timestamp);
+      return item.book?.title || t('untitled');
+    }
+
+    function renderAnnotationCenter() {
+      if (!els.annotationCenterList) return;
+      const items = getFilteredAnnotationCenterItems();
+      annotationCenterState.filtered = items;
+      annotationCenterState.activeMap = new Map();
+
+      const total = annotationCenterState.items.length;
+      const bookCount = new Set(items.map(item => item.bookId).filter(Boolean)).size;
+      if (els.annotationCenterSummary) {
+        els.annotationCenterSummary.textContent = tf('annotationCenterSummary', {
+          shown: items.length,
+          total,
+          books: bookCount
+        });
+      }
+
+      if (annotationCenterState.loading) {
+        els.annotationCenterList.innerHTML = `<div class="annotation-center-empty">${escapeHtml(t('annotationCenterLoading'))}</div>`;
+        return;
+      }
+      if (!total) {
+        els.annotationCenterList.innerHTML = `<div class="annotation-center-empty">${escapeHtml(t('annotationCenterEmpty'))}</div>`;
+        return;
+      }
+      if (!items.length) {
+        els.annotationCenterList.innerHTML = `<div class="annotation-center-empty">${escapeHtml(t('annotationCenterNoMatches'))}</div>`;
+        return;
+      }
+
+      const query = String(els.annotationCenterSearch?.value || '').trim();
+      const groupBy = els.annotationCenterGroup?.value || 'book';
+      const groups = new Map();
+      for (const item of items) {
+        const label = getAnnotationGroupLabel(item, groupBy);
+        if (!groups.has(label)) groups.set(label, []);
+        groups.get(label).push(item);
+      }
+
+      const html = [];
+      let idx = 0;
+      for (const [label, list] of groups.entries()) {
+        html.push(`<div class="annotation-center-group-title"><span>${escapeHtml(label)}</span><span>${list.length}</span></div>`);
+        for (const item of list) {
+          const key = `ann-${idx++}`;
+          annotationCenterState.activeMap.set(key, item);
+          const primary = getAnnotationPrimaryText(item) || getAnnotationTypeLabel(item.type);
+          const note = item.type === 'note'
+            ? String(item.note || '').trim()
+            : String(item.note || '').trim();
+          const location = getAnnotationLocationLabel(item);
+          const pct = Math.max(0, Math.min(100, Math.round((Number(item.progress || 0) || 0) * 100)));
+          const colorClass = item.color ? String(item.color).replace(/[^a-z0-9_-]/gi, '') : item.type;
+          const bookMeta = [
+            item.book?.author,
+            item.book?.libraryName,
+            item.book?.format ? String(item.book.format).toUpperCase() : ''
+          ].filter(Boolean).join(' · ');
+          html.push(`
+            <button type="button" class="annotation-center-row" onclick="openAnnotationCenterItem('${key}')">
+              <span class="annotation-center-color ${escapeHtml(colorClass)}"></span>
+              <span class="annotation-center-main">
+                <span class="annotation-center-meta">
+                  <span class="annotation-center-pill">${escapeHtml(getAnnotationTypeLabel(item.type))}</span>
+                  <span class="annotation-center-pill">${escapeHtml(item.book?.title || t('untitled'))}</span>
+                  ${bookMeta ? `<span>${escapeHtml(bookMeta)}</span>` : ''}
+                </span>
+                <span class="annotation-center-text">${htmlWithQueryMarks(primary, query)}</span>
+                ${note && note !== primary ? `<span class="annotation-center-note">${htmlWithQueryMarks(note, query)}</span>` : ''}
+              </span>
+              <span class="annotation-center-side">
+                <span class="annotation-center-location">${htmlWithQueryMarks(location, query)}</span>
+                <span>${pct}% · ${escapeHtml(formatRelativeTime(item.timestamp))}</span>
+              </span>
+            </button>
+          `);
+        }
+      }
+
+      els.annotationCenterList.innerHTML = html.join('');
+    }
+
+    function onAnnotationCenterFilterChange() {
+      renderAnnotationCenter();
+    }
+
+    async function showAnnotationCenter() {
+      if (!els.annotationCenterModal) return;
+      els.annotationCenterModal.classList.remove('hidden');
+      annotationCenterState.loading = true;
+      annotationCenterState.items = [];
+      populateAnnotationCenterFilters();
+      renderAnnotationCenter();
+      try {
+        const items = await ipcRenderer.invoke('get-all-annotations');
+        annotationCenterState.items = Array.isArray(items) ? items : [];
+      } catch (e) {
+        annotationCenterState.items = [];
+        showToast(e?.message || t('actionFailed'), 'error');
+      } finally {
+        annotationCenterState.loading = false;
+        populateAnnotationCenterFilters();
+        renderAnnotationCenter();
+        setTimeout(() => els.annotationCenterSearch?.focus(), 40);
+      }
+    }
+
+    function hideAnnotationCenter() {
+      els.annotationCenterModal?.classList?.add('hidden');
+    }
+
+    async function openAnnotationCenterItem(key) {
+      const item = annotationCenterState.activeMap.get(key);
+      if (!item?.bookId) return;
+      try {
+        hideAnnotationCenter();
+        await openBook(item.bookId, { skipResume: true, awaitAnnotations: true });
+        if (!currentBook || currentBook.id !== item.bookId) return;
+        cancelReaderResumeRun();
+        let didLocate = false;
+        if (item.type === 'highlight') {
+          didLocate = await scrollToHighlight(item.id, { fallback: false });
+        } else if (item.type === 'note') {
+          didLocate = scrollToNote(item.id, { fallback: false });
+        }
+        if (!didLocate) {
+          jumpToProgress(item.progress || 0);
+        }
+        scheduleTocHighlightUpdate();
+        updateReaderProgressUi();
+      } catch (e) {
+        showToast(e?.message || t('annotationCenterOpenFailed'), 'error');
+      }
+    }
+
     async function showBookMetainfo(bookId) {
       try {
         const meta = await ipcRenderer.invoke('get-book-metainfo', bookId);
@@ -6912,7 +7547,8 @@
                               !document.getElementById('create-library-modal')?.classList.contains('hidden') ||
 	                              !document.getElementById('delete-library-modal')?.classList.contains('hidden') ||
 	                              !document.getElementById('move-book-modal')?.classList.contains('hidden') ||
-                              !document.getElementById('book-meta-modal')?.classList.contains('hidden');
+                              !document.getElementById('book-meta-modal')?.classList.contains('hidden') ||
+                              !document.getElementById('annotation-center-modal')?.classList.contains('hidden');
 
 		          closeSearch();
 		          hideSettings();
@@ -6922,6 +7558,7 @@
 		          hideDeleteLibraryModal();
 		          hideMoveBookModal();
 		          hideBookMetaModal();
+		          hideAnnotationCenter();
 		          hideContextMenu();
 		          hideNoteModal();
 		          const hasBookSearch = currentBook && (isBookSearchResultsVisible() || (els.bookSearch?.value || '').trim());
@@ -7472,6 +8109,7 @@
 	    }
 
     async function openBook(id, opts = { pushNav: true }) {
+      const openOptions = { pushNav: true, skipResume: false, awaitAnnotations: false, ...(opts || {}) };
 	      // Refresh state to get latest progress
 	      await refreshState();
 	      currentBook = state.booksById[id];
@@ -7496,7 +8134,7 @@
       els.readerView.style.display = 'flex';
       els.readerView.classList.remove('hidden');
       lastOpenedBookId = id;
-      if (opts.pushNav) pushNav({ view: 'reader', bookId: id });
+      if (openOptions.pushNav) pushNav({ view: 'reader', bookId: id });
 
       clearBookSearch();
       els.bookmarksSidebar.classList.add('hidden');
@@ -7565,17 +8203,21 @@
         renderCurrentBookBody();
       }
 
-      onAnnotationSearch('');
+      const annotationsReady = onAnnotationSearch('');
 
 	      renderToc();
-	      applySettings({ revealReaderUi: false });
+	      applySettings({ revealReaderUi: false, resumeReader: !openOptions.skipResume });
       scheduleTocHighlightUpdate();
 
 	      startReadingSession();
-	      resumeReaderAtRecordedPosition();
+	      if (openOptions.skipResume) cancelReaderResumeRun();
+	      else resumeReaderAtRecordedPosition();
 	      updateReaderProgressUi();
-	      loadAnnotations().catch(() => {});
-	      refreshBookmarksAndHighlights().catch(() => {});
+	      if (openOptions.awaitAnnotations) {
+	        await annotationsReady.catch(() => {});
+	      } else {
+	        annotationsReady.catch(() => {});
+	      }
 	    }
 
 	    function updateReaderProgressUi() {
@@ -8067,8 +8709,9 @@
     function showSettings() { document.getElementById('settings-modal').classList.remove('hidden'); }
     function hideSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
 
-	    function applySettings(opts = {}) {
-      const revealReaderUi = opts.revealReaderUi !== false;
+		    function applySettings(opts = {}) {
+	      const revealReaderUi = opts.revealReaderUi !== false;
+	      const resumeReader = opts.resumeReader !== false;
 	      const rc = document.getElementById('reader-content');
 	      const systemStack = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
 	      const mode = settings.fontMode || 'book';
@@ -8173,11 +8816,11 @@
 	        btn.classList.toggle('active', themeMatches || colorMatches);
 	      });
 
-      if (currentBook?.format === 'pdf') {
-        // Re-render PDF pages with new theme colors
-        rerenderPdfPages();
-        resumeReaderAtRecordedPosition();
-      }
+	      if (currentBook?.format === 'pdf') {
+	        // Re-render PDF pages with new theme colors
+	        rerenderPdfPages();
+	        if (resumeReader) resumeReaderAtRecordedPosition();
+	      }
       updateMarkdownViewToggleUi();
     }
 
@@ -9929,12 +10572,14 @@
 	    }
 
 	    async function refreshBookmarksAndHighlights() {
-	      if (!currentBook) return;
+	      if (!currentBook) return false;
+	      const bookId = currentBook.id;
 	      const [bookmarks, highlights, notes] = await Promise.all([
-	        ipcRenderer.invoke('get-bookmarks', currentBook.id),
-	        ipcRenderer.invoke('get-highlights', currentBook.id),
-	        ipcRenderer.invoke('get-notes', currentBook.id)
+	        ipcRenderer.invoke('get-bookmarks', bookId),
+	        ipcRenderer.invoke('get-highlights', bookId),
+	        ipcRenderer.invoke('get-notes', bookId)
 	      ]);
+	      if (!currentBook || currentBook.id !== bookId) return false;
 	      currentHighlights = highlights || [];
 	      currentNotes = notes || [];
 
@@ -10031,20 +10676,22 @@
 	      }
 
 	      els.bookmarksList.innerHTML = items.join('');
+	      return true;
 	    }
 
-	    function scrollToHighlight(id) {
-        // Record current position before navigating
-        recordReaderPosition();
+		    async function scrollToHighlight(id, opts = {}) {
+	      const allowFallback = opts.fallback !== false;
+	        // Record current position before navigating
+	        recordReaderPosition();
 
-        // Handle PDF highlights
-        if (currentBook?.format === 'pdf') {
-          const h = (currentHighlights || []).find(x => x.id === id);
-          if (h && h.pageNum) {
-            scrollToPdfHighlight(h);
-          }
-          return;
-        }
+	        // Handle PDF highlights
+	        if (currentBook?.format === 'pdf') {
+	          const h = (currentHighlights || []).find(x => x.id === id);
+	          if (h && h.pageNum) {
+	            return await scrollToPdfHighlight(h);
+	          }
+	          return false;
+	        }
 
 	      const el = els.readerContent?.querySelector?.(`mark.hl[data-hl-id="${cssEscape(id)}"]`);
 	      if (el) {
@@ -10081,23 +10728,40 @@
 	          el.classList.remove('highlight-flash');
 	          locator.remove();
 	        }, 1500);
-	        return;
-	      }
-	      const h = (currentHighlights || []).find(x => x.id === id);
-	      if (h) jumpToProgress(h.progress || 0);
-	    }
+		        return true;
+			      }
+			      const h = (currentHighlights || []).find(x => x.id === id);
+			      if (h) {
+			        const rangeInfo = findAnnotationRange(h);
+			        if (scrollToAnnotationRange(rangeInfo)) return true;
+			      }
+			      if (h && allowFallback) {
+			        jumpToProgress(h.progress || 0);
+			        return true;
+			      }
+			      return false;
+		    }
 
-    function scrollToNote(id) {
+    function scrollToNote(id, opts = {}) {
+      const allowFallback = opts.fallback !== false;
         // Record current position before navigating
         recordReaderPosition();
 
 	      const el = els.readerContent?.querySelector?.(`.note-anchor[data-note-id="${cssEscape(id)}"]`);
 	      if (el) {
 	        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-	        return;
-	      }
-	      const n = (currentNotes || []).find(x => x.id === id);
-      if (n) jumpToProgress(n.progress || 0);
+	        return true;
+		      }
+		      const n = (currentNotes || []).find(x => x.id === id);
+      if (n) {
+        const rangeInfo = findAnnotationRange(n);
+        if (scrollToAnnotationRange(rangeInfo)) return true;
+      }
+      if (n && allowFallback) {
+        jumpToProgress(n.progress || 0);
+        return true;
+      }
+      return false;
     }
 
     function onAnnotationSearch(query, fromInput = false) {
@@ -10106,7 +10770,7 @@
         const input = document.getElementById('annotation-search');
         if (input && input.value !== query) input.value = query;
       }
-      refreshBookmarksAndHighlights().catch(() => {});
+      return refreshBookmarksAndHighlights().catch(() => false);
     }
 
 	    function showHighlightColorPicker(hlId, anchorEl) {
@@ -10461,6 +11125,175 @@
 	        node = walker.nextNode();
 	      }
 	      return null;
+	    }
+
+	    function getChapterTextNodes(chapterEl) {
+	      if (!chapterEl) return [];
+	      const walker = document.createTreeWalker(chapterEl, NodeFilter.SHOW_TEXT, {
+	        acceptNode(node) {
+	          const p = node.parentElement;
+	          if (!p) return NodeFilter.FILTER_REJECT;
+	          if (p.closest('script,style,noscript')) return NodeFilter.FILTER_REJECT;
+	          if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
+	          return NodeFilter.FILTER_ACCEPT;
+	        }
+	      });
+	      const nodes = [];
+	      let node;
+	      while ((node = walker.nextNode())) nodes.push(node);
+	      return nodes;
+	    }
+
+	    function buildTextIndexForChapter(chapterEl) {
+	      const nodes = getChapterTextNodes(chapterEl);
+	      let fullText = '';
+	      const nodeOffsets = [];
+	      for (const node of nodes) {
+	        nodeOffsets.push({ node, start: fullText.length });
+	        fullText += node.nodeValue || '';
+	      }
+	      return { fullText, nodeOffsets };
+	    }
+
+	    function originalOffsetToTextPosition(textIndex, offset) {
+	      const target = Math.max(0, Number(offset || 0));
+	      for (const { node, start } of textIndex.nodeOffsets || []) {
+	        const len = node.nodeValue.length;
+	        if (target <= start + len) {
+	          return { node, offset: Math.max(0, Math.min(len, target - start)) };
+	        }
+	      }
+	      return null;
+	    }
+
+	    function normalizedOffsetFromOriginal(fullText, originalOffset) {
+	      const target = Math.max(0, Number(originalOffset || 0));
+	      let normalized = 0;
+	      for (let i = 0; i < fullText.length && i < target; i++) {
+	        if (/\s/.test(fullText[i])) {
+	          if (i === 0 || !/\s/.test(fullText[i - 1])) normalized += 1;
+	        } else {
+	          normalized += 1;
+	        }
+	      }
+	      return normalized;
+	    }
+
+	    function normalizedOffsetToOriginal(fullText, normalizedOffset) {
+	      const target = Math.max(0, Number(normalizedOffset || 0));
+	      let normalized = 0;
+	      for (let i = 0; i < fullText.length; i++) {
+	        if (normalized >= target) return i;
+	        if (/\s/.test(fullText[i])) {
+	          if (i === 0 || !/\s/.test(fullText[i - 1])) normalized += 1;
+	        } else {
+	          normalized += 1;
+	        }
+	      }
+	      return fullText.length;
+	    }
+
+	    function findTextRangeInChapter(chapterEl, searchText, hintStartChar) {
+	      const textIndex = buildTextIndexForChapter(chapterEl);
+	      const fullText = textIndex.fullText || '';
+	      const query = String(searchText || '').replace(/\s+/g, ' ').trim();
+	      if (!fullText || query.length < 2) return null;
+
+	      const normalizedFull = fullText.replace(/\s+/g, ' ');
+	      const normalizedQuery = query.replace(/\s+/g, ' ');
+	      const hay = normalizedFull.toLowerCase();
+	      const needle = normalizedQuery.toLowerCase();
+	      const occurrences = [];
+	      let idx = 0;
+	      while ((idx = hay.indexOf(needle, idx)) !== -1) {
+	        occurrences.push(idx);
+	        idx += 1;
+	      }
+	      if (!occurrences.length) return null;
+
+	      let best = occurrences[0];
+	      if (typeof hintStartChar === 'number' && Number.isFinite(hintStartChar)) {
+	        const hint = normalizedOffsetFromOriginal(fullText, hintStartChar);
+	        best = occurrences.reduce((prev, curr) =>
+	          Math.abs(curr - hint) < Math.abs(prev - hint) ? curr : prev
+	        );
+	      }
+
+	      const startOriginal = normalizedOffsetToOriginal(fullText, best);
+	      const endOriginal = normalizedOffsetToOriginal(fullText, best + normalizedQuery.length);
+	      const start = originalOffsetToTextPosition(textIndex, startOriginal);
+	      const end = originalOffsetToTextPosition(textIndex, Math.max(startOriginal + 1, endOriginal));
+	      if (!start || !end) return null;
+	      return { start, end, chapterEl };
+	    }
+
+	    function findAnnotationRange(annotation) {
+	      if (!annotation || !els.readerContent) return null;
+	      const chapters = [...els.readerContent.querySelectorAll('.chapter')];
+	      if (!chapters.length) return null;
+
+	      const chapterIndex = Number(annotation.chapterIndex);
+	      let chapterEl = null;
+	      if (Number.isFinite(chapterIndex) && chapterIndex >= 0) {
+	        chapterEl = document.getElementById(`chapter-${Math.floor(chapterIndex)}`) || chapters[Math.floor(chapterIndex)] || null;
+	      }
+	      if (!chapterEl) return null;
+	      temporarilyForceChapterVisible(chapterEl, 1600);
+
+	      const textIndex = buildTextIndexForChapter(chapterEl);
+	      const startChar = Number(annotation.startChar);
+	      const endChar = Number(annotation.endChar);
+	      if (
+	        Number.isFinite(startChar) &&
+	        Number.isFinite(endChar) &&
+	        endChar > startChar &&
+	        startChar >= 0 &&
+	        startChar < textIndex.fullText.length
+	      ) {
+	        const start = originalOffsetToTextPosition(textIndex, startChar);
+	        const end = originalOffsetToTextPosition(textIndex, Math.min(textIndex.fullText.length, endChar));
+	        if (start && end) return { start, end, chapterEl };
+	      }
+
+	      const candidates = [
+	        annotation.quote,
+	        annotation.text,
+	        annotation.label,
+	        annotation.note
+	      ].map(value => String(value || '').trim()).filter(value => value.length >= 2);
+
+	      for (const candidate of candidates) {
+	        const found = findTextRangeInChapter(chapterEl, candidate, Number.isFinite(startChar) ? startChar : null);
+	        if (found) return found;
+	      }
+	      return null;
+	    }
+
+	    function scrollToAnnotationRange(rangeInfo) {
+	      if (!rangeInfo?.start?.node || !els.readerContent) return false;
+	      const range = document.createRange();
+	      range.setStart(rangeInfo.start.node, rangeInfo.start.offset);
+	      range.collapse(true);
+
+	      const marker = document.createElement('span');
+	      marker.className = 'annotation-jump-target';
+	      marker.textContent = '\u200b';
+	      marker.style.display = 'inline-block';
+	      marker.style.width = '1px';
+	      marker.style.height = '1em';
+	      marker.style.verticalAlign = 'baseline';
+
+	      try {
+	        range.insertNode(marker);
+	      } catch (e) {
+	        return false;
+	      }
+
+	      marker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	      setTimeout(() => {
+	        if (marker.parentNode) marker.parentNode.removeChild(marker);
+	      }, 1600);
+	      return true;
 	    }
 
 	    function wrapCharRange(el, startChar, endChar, wrapperFactory) {

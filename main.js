@@ -101,6 +101,54 @@ const defaultAnalytics = {
   updatedAt: 0
 };
 
+function normalizeLocaleCandidate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  const normalized = raw
+    .split(/[.:@]/)[0]
+    .replace('_', '-')
+    .trim();
+  if (!normalized || normalized.toUpperCase() === 'C' || normalized.toUpperCase() === 'POSIX') return '';
+  return normalized;
+}
+
+function getEnvironmentLocaleCandidates() {
+  const candidates = [];
+  const add = (value) => {
+    const normalized = normalizeLocaleCandidate(value);
+    if (normalized) candidates.push(normalized);
+  };
+
+  String(process.env.LANGUAGE || '')
+    .split(':')
+    .forEach(add);
+  add(process.env.LC_MESSAGES);
+  add(process.env.LC_TIME);
+  add(process.env.LC_CTYPE);
+  add(process.env.LC_ALL);
+  add(process.env.LANG);
+
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith('LC_')) add(value);
+  }
+
+  return [...new Set(candidates)];
+}
+
+function getSystemLocaleInfoForRenderer() {
+  const envLocales = getEnvironmentLocaleCandidates();
+  const electronLocales = [
+    ...(app.getPreferredSystemLanguages?.() || []),
+    app.getLocale?.() || 'en-US'
+  ].map(normalizeLocaleCandidate).filter(Boolean);
+  const languages = [...new Set([...envLocales, ...electronLocales])];
+
+  return {
+    locale: languages[0] || 'en-US',
+    languages
+  };
+}
+
 let appData = {
   books: {},
   libraries: [],
@@ -2079,6 +2127,150 @@ function getBookForRenderer(book) {
   return out;
 }
 
+function getLibraryLabelForBook(book) {
+  const libraryId = String(book?.libraryId || '').trim();
+  if (!libraryId) return '';
+  const lib = (appData.libraries || []).find(item => String(item?.id || '') === libraryId);
+  return lib?.name || '';
+}
+
+function getSectionForAnnotation(book, annotation) {
+  const index = sanitizeSearchIndex(book?.searchIndex);
+  if (!index) return null;
+
+  const pageNum = Number(annotation?.pageNum);
+  if (Number.isFinite(pageNum) && pageNum > 0) {
+    return (index.sections || []).find(section =>
+      section.kind === 'page' && Number(section.pageNum || 0) === Math.floor(pageNum)
+    ) || null;
+  }
+
+  const chapterIndex = Number(annotation?.chapterIndex);
+  if (Number.isFinite(chapterIndex) && chapterIndex >= 0) {
+    return (index.sections || []).find(section =>
+      section.kind !== 'page' && Number(section.chapterIndex || 0) === Math.floor(chapterIndex)
+    ) || null;
+  }
+
+  return null;
+}
+
+function buildAnnotationLocation(book, annotation) {
+  const pageNum = Number(annotation?.pageNum);
+  if (Number.isFinite(pageNum) && pageNum > 0) {
+    return {
+      navPath: [`Page ${Math.floor(pageNum)}`],
+      label: `Page ${Math.floor(pageNum)}`
+    };
+  }
+
+  const section = getSectionForAnnotation(book, annotation);
+  const navPath = Array.isArray(section?.navPath)
+    ? section.navPath.map(item => String(item || '').trim()).filter(Boolean).slice(0, 8)
+    : [];
+  if (navPath.length) {
+    return {
+      navPath,
+      label: navPath.join(' / ')
+    };
+  }
+
+  const sectionTitle = String(section?.title || '').trim();
+  if (sectionTitle) {
+    return {
+      navPath: [sectionTitle],
+      label: sectionTitle
+    };
+  }
+
+  const chapterIndex = Number(annotation?.chapterIndex);
+  if (Number.isFinite(chapterIndex) && chapterIndex >= 0) {
+    return {
+      navPath: [`Chapter ${Math.floor(chapterIndex) + 1}`],
+      label: `Chapter ${Math.floor(chapterIndex) + 1}`
+    };
+  }
+
+  const progress = Number(annotation?.progress || 0);
+  if (Number.isFinite(progress) && progress > 0) {
+    const pct = Math.max(0, Math.min(100, Math.round(progress * 100)));
+    return {
+      navPath: [],
+      label: `${pct}%`
+    };
+  }
+
+  return { navPath: [], label: '' };
+}
+
+function buildGlobalAnnotationItem(bookId, book, type, annotation) {
+  if (!book || !annotation || typeof annotation !== 'object') return null;
+  const id = String(annotation.id || '').trim();
+  if (!id) return null;
+
+  const location = buildAnnotationLocation(book, annotation);
+  const quote = type === 'bookmark'
+    ? String(annotation.label || '').trim()
+    : String(annotation.quote || annotation.text || '').trim();
+  const noteText = type === 'note'
+    ? String(annotation.note || '').trim()
+    : String(annotation.note || '').trim();
+  const label = type === 'bookmark'
+    ? quote
+    : (type === 'note' ? noteText : String(annotation.text || '').trim());
+  const timestamp = Number(annotation.updatedAt || annotation.timestamp || 0);
+
+  return {
+    type,
+    id,
+    bookId,
+    book: {
+      id: bookId,
+      title: book.title || path.basename(book.path || '') || '',
+      author: book.author || '',
+      format: book.format || '',
+      libraryId: book.libraryId || '',
+      libraryName: getLibraryLabelForBook(book),
+      missingOnDisk: book.missingOnDisk === true
+    },
+    text: String(annotation.text || '').trim(),
+    quote,
+    note: noteText,
+    label,
+    color: annotation.color || '',
+    progress: Number(annotation.progress || 0) || 0,
+    chapterIndex: Number.isFinite(Number(annotation.chapterIndex)) ? Number(annotation.chapterIndex) : null,
+    startChar: Number.isFinite(Number(annotation.startChar)) ? Number(annotation.startChar) : null,
+    endChar: Number.isFinite(Number(annotation.endChar)) ? Number(annotation.endChar) : null,
+    pageNum: Number.isFinite(Number(annotation.pageNum)) ? Number(annotation.pageNum) : null,
+    navPath: location.navPath,
+    locationLabel: location.label,
+    timestamp,
+    updatedAt: Number(annotation.updatedAt || 0) || 0
+  };
+}
+
+function getAllAnnotationsForRenderer() {
+  const items = [];
+  const addCollection = (collection, type) => {
+    for (const [bookId, list] of Object.entries(collection || {})) {
+      const book = appData.books?.[bookId];
+      if (!book || !Array.isArray(list)) continue;
+      for (const annotation of list) {
+        const item = buildGlobalAnnotationItem(bookId, book, type, annotation);
+        if (item) items.push(item);
+      }
+    }
+  };
+
+  addCollection(appData.highlights, 'highlight');
+  addCollection(appData.notes, 'note');
+  addCollection(appData.bookmarks, 'bookmark');
+
+  items.sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+  return items;
+}
+
 function getReusableBookSearchIndex(book, sourceIdentity) {
   if (!book || !isReusableSearchIndex(book.searchIndex, book.format, sourceIdentity)) return null;
   return sanitizeSearchIndex(book.searchIndex);
@@ -3879,10 +4071,7 @@ ipcMain.handle('merge-moved-book-state', () => {
   return { mergedCount, dedupedCount };
 });
 ipcMain.handle('list-system-fonts', async () => listSystemFonts());
-ipcMain.handle('get-system-locale', () => ({
-  locale: app.getLocale?.() || 'en-US',
-  languages: app.getPreferredSystemLanguages?.() || []
-}));
+ipcMain.handle('get-system-locale', () => getSystemLocaleInfoForRenderer());
 ipcMain.handle('get-cover-url', async (_, bookId) => getCoverUrl(bookId));
 ipcMain.handle('regenerate-cover', async (_, bookId) => {
   const book = appData.books[bookId];
@@ -4015,6 +4204,7 @@ ipcMain.handle('get-pdf-search-index-status', (_, bookId) => getPdfSearchIndexSt
 ipcMain.handle('export-data', async (_, filePath) => exportData(filePath));
 ipcMain.handle('import-data', async (_, filePath) => importData(filePath));
 ipcMain.handle('get-stats', () => appData.stats);
+ipcMain.handle('get-all-annotations', () => getAllAnnotationsForRenderer());
 ipcMain.handle('get-bookmarks', (_, bookId) => appData.bookmarks[bookId] || []);
 ipcMain.handle('add-bookmark', (_, bookId, bookmark) => {
   if (!appData.bookmarks[bookId]) appData.bookmarks[bookId] = [];
